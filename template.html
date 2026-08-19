@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synquery — Panel Synthesis (prototype)</title>
+<style>
+  :root{--bg:#fbfbfa;--panel:#fff;--ink:#1b1b1a;--mute:#6b6b66;--line:#e4e3df;
+    --accent:#2c4a7c;--sq:#a8442a;--sqbg:#fdf0ec;--warn:#8a5a1f;--warnbg:#fdf6ea;--chip:#f1f0ec;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+  .ghostbar{background:#1b1b1a;color:#fff;padding:7px 20px;font-size:12.5px}
+  .ghostbar b{color:#ffd479}
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:16px 20px 0}
+  .brand{font-size:12.5px;color:var(--mute);letter-spacing:.06em;text-transform:uppercase}
+  .proj{font-size:19px;font-weight:640;margin:3px 0 12px}
+  nav{display:flex;gap:2px;flex-wrap:wrap}
+  nav button{background:none;border:0;border-bottom:2px solid transparent;padding:9px 14px;
+    font:inherit;font-size:14px;color:var(--mute);cursor:pointer}
+  nav button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+  nav button.parked{opacity:.5;font-style:italic}
+  main{padding:20px;max-width:1240px}
+  section{display:none} section.on{display:block}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:15px 17px;margin-bottom:14px}
+  h2{font-size:15px;margin:0 0 10px}
+  h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);margin:0 0 8px;font-weight:640}
+  p{margin:0 0 9px}.mute{color:var(--mute)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{border-bottom:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);
+     font-weight:640;border-bottom:1px solid #cfcec9}
+  td.num{text-align:center;font-variant-numeric:tabular-nums}
+  tr.strong td:first-child{font-weight:660}
+  .scroll{overflow-x:auto}
+  .layout{display:grid;grid-template-columns:212px 1fr;gap:14px;align-items:start}
+  .rail button{display:block;width:100%;text-align:left;background:none;border:0;padding:5px 8px;
+    font:inherit;font-size:13px;color:var(--ink);border-radius:4px;cursor:pointer}
+  .rail button:hover{background:var(--chip)}
+  .rail button.on{background:#eef2f8;font-weight:600}
+  .rail button.sq{color:var(--sq)}
+  .rail button.sq.on{background:var(--sqbg)}
+  .rail .n{float:right;color:var(--mute);font-size:12px}
+  .railgrp{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);
+    margin:12px 0 4px;padding:0 8px}
+  .railgrp.sq{color:var(--sq)}
+  .thchip{background:var(--chip);border-radius:3px;padding:1px 6px;font-size:12px;white-space:nowrap}
+  .thchip.sq{background:var(--sqbg);color:var(--sq)}
+  .prov{font-size:11px;color:var(--mute);display:block}
+  .quote{font-style:italic;color:#37372f}
+  .qlink{cursor:pointer;display:block}
+  .qlink:hover .quote{color:var(--accent)}
+  .jump{color:var(--accent);font-weight:600;visibility:hidden}
+  .qlink:hover .jump{visibility:visible}
+  tr.weak td{background:#fcfbf7}
+  .filters{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+  select,input{font:inherit;font-size:13px;padding:4px 7px;border:1px solid var(--line);
+    border-radius:5px;background:#fff}
+  .copy{border:1px solid var(--line);background:#fff;border-radius:5px;padding:2px 8px;
+    font-size:11.5px;cursor:pointer;color:var(--mute);white-space:nowrap}
+  .empty{color:#c9c7c1}
+  .note{font-size:12.5px;color:var(--mute);margin-top:8px}
+  .flag{background:var(--warnbg);border:1px solid #ecdcbe;border-radius:6px;padding:10px 13px;
+    font-size:13px;color:var(--warn);margin:10px 0}
+  .score{display:inline-block;min-width:22px;padding:1px 4px;border-radius:3px;cursor:pointer;
+    color:var(--accent);font-size:13px}
+  .score:hover{background:#eef2f8;text-decoration:underline}
+  .pts{white-space:nowrap}
+  td.num b{display:block;font-size:15px}
+  .cov{display:flex;gap:26px;flex-wrap:wrap;font-size:13px}
+  .cov div{color:var(--mute)} .cov div span{display:block;font-size:22px;font-weight:640;color:var(--ink)}
+  ul,ol{margin:0 0 4px 18px;padding:0} li{margin-bottom:4px;font-size:13.5px}
+  .txlayout{display:grid;grid-template-columns:238px 1fr;gap:16px;align-items:start}
+  .toc{position:sticky;top:12px;background:var(--panel);border:1px solid var(--line);
+    border-radius:7px;padding:13px 15px;max-height:78vh;overflow:auto}
+  .toc ol{font-size:12.5px;margin-left:16px}
+  .toc a{color:var(--ink);text-decoration:none} .toc a:hover{color:var(--accent);text-decoration:underline}
+  .txbody{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:6px 20px 24px}
+  .sect{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);
+    margin:22px 0 2px;padding-top:12px;border-top:1px solid var(--line)}
+  .turn{padding:7px 0 7px 11px;border-left:2px solid transparent;scroll-margin-top:70px}
+  .turn.ai{border-left-color:#e4e3df}
+  .turn.ex{border-left-color:var(--accent);background:#fcfcfb}
+  .turn .meta{font-size:11.5px;color:var(--mute);margin-bottom:2px}
+  .turn .ts{font-variant-numeric:tabular-nums}
+  .turn.hit{background:#fff6d9;border-left-color:#e0a92b}
+  .txnav{display:flex;gap:6px;margin-bottom:10px}
+  .txnav button{border:1px solid var(--line);background:#fff;border-radius:20px;padding:4px 12px;
+    font:inherit;font-size:12.5px;cursor:pointer;color:var(--mute)}
+  .txnav button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .txpane{display:none} .txpane.on{display:block}
+  #backbar{display:none;position:sticky;top:0;z-index:5;padding:8px 0 10px;background:var(--bg)}
+  #backbar.on{display:block}
+  #backbar button{background:var(--ink);color:#fff;border:0;border-radius:20px;padding:6px 15px;
+    font:inherit;font-size:13px;cursor:pointer}
+  #rTable{overflow:visible}
+  .pts{display:flex;gap:10px;justify-content:center}
+  .sc{position:relative;display:inline-block;text-align:center;line-height:1.15}
+  .sc .who{display:block;font-size:10px;color:var(--mute);letter-spacing:.04em}
+  .sc.has .score{border-bottom:1px dotted #b3a06a}
+  .tmark{color:#b07d1a;font-size:9px;font-weight:700;margin-left:1px}
+  .tip{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+    margin-bottom:7px;width:250px;background:#241f16;color:#f6f2e8;text-align:left;
+    padding:9px 11px;border-radius:6px;font-size:12.5px;line-height:1.45;z-index:40;
+    box-shadow:0 6px 18px rgba(0,0,0,.24);font-style:normal}
+  .tip b{display:block;color:#ffd479;font-size:11px;text-transform:uppercase;
+    letter-spacing:.05em;margin-bottom:3px}
+  .tip i{display:block;color:#9d968a;font-size:10.5px;margin-top:5px;font-style:normal}
+  .sc:hover .tip{display:block}
+  tr.strong td:first-child{font-weight:660}
+  .tag{display:inline-block;background:var(--chip);border-radius:3px;padding:0 5px;font-size:10.5px;color:var(--mute);margin-right:4px}
+  .tag.weak{background:var(--warnbg);color:var(--warn)}
+  .consensus{display:block;font-size:10px;letter-spacing:.03em;margin-top:2px}
+  .consensus-u{color:#2e6b46}.consensus-m{color:var(--accent)}.consensus-c{color:var(--sq)}
+  .compat{display:block;font-size:10px;color:var(--mute)}
+  .claim .slideline{font-size:16px;font-weight:640;margin-bottom:6px}
+  .verdict{display:inline-block;border-radius:4px;padding:2px 9px;font-size:11px;font-weight:700;letter-spacing:.05em}
+  .verdict-s{background:#e6f2ea;color:#2e6b46}.verdict-w{background:var(--warnbg);color:var(--warn)}.verdict-n{background:var(--sqbg);color:var(--sq)}
+  .footnote{background:var(--chip);border-radius:6px;padding:9px 12px;font-size:12.5px;margin-top:8px}
+  .atoms li{font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="ghostbar">Prototype &mdash; built from 3 expert interviews. Every number and quote links to the exact moment it was said.</div>
+
+<header>
+  <div class="brand">Synquery &middot; Workstream</div>
+  <div class="proj">Enterprise ITSM platform buying decisions</div>
+  <nav>
+    <button class="on" data-t="findings">Themes &amp; Quotes</button>
+    <button data-t="ratings">Ratings &amp; Numbers</button>
+    <button data-t="transcripts">Transcripts</button>
+    <button data-t="coverage">Coverage</button>
+    <button data-t="slidecheck">Slide Check</button>
+  </nav>
+</header>
+
+<main>
+
+<section id="findings" class="on">
+ <div class="layout">
+  <div class="card rail">
+    <h3>Themes</h3>
+    {{RAIL}}
+    <div class="note" style="margin-top:14px;border-top:1px solid var(--line);padding-top:9px">
+      Themes in <span style="color:var(--sq)">this colour</span> were not in your brief. Synquery proposed them from what came up.
+    </div>
+  </div>
+  <div class="card">
+    <div class="filters">
+      <select id="fExpert">
+        <option value="">All experts</option><option>E1</option><option>E2</option><option>E3</option>
+      </select>
+      <input id="fSearch" placeholder="search takeaways and quotes...">
+      <span class="note" style="margin:0" id="fCount"></span>
+    </div>
+    <div class="scroll">
+    <table>
+      <tr><th>Expert</th><th>Theme</th><th>Takeaway</th><th>What we heard</th><th></th></tr>
+      {{FROWS}}
+    </table>
+    </div>
+    <div class="note">Copy is anonymised to role and segment, never a company name. The shaded row is tagged <b>confirmed on prompt</b> &mdash; the interviewer supplied the conclusion and the expert only agreed, which is weaker evidence than a volunteered answer and should not aggregate the same way.</div>
+  </div>
+ </div>
+</section>
+
+<section id="ratings">
+  <div class="card">
+    <h2>Vendor ratings, as asked</h2>
+    <p class="mute">Each expert rated vendors 1&ndash;10 on <i>their own</i> top five criteria rather than a project-wide set, so most of the grid was never asked. Click any score to open the moment it was said.</p>
+    <div class="filters">
+      <select id="rExpert">
+        <option value="">All experts</option><option>E1</option><option>E2</option><option>E3</option>
+      </select>
+      <span class="note" style="margin:0">Filtering to one expert shows only that expert&rsquo;s scores.</span>
+    </div>
+    <div class="scroll">
+    <table id="rTable">
+      <tr><th>Criterion</th><th>ServiceNow</th><th>BMC</th><th>Freshservice</th><th>Ivanti</th><th>Zendesk</th><th>Jira</th></tr>
+      {{RROWS}}
+    </table>
+    </div>
+    <div class="note"><b>Key.</b> Every score carries the expert who gave it underneath. A bold figure above them is the mean, shown only where more than one person answered. A score marked <sup class="tmark">T</sup> has the expert&rsquo;s own reason attached &mdash; hover to read it. Em dash means <i>not asked</i>, which is a different fact from <i>asked, no answer</i>. Bold criteria are the two every expert rated. Click any score to open that moment in the transcript.</div>
+    <div class="flag"><b>13 rating statements exist where the theoretical grid has 126 cells.</b> Fix it once at interview design: the client fixes the criteria at setup, the interviewer holds them, and the grid fills itself. Cheapest change available, and everything downstream inherits it.</div>
+  </div>
+  {{NUMERIC}}
+</section>
+
+<section id="transcripts">
+  <div id="backbar"><button onclick="goBack()">&lsaquo; Back to <span id="backwhere"></span></button></div>
+  <div class="txnav">{{TX_TABS}}</div>
+  {{TX_BODIES}}
+</section>
+
+<section id="coverage">
+  <div class="card">
+    <h3>Panel coverage</h3>
+    <div class="cov">
+      <div><span>3</span>interviews</div>
+      <div><span>7</span>vendors mentioned</div>
+      <div><span>3</span>with a primary user in the panel</div>
+      <div><span>2 of 8</span>criteria comparable across all three</div>
+      <div><span>{{NFIND}}</span>findings extracted</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Vendors rated but never run by anyone in the panel</h3>
+    <p>Ivanti, Jira and Zendesk. Every rating for those three comes from someone who rejected the product or used it years ago somewhere else.</p>
+  </div>
+  <div class="card">
+    <h3>Segments not covered</h3>
+    <ul>{{MISSING}}</ul>
+  </div>
+  <div class="card">
+    <h3>What this panel cannot support</h3>
+    <ul>{{GAPS}}</ul>
+    <div class="note">Each gap names the interview that would close it. Those briefs are what feed the next round of sourcing.</div>
+  </div>
+</section>
+
+<section id="slidecheck">
+  <div class="card">
+    <p class="mute">A slide claim is only useful if it survives a partner meeting. Each claim below carries the verdict this panel can actually support, the atoms behind it, and the footnote to paste under the slide.</p>
+  </div>
+  {{SLIDECHECK}}
+</section>
+
+</main>
+
+<script>
+function show(t){
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('main > section').forEach(x=>x.classList.remove('on'));
+  document.querySelector('nav button[data-t="'+t+'"]').classList.add('on');
+  document.getElementById(t).classList.add('on');
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{show(b.dataset.t);window.scrollTo(0,0)});
+document.querySelectorAll('.txnav button').forEach(b=>b.onclick=()=>showTx(b.dataset.tx));
+function showTx(e){
+  document.querySelectorAll('.txnav button').forEach(x=>x.classList.toggle('on',x.dataset.tx===e));
+  document.querySelectorAll('.txpane').forEach(x=>x.classList.toggle('on',x.dataset.tx===e));
+}
+function jump(id){
+  const el=document.getElementById(id); if(!el) return false;
+  el.scrollIntoView({behavior:'smooth',block:'start'}); return false;
+}
+let origin=null;
+const LABEL={findings:'Themes & Quotes',ratings:'Ratings & Numbers',coverage:'Coverage',slidecheck:'Slide Check'};
+function goBack(){ if(origin){show(origin);window.scrollTo(0,0);} }
+function goto(e,ts){
+  const cur=document.querySelector('main > section.on');
+  if(cur && cur.id!=='transcripts'){ origin=cur.id;
+    document.getElementById('backwhere').textContent=LABEL[origin]||origin;
+    document.getElementById('backbar').classList.add('on'); }
+  show('transcripts'); showTx(e);
+  const id='t-'+e+'-'+ts.replace(/:/g,'');
+  const el=document.getElementById(id);
+  document.querySelectorAll('.turn.hit').forEach(x=>x.classList.remove('hit'));
+  if(el){el.classList.add('hit');setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'center'}),40);}
+  else{alert('No turn at '+ts+' for '+e+' (ghost data)');}
+}
+// findings filters
+const rail=document.querySelectorAll('.rail button');
+let theme='ALL';
+rail.forEach(b=>b.onclick=()=>{rail.forEach(x=>x.classList.remove('on'));b.classList.add('on');theme=b.dataset.th;applyF()});
+document.getElementById('fExpert').onchange=applyF;
+document.getElementById('fSearch').oninput=applyF;
+function applyF(){
+  const ex=document.getElementById('fExpert').value;
+  const q=document.getElementById('fSearch').value.toLowerCase();
+  let n=0;
+  document.querySelectorAll('tr.frow').forEach(r=>{
+    const ok=(theme==='ALL'||r.dataset.th===theme)&&(!ex||r.dataset.e===ex)&&
+             (!q||r.innerText.toLowerCase().includes(q));
+    r.style.display=ok?'':'none'; if(ok)n++;
+  });
+  document.getElementById('fCount').textContent=n+' of '+document.querySelectorAll('tr.frow').length+' findings';
+}
+applyF();
+// ratings expert filter
+document.getElementById('rExpert').onchange=function(){
+  const e=this.value;
+  document.querySelectorAll('#rTable .score').forEach(s=>{
+    s.style.display=(!e||s.dataset.e===e)?'':'none';
+  });
+  document.querySelectorAll('#rTable td.num').forEach(td=>{
+    const b=td.querySelector('b'); if(!b)return;
+    b.style.display=e?'none':'';
+    const p=td.querySelector('.prov'); if(p)p.style.display=e?'none':'';
+  });
+};
+document.querySelectorAll('.copy[data-text]').forEach(b=>b.onclick=()=>{navigator.clipboard.writeText(b.dataset.text);const t=b.textContent;b.textContent='copied';setTimeout(()=>b.textContent=t,1200);});
+</script>
+</body>
+</html>

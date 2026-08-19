@@ -1,0 +1,7 @@
+facts.json
+*transcript*
+*Transcript*
+extracted.json
+out/
+__pycache__/
+.DS_Store
