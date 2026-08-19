@@ -198,14 +198,50 @@ SQ_THEMES = ["Compliance as funding trigger"]
 
 # ---------------------------------------------------------------- evidentiary state
 def basis_label(basis):
+    """Order matters. "quoted, not paid" contains the substring "paid", so the
+    negated forms are tested before the positive one -- the same
+    longest-and-most-specific-first rule the redaction map uses."""
     b = basis.lower()
-    if "paid" in b:
-        return "paid"
-    if "quoted" in b:
+    if "not paid" in b or "quoted" in b:
         return "quoted, not paid"
     if "illustrative" in b or "baseline" in b:
         return "illustrative baseline"
+    if "paid" in b:
+        return "paid"
     return "recalled"
+
+
+def basis_verb(basis):
+    """The same fact as basis_label, phrased as a verb so it reads as a sentence
+    in client-facing prose rather than as a tag dropped mid-clause."""
+    return {
+        "paid": "was paid at",
+        "quoted, not paid": "was quoted at, but not purchased for,",
+        "illustrative baseline": "was anchored by the expert at",
+        "recalled": "was recalled at",
+    }[basis_label(basis)]
+
+
+def check_basis_labels():
+    """Regression guard for the substring-ordering bug that rendered every quoted
+    price as a paid one. A price the client never paid must never be labelled paid
+    anywhere in the deliverable -- that is the exact error this product exists to
+    prevent, so it fails the build rather than warning."""
+    cases = {
+        "quoted, not paid": "quoted, not paid",
+        "paid, blended across license tiers": "paid",
+        "illustrative baseline set by expert for comparison, historical employer": "illustrative baseline",
+        "recalled comparison": "recalled",
+    }
+    for raw, want in cases.items():
+        got = basis_label(raw)
+        if got != want:
+            raise SystemExit(f"BASIS LABEL WRONG: {raw!r} -> {got!r}, expected {want!r}")
+    for p in FACTS["pricing"]:
+        if "not paid" in p["basis"].lower() and basis_label(p["basis"]) == "paid":
+            raise SystemExit(
+                f"BASIS LABEL WRONG: {p['expert']}/{p['vendor']} quoted price labelled paid")
+    print(f"basis labels: {len(cases)} synthetic + {len(FACTS['pricing'])} real priced atoms, 0 mislabelled")
 
 
 def evidence_tags(row, all_rows):
@@ -428,8 +464,8 @@ def slide_claims():
     ratio = p_sn["usd_per_user_month"] / p_bmc["usd_per_user_month"]
     same_basis = p_sn["basis"] == p_bmc["basis"]
     verdict_b = "SUPPORTED" if same_basis else "SUPPORTED WITH CAVEAT"
-    reason_b = (f"BMC is {basis_label(p_bmc['basis'])} at ${p_bmc['usd_per_user_month']:g}/user/mo; "
-                f"ServiceNow is {basis_label(p_sn['basis'])} at ${p_sn['usd_per_user_month']:g}/user/mo. "
+    reason_b = (f"BMC {basis_verb(p_bmc['basis'])} ${p_bmc['usd_per_user_month']:g}/user/mo; "
+                f"ServiceNow {basis_verb(p_sn['basis'])} ${p_sn['usd_per_user_month']:g}/user/mo. "
                 + ("Same measurement basis." if same_basis else
                    "Different measurement bases, so the multiple is indicative, not audited."))
     atoms_b = [
@@ -733,6 +769,7 @@ if __name__ == "__main__":
     check_citations(doc)
     check_banned(doc)
     check_counts(doc)
+    check_basis_labels()
     site_dir = pathlib.Path(__file__).parent / "site"
     site_dir.mkdir(parents=True, exist_ok=True)
     dest = site_dir / "index.html"
