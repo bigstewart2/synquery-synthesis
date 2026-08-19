@@ -203,7 +203,7 @@ def main():
             print(f"  {expert} {group}: {len(items)} items", flush=True)
 
     out["_usage"] = {"input_tokens": tok_in, "output_tokens": tok_out, "model": MODEL}
-    out_dir = HERE.resolve().parent.parent / "out"
+    out_dir = HERE.resolve().parent / "out"
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "extracted.json").write_text(json.dumps(out, indent=2))
     print(f"\nwrote {out_dir / 'extracted.json'}  ({tok_in} in / {tok_out} out)")
