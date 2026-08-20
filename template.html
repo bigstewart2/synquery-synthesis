@@ -3,121 +3,243 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23274a78'/%3E%3Cpath d='M4 5h8M4 8h8M4 11h5' stroke='white' stroke-width='1.4'/%3E%3C/svg%3E">
 <title>Synquery — Panel Synthesis (prototype)</title>
 <style>
-  :root{--bg:#fbfbfa;--panel:#fff;--ink:#1b1b1a;--mute:#6b6b66;--line:#e4e3df;
-    --accent:#2c4a7c;--sq:#a8442a;--sqbg:#fdf0ec;--warn:#8a5a1f;--warnbg:#fdf6ea;--chip:#f1f0ec;}
+  :root{
+    /* surface + ink */
+    --bg:#fafaf9; --panel:#fff; --ink:#191917; --ink-2:#3d3d38;
+    --mute:#66665f; --line:#e6e5e1; --rule:#d3d2cc; --chip:#f2f1ed;
+    /* meaning-bearing only */
+    --accent:#274a78; --accent-soft:#eef2f8;
+    --sq:#9c3f27; --sqbg:#fbeee9;
+    --warn:#7d5216; --warnbg:#fdf6e8;
+    --ok:#2a6440; --okbg:#e8f1eb;
+    /* rhythm */
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:36px;
+    --r:6px;
+    /* semantic depth */
+    --z-sticky:10; --z-bar:20; --z-tip:60;
+    --t:140ms cubic-bezier(.22,.61,.36,1);
+  }
   *{box-sizing:border-box}
+  html{font-size:16px}
   body{margin:0;background:var(--bg);color:var(--ink);
-    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
-  .ghostbar{background:#1b1b1a;color:#fff;padding:7px 20px;font-size:12.5px}
-  .ghostbar b{color:#ffd479}
-  header{background:var(--panel);border-bottom:1px solid var(--line);padding:16px 20px 0}
-  .brand{font-size:12.5px;color:var(--mute);letter-spacing:.06em;text-transform:uppercase}
-  .proj{font-size:19px;font-weight:640;margin:3px 0 12px}
-  nav{display:flex;gap:2px;flex-wrap:wrap}
-  nav button{background:none;border:0;border-bottom:2px solid transparent;padding:9px 14px;
-    font:inherit;font-size:14px;color:var(--mute);cursor:pointer}
+    font:0.9375rem/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+  a{color:var(--accent)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+
+  .ghostbar{background:var(--ink);color:#f4f3ef;padding:var(--s2) var(--s5);font-size:0.75rem;
+    letter-spacing:.005em}
+  .ghostbar b{color:#e8c979;font-weight:600}
+
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:var(--s4) var(--s5) 0}
+  .brand{font-size:0.6875rem;color:var(--mute);letter-spacing:.09em;text-transform:uppercase;font-weight:600}
+  .proj{font-size:1.25rem;font-weight:650;letter-spacing:-.011em;margin:var(--s1) 0 var(--s3)}
+  nav{display:flex;gap:0;flex-wrap:wrap}
+  nav button{background:none;border:0;border-bottom:2px solid transparent;padding:var(--s2) var(--s3) 10px;
+    font:inherit;font-size:0.875rem;color:var(--mute);cursor:pointer;transition:color var(--t)}
+  nav button:hover{color:var(--ink-2)}
   nav button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
-  nav button.parked{opacity:.5;font-style:italic}
-  main{padding:20px;max-width:1240px}
+  nav button.parked{opacity:.45;font-style:italic}
+
+  main{padding:var(--s5);max-width:1240px}
   section{display:none} section.on{display:block}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:15px 17px;margin-bottom:14px}
-  h2{font-size:15px;margin:0 0 10px}
-  h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);margin:0 0 8px;font-weight:640}
-  p{margin:0 0 9px}.mute{color:var(--mute)}
-  table{border-collapse:collapse;width:100%;font-size:13.5px}
-  th,td{border-bottom:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
-  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);
-     font-weight:640;border-bottom:1px solid #cfcec9}
-  td.num{text-align:center;font-variant-numeric:tabular-nums}
-  tr.strong td:first-child{font-weight:660}
+
+  /* one surface per idea. nested boxes are flattened below. */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:var(--s4) var(--s5) var(--s5);margin-bottom:var(--s4)}
+  .card .card{border:0;background:none;padding:0;margin:0}
+
+  h2{font-size:1.0625rem;font-weight:650;letter-spacing:-.008em;margin:0 0 var(--s3)}
+  h3{font-size:0.6875rem;text-transform:uppercase;letter-spacing:.09em;color:var(--mute);
+    margin:0 0 var(--s2);font-weight:650}
+  p{margin:0 0 var(--s2);max-width:74ch;text-wrap:pretty}
+  .mute{color:var(--mute)}
+
+  table{border-collapse:collapse;width:100%;font-size:0.8125rem}
+  th,td{border-bottom:1px solid var(--line);padding:var(--s2) 10px;text-align:left;vertical-align:top}
+  th{font-size:0.6875rem;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);
+    font-weight:650;border-bottom:1px solid var(--rule);padding-bottom:var(--s1)}
+  tbody tr:last-child td,table tr:last-child td{border-bottom:0}
+  td.num{text-align:center}
+  tr.strong td:first-child{font-weight:650}
+  tr.frow{transition:background var(--t)}
+  tr.frow:hover td{background:#fcfcfb}
   .scroll{overflow-x:auto}
-  .layout{display:grid;grid-template-columns:212px 1fr;gap:14px;align-items:start}
-  .rail button{display:block;width:100%;text-align:left;background:none;border:0;padding:5px 8px;
-    font:inherit;font-size:13px;color:var(--ink);border-radius:4px;cursor:pointer}
-  .rail button:hover{background:var(--chip)}
-  .rail button.on{background:#eef2f8;font-weight:600}
+
+  .layout{display:grid;grid-template-columns:214px 1fr;gap:var(--s4);align-items:start}
+  .rail button{display:block;width:100%;text-align:left;background:none;border:0;
+    padding:5px var(--s2);font:inherit;font-size:0.8125rem;color:var(--ink-2);
+    border-radius:4px;cursor:pointer;transition:background var(--t),color var(--t)}
+  .rail button:hover{background:var(--chip);color:var(--ink)}
+  .rail button.on{background:var(--accent-soft);color:var(--ink);font-weight:600}
   .rail button.sq{color:var(--sq)}
   .rail button.sq.on{background:var(--sqbg)}
-  .rail .n{float:right;color:var(--mute);font-size:12px}
-  .railgrp{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);
-    margin:12px 0 4px;padding:0 8px}
+  .rail .n{float:right;color:var(--mute);font-size:0.75rem;font-weight:400}
+  .railgrp{font-size:0.625rem;text-transform:uppercase;letter-spacing:.09em;color:var(--mute);
+    margin:var(--s4) 0 var(--s1);padding:0 var(--s2);font-weight:650}
   .railgrp.sq{color:var(--sq)}
-  .thchip{background:var(--chip);border-radius:3px;padding:1px 6px;font-size:12px;white-space:nowrap}
+
+  .thchip{background:var(--chip);border-radius:3px;padding:1px 6px;font-size:0.75rem;white-space:nowrap}
   .thchip.sq{background:var(--sqbg);color:var(--sq)}
-  .prov{font-size:11px;color:var(--mute);display:block}
-  .quote{font-style:italic;color:#37372f}
-  .qlink{cursor:pointer;display:block}
+  .tag{display:inline-block;background:var(--chip);border-radius:3px;padding:0 5px;
+    font-size:0.6875rem;color:var(--mute);margin-right:var(--s1)}
+  .tag.weak{background:var(--warnbg);color:var(--warn)}
+
+  /* the quote is the hero: it outranks every label around it */
+  .quote{font-style:italic;color:var(--ink);font-size:0.875rem;line-height:1.5}
+  .prov{font-size:0.6875rem;color:var(--mute);display:block;margin-top:3px;letter-spacing:.005em}
+  .qlink{cursor:pointer;display:block;border-radius:4px;transition:background var(--t)}
+  .qlink:hover{background:var(--accent-soft)}
   .qlink:hover .quote{color:var(--accent)}
-  .jump{color:var(--accent);font-weight:600;visibility:hidden}
-  .qlink:hover .jump{visibility:visible}
-  tr.weak td{background:#fcfbf7}
-  .filters{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
-  select,input{font:inherit;font-size:13px;padding:4px 7px;border:1px solid var(--line);
-    border-radius:5px;background:#fff}
-  .copy{border:1px solid var(--line);background:#fff;border-radius:5px;padding:2px 8px;
-    font-size:11.5px;cursor:pointer;color:var(--mute);white-space:nowrap}
-  .empty{color:#c9c7c1}
-  .note{font-size:12.5px;color:var(--mute);margin-top:8px}
-  .flag{background:var(--warnbg);border:1px solid #ecdcbe;border-radius:6px;padding:10px 13px;
-    font-size:13px;color:var(--warn);margin:10px 0}
+  .jump{color:var(--accent);font-weight:650;opacity:0;transition:opacity var(--t)}
+  .qlink:hover .jump{opacity:1}
+  tr.weak td{background:#fdfbf5}
+
+  .filters{display:flex;gap:var(--s2);margin-bottom:var(--s3);flex-wrap:wrap;align-items:center}
+  select,input{font:inherit;font-size:0.8125rem;padding:5px var(--s2);border:1px solid var(--rule);
+    border-radius:5px;background:#fff;color:var(--ink);transition:border-color var(--t)}
+  select:hover,input:hover{border-color:#b9b8b1}
+  .copy{border:1px solid var(--rule);background:#fff;border-radius:5px;padding:3px 9px;
+    font-size:0.6875rem;cursor:pointer;color:var(--mute);white-space:nowrap;
+    transition:background var(--t),color var(--t),border-color var(--t)}
+  .copy:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .empty{color:#c4c3bd}
+  .note{font-size:0.75rem;color:var(--mute);margin-top:var(--s3);max-width:78ch;line-height:1.5}
+
+  /* was a nested tinted box inside a card. now a hairline-separated warning note. */
+  .flag{background:none;border:0;border-top:1px solid var(--line);border-radius:0;
+    padding:var(--s3) 0 0 var(--s5);font-size:0.8125rem;color:var(--warn);
+    margin:var(--s3) 0 0;position:relative;max-width:80ch;line-height:1.5}
+  .flag::before{content:"";position:absolute;left:var(--s2);top:calc(var(--s3) + 6px);
+    width:7px;height:7px;border-radius:50%;background:var(--warn)}
+  .flag b{color:#5f3d0c}
+
   .score{display:inline-block;min-width:22px;padding:1px 4px;border-radius:3px;cursor:pointer;
-    color:var(--accent);font-size:13px}
-  .score:hover{background:#eef2f8;text-decoration:underline}
-  .pts{white-space:nowrap}
-  td.num b{display:block;font-size:15px}
-  .cov{display:flex;gap:26px;flex-wrap:wrap;font-size:13px}
-  .cov div{color:var(--mute)} .cov div span{display:block;font-size:22px;font-weight:640;color:var(--ink)}
-  ul,ol{margin:0 0 4px 18px;padding:0} li{margin-bottom:4px;font-size:13.5px}
-  .txlayout{display:grid;grid-template-columns:238px 1fr;gap:16px;align-items:start}
-  .toc{position:sticky;top:12px;background:var(--panel);border:1px solid var(--line);
-    border-radius:7px;padding:13px 15px;max-height:78vh;overflow:auto}
-  .toc ol{font-size:12.5px;margin-left:16px}
-  .toc a{color:var(--ink);text-decoration:none} .toc a:hover{color:var(--accent);text-decoration:underline}
-  .txbody{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:6px 20px 24px}
-  .sect{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);
-    margin:22px 0 2px;padding-top:12px;border-top:1px solid var(--line)}
-  .turn{padding:7px 0 7px 11px;border-left:2px solid transparent;scroll-margin-top:70px}
-  .turn.ai{border-left-color:#e4e3df}
-  .turn.ex{border-left-color:var(--accent);background:#fcfcfb}
-  .turn .meta{font-size:11.5px;color:var(--mute);margin-bottom:2px}
-  .turn .ts{font-variant-numeric:tabular-nums}
-  .turn.hit{background:#fff6d9;border-left-color:#e0a92b}
-  .txnav{display:flex;gap:6px;margin-bottom:10px}
-  .txnav button{border:1px solid var(--line);background:#fff;border-radius:20px;padding:4px 12px;
-    font:inherit;font-size:12.5px;cursor:pointer;color:var(--mute)}
+    color:var(--accent);font-size:0.8125rem;transition:background var(--t)}
+  .score:hover{background:var(--accent-soft)}
+  .pts{display:flex;gap:10px;justify-content:center}
+  td.num b{display:block;font-size:0.9375rem;font-weight:650;margin-bottom:1px}
+  .sc{position:relative;display:inline-block;text-align:center;line-height:1.15}
+  .sc .who{display:block;font-size:0.625rem;color:var(--mute);letter-spacing:.05em}
+  .sc.has .score{border-bottom:1px dotted #b8a468}
+  .tmark{color:#9c6f16;font-size:0.5625rem;font-weight:700;margin-left:1px;vertical-align:super}
+  .tip{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+    margin-bottom:var(--s2);width:252px;background:#211d16;color:#f5f2ea;text-align:left;
+    padding:10px 12px;border-radius:var(--r);font-size:0.75rem;line-height:1.5;
+    z-index:var(--z-tip);box-shadow:0 8px 22px rgba(0,0,0,.22);font-style:normal}
+  .tip b{display:block;color:#e8c979;font-size:0.625rem;text-transform:uppercase;
+    letter-spacing:.07em;margin-bottom:3px}
+  .tip i{display:block;color:#a8a196;font-size:0.625rem;margin-top:5px;font-style:normal}
+  .sc:hover .tip{display:block}
+  #rTable{overflow:visible}
+  .consensus{display:block;font-size:0.625rem;letter-spacing:.05em;margin-top:2px;
+    text-transform:uppercase;font-weight:650}
+  .consensus-u{color:var(--ok)}.consensus-m{color:var(--accent)}.consensus-c{color:var(--sq)}
+  .compat{display:block;font-size:0.625rem;color:var(--mute)}
+
+  .cov{display:flex;gap:var(--s6);flex-wrap:wrap;font-size:0.8125rem}
+  .cov div{color:var(--mute)}
+  .cov div span{display:block;font-size:1.5rem;font-weight:650;color:var(--ink);
+    letter-spacing:-.02em;line-height:1.2}
+  ul,ol{margin:0 0 var(--s1) 18px;padding:0}
+  li{margin-bottom:5px;font-size:0.8125rem;max-width:80ch}
+
+  /* slide check: a list separated by rules, not a stack of boxes */
+  .claim{padding:var(--s5) 0;border-top:1px solid var(--line)}
+  .claim:first-of-type{border-top:0;padding-top:var(--s2)}
+  .claim .slideline{font-size:1.0625rem;font-weight:650;letter-spacing:-.008em;
+    margin-bottom:var(--s2);max-width:60ch;text-wrap:balance}
+  .verdict{display:inline-block;border-radius:4px;padding:3px 9px;font-size:0.6875rem;
+    font-weight:700;letter-spacing:.07em}
+  .verdict-s{background:var(--okbg);color:var(--ok)}
+  .verdict-w{background:var(--warnbg);color:var(--warn)}
+  .verdict-n{background:var(--sqbg);color:var(--sq)}
+  .footnote{background:var(--chip);border-radius:var(--r);padding:10px var(--s3);
+    font-size:0.8125rem;margin-top:var(--s3);max-width:82ch;line-height:1.55;color:var(--ink-2)}
+  .atoms li{font-size:0.8125rem}
+
+  .txlayout{display:grid;grid-template-columns:238px 1fr;gap:var(--s4);align-items:start}
+  .toc{position:sticky;top:var(--s3);background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--r);padding:var(--s3) var(--s4);max-height:78vh;overflow:auto}
+  .toc ol{font-size:0.75rem;margin-left:16px}
+  .toc li{font-size:0.75rem}
+  .toc a{color:var(--ink-2);text-decoration:none}
+  .toc a:hover{color:var(--accent);text-decoration:underline}
+  .txbody{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:var(--s1) var(--s5) var(--s5)}
+  .sect{font-size:0.6875rem;text-transform:uppercase;letter-spacing:.09em;color:var(--accent);
+    margin:var(--s5) 0 var(--s1);padding-top:var(--s3);border-top:1px solid var(--line);font-weight:650}
+
+  /* speaker is carried by weight, indent and ground -- not a coloured side stripe */
+  .turn{padding:var(--s2) var(--s3);scroll-margin-top:76px;border-radius:5px;max-width:86ch}
+  .turn.ai{color:var(--mute)}
+  .turn.ai .say{font-size:0.8125rem}
+  .turn.ex{background:#f7f7f5;color:var(--ink)}
+  .turn .meta{font-size:0.6875rem;color:var(--mute);margin-bottom:2px;letter-spacing:.02em}
+  .turn.ex .meta b{color:var(--ink)}
+  .turn .ts{color:var(--mute)}
+  .turn.hit{background:#fdf3d4;box-shadow:inset 0 0 0 1px #dcbf6a;
+    animation:landed 900ms cubic-bezier(.22,.61,.36,1)}
+  @keyframes landed{0%{background:#f7e5a6}100%{background:#fdf3d4}}
+
+  .txnav{display:flex;gap:6px;margin-bottom:var(--s3)}
+  .txnav button{border:1px solid var(--rule);background:#fff;border-radius:20px;padding:5px var(--s3);
+    font:inherit;font-size:0.75rem;cursor:pointer;color:var(--mute);
+    transition:background var(--t),color var(--t),border-color var(--t)}
+  .txnav button:hover{border-color:#b9b8b1;color:var(--ink-2)}
   .txnav button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
   .txpane{display:none} .txpane.on{display:block}
-  #backbar{display:none;position:sticky;top:0;z-index:5;padding:8px 0 10px;background:var(--bg)}
+
+  #backbar{display:none;position:sticky;top:0;z-index:var(--z-bar);padding:var(--s2) 0 10px;
+    background:linear-gradient(var(--bg) 68%,rgba(250,250,249,0))}
   #backbar.on{display:block}
-  #backbar button{background:var(--ink);color:#fff;border:0;border-radius:20px;padding:6px 15px;
-    font:inherit;font-size:13px;cursor:pointer}
-  #rTable{overflow:visible}
-  .pts{display:flex;gap:10px;justify-content:center}
-  .sc{position:relative;display:inline-block;text-align:center;line-height:1.15}
-  .sc .who{display:block;font-size:10px;color:var(--mute);letter-spacing:.04em}
-  .sc.has .score{border-bottom:1px dotted #b3a06a}
-  .tmark{color:#b07d1a;font-size:9px;font-weight:700;margin-left:1px}
-  .tip{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
-    margin-bottom:7px;width:250px;background:#241f16;color:#f6f2e8;text-align:left;
-    padding:9px 11px;border-radius:6px;font-size:12.5px;line-height:1.45;z-index:40;
-    box-shadow:0 6px 18px rgba(0,0,0,.24);font-style:normal}
-  .tip b{display:block;color:#ffd479;font-size:11px;text-transform:uppercase;
-    letter-spacing:.05em;margin-bottom:3px}
-  .tip i{display:block;color:#9d968a;font-size:10.5px;margin-top:5px;font-style:normal}
-  .sc:hover .tip{display:block}
-  tr.strong td:first-child{font-weight:660}
-  .tag{display:inline-block;background:var(--chip);border-radius:3px;padding:0 5px;font-size:10.5px;color:var(--mute);margin-right:4px}
-  .tag.weak{background:var(--warnbg);color:var(--warn)}
-  .consensus{display:block;font-size:10px;letter-spacing:.03em;margin-top:2px}
-  .consensus-u{color:#2e6b46}.consensus-m{color:var(--accent)}.consensus-c{color:var(--sq)}
-  .compat{display:block;font-size:10px;color:var(--mute)}
-  .claim .slideline{font-size:16px;font-weight:640;margin-bottom:6px}
-  .verdict{display:inline-block;border-radius:4px;padding:2px 9px;font-size:11px;font-weight:700;letter-spacing:.05em}
-  .verdict-s{background:#e6f2ea;color:#2e6b46}.verdict-w{background:var(--warnbg);color:var(--warn)}.verdict-n{background:var(--sqbg);color:var(--sq)}
-  .footnote{background:var(--chip);border-radius:6px;padding:9px 12px;font-size:12.5px;margin-top:8px}
-  .atoms li{font-size:13px}
+  #backbar button{background:var(--ink);color:#fff;border:0;border-radius:20px;
+    padding:7px var(--s4);font:inherit;font-size:0.8125rem;cursor:pointer;
+    box-shadow:0 2px 8px rgba(0,0,0,.14)}
+
+  @media (max-width:860px){
+    .layout,.txlayout{grid-template-columns:1fr}
+    .toc{position:static;max-height:none}
+    main{padding:var(--s4)}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition-duration:1ms!important;animation-duration:1ms!important}
+  }
+
+  /* --- density + surface fixes after visual review --- */
+
+  /* slide check shipped as a stack of separate boxes (each claim IS a card).
+     merge them into one continuous surface separated by hairlines. */
+  #slidecheck > .card:not(.claim){border:0;background:none;padding:0 var(--s1) var(--s4);
+    margin:0;max-width:78ch}
+  .card.claim{border-radius:0;border-top:0;margin:0;padding:var(--s5)}
+  .card:not(.claim) + .card.claim{border-top:1px solid var(--line);
+    border-radius:var(--r) var(--r) 0 0}
+  .card.claim:last-child{border-radius:0 0 var(--r) var(--r);margin-bottom:var(--s4)}
+  .card.claim + .card.claim{border-top:1px solid var(--line)}
+  .claim{padding:0;border-top:0}
+  .claim .slideline{margin-bottom:var(--s2)}
+  .claim .verdict{margin-bottom:var(--s3)}
+  .claim > p{margin-top:var(--s2)}
+  .footnote{position:relative;padding-right:var(--s5)}
+  .footnote .copy{display:block;width:max-content;margin-top:var(--s2)}
+
+  /* the expert cell was wrapping role and segment onto four lines and
+     tripling row height. fix the column widths instead of the copy. */
+  tr.frow td:nth-child(1){width:132px}
+  tr.frow td:nth-child(2){width:124px}
+  tr.frow td:nth-child(3){width:25%}
+  tr.frow td:nth-child(4){width:38%}
+  tr.frow td:last-child{width:56px;text-align:right}
+  tr.frow td:nth-child(1) .prov{line-height:1.35}
+
+  /* evidentiary tags are load-bearing but must not outshout the quote */
+  .tag{font-size:0.625rem;line-height:1.6;background:#f4f3f0;color:#70706a;
+    border-radius:2px;margin:2px 3px 0 0;padding:0 4px}
+  .tag.weak{background:var(--warnbg);color:var(--warn);font-weight:600}
 </style>
 </head>
 <body>

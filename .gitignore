@@ -5,3 +5,7 @@ extracted.json
 out/
 __pycache__/
 .DS_Store
+
+PRODUCT.md
+DESIGN.md
+.impeccable/
