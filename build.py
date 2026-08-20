@@ -172,7 +172,7 @@ def findings_rows():
 
     add("E1", "Switching dynamics",
         "Rates switching difficulty at 7.5 of 10, below ERP, with a $1.0-1.5M cost and at least a year.",
-        "it's not as difficult as an ERP system - I'd put ERP at 10 ... This would be around 7-8",
+        "Switching would be very difficult. On a scale of 1 to 10, it's not as difficult as an ERP system",
         "00:52:09")
     add("E2", "Switching dynamics",
         "Would move to ServiceNow if switching at all, because the switching cost is paid once either way.",
