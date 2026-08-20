@@ -145,7 +145,7 @@ def findings_rows():
         "00:27:32")
 
     add("E1", "Compliance as funding trigger",
-        "Site-level complaints only became a funded programme once GxP and SOX entered the business case.",
+        "Names GxP, ISO, SOC and SOC 2 as the regulatory load the platform had to carry.",
         "we're subject to heavy regulations such as SOC, ISO, GxP, and SOC 2",
         "00:04:43")
     add("E2", "Compliance as funding trigger",
@@ -171,7 +171,7 @@ def findings_rows():
         "00:10:00")
 
     add("E1", "Switching dynamics",
-        "Rates switching difficulty at 7.5 of 10, below ERP, with a $1.0-1.5M cost and at least a year.",
+        "Rates switching difficulty at 7-8 out of 10, below ERP at 10, with a $1.0-1.5M cost and at least a year.",
         "Switching would be very difficult. On a scale of 1 to 10, it's not as difficult as an ERP system",
         "00:52:09")
     add("E2", "Switching dynamics",
@@ -209,6 +209,17 @@ def basis_label(basis):
     if "paid" in b:
         return "paid"
     return "recalled"
+
+
+def spoken(entry, key):
+    """Render the value as the expert stated it. facts.json stores a midpoint
+    alongside a range for answers given as a band ("around 7-8"); the midpoint is
+    fine to compute WITH and wrong to print AS speech. On a surface whose whole
+    claim is traceability, a number nobody said is the worst kind of small error."""
+    r = entry.get("range")
+    if r and r[0] != r[1]:
+        return f"{r[0]:g}-{r[1]:g}"
+    return f"{entry[key]:g}"
 
 
 def basis_verb(basis):
@@ -404,7 +415,7 @@ def numeric_tables():
         rows.append((l["expert"], LL[l["field"]], str(l["value"]), note, l["quote"], l["ts"]))
     for sw in FACTS["switching"]:
         if sw.get("difficulty_1_10") is not None:
-            rows.append((sw["expert"], "Switching difficulty (1-10)", f'{sw["difficulty_1_10"]:g}',
+            rows.append((sw["expert"], "Switching difficulty (1-10)", spoken(sw, "difficulty_1_10"),
                          "", sw["quote"], sw["ts"]))
     out.append(("Loyalty and switching",
                 "One row is held out of every aggregate. At 00:44:58 the interviewer asked for a rating on a 1-7 scale and the expert answered 9 out of 10, and the interview moved on. A validator catches that every time; a human reading at volume will not.",
@@ -486,9 +497,14 @@ def slide_claims():
     industries_distinct = len(set(industries)) == len(industries)
     verdict_c = "SUPPORTED WITH CAVEAT" if strictly_decreasing else "NOT SUPPORTED BY THIS PANEL"
     caveat_c = " and each in a different industry, so size is confounded with industry" if industries_distinct else ""
-    reason_c = (f"Switching difficulty runs {diffs[0]:g}, {diffs[1]:g}, {diffs[2]:g} out of 10 in descending "
-                f"company-size order. One respondent per size tier{caveat_c}.")
-    atoms_c = [(e, sw[e]["ts"], f'{e}: switching difficulty {sw[e]["difficulty_1_10"]:g}/10') for e in ("E1", "E2", "E3")]
+    said = [spoken(sw[e], "difficulty_1_10") for e in ("E1", "E2", "E3")]
+    incumbents = [next(x for x in FACTS["experts"] if x["id"] == e)["primary_vendor"] for e in ("E1", "E2", "E3")]
+    vendor_confound = (" Each tier also runs a different incumbent platform, so the panel cannot separate "
+                       "company size from entrenchment in a particular product."
+                       if len(set(incumbents)) == len(incumbents) else "")
+    reason_c = (f"Switching difficulty runs {said[0]}, {said[1]}, {said[2]} out of 10 in descending "
+                f"company-size order. One respondent per size tier{caveat_c}.{vendor_confound}")
+    atoms_c = [(e, sw[e]["ts"], f'{e}: switching difficulty {spoken(sw[e], "difficulty_1_10")}/10') for e in ("E1", "E2", "E3")]
     claims.append(dict(
         claim="Switching difficulty falls as company size falls.",
         verdict=verdict_c, reason=reason_c, atoms=atoms_c,
