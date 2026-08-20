@@ -6,6 +6,9 @@ Today the client gets raw transcripts and has to mine them by hand. The goal her
 
 ## Value added, the key principles
 
+This takes four manual steps off the client's plate, pulling themes, pulling quotes, building tables, and comparing across interviews, and sets the output up to drop straight into their deck. And the differentiator holds even if a client built their own agents to do this. They would never have the volume of interview analysis Synquery has, and volume is what makes the themes get smarter.
+
+
 - **Everything is cited.** Every number and quote links to the exact moment it was said, so any claim survives a "says who" in a partner meeting.
 - **Everything is structured.** Ratings, prices, rankings, and quotes become data, ready to drop into tables and slides instead of prose to mine.
 - **Everything is comparable.** The same question across all the interviews lands in one view instead of three documents.
@@ -31,10 +34,6 @@ Today the client gets raw transcripts and has to mine them by hand. The goal her
 The middle of the client's workflow disappears. They go from mining transcripts to reviewing findings and building their deck.
 
 ![Before and after, who does each step](workflow-before-after.png)
-
-## Why this has lasting value a client can't build themselves
-
-The client brings their **question** and their **starting themes**. The product pulls **its own themes** on top, clearly marked as ours. And Synquery can get **smarter with themes** because of a **volume** of interview analysis that no single client ever has.
 
 ## Where AI does the work, and where it's plain software
 
