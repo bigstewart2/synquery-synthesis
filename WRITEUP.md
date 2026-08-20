@@ -60,3 +60,12 @@ The client brings their **question** and their **starting themes**. The product 
 **Weeks 3 and 4, sandbox.** A couple of design partners use it on real projects. A person signs off on everything before it reaches them, and every correction gets logged. Engineering walls each client's data off from the others before a second client's data ever enters the system.
 
 **Week 5 and beyond, live and learning.** Roll out wider. The logged corrections become a running test set, so extraction and theme-pulling measurably improve with every project. This is where the volume advantage from above starts paying, and engineering owns accuracy tooling at scale.
+
+**What those builds actually are, concretely.**
+
+- **Ingestion.** In the prototype I placed transcript files in a folder by hand. The real build is a connector to the interview platform. A call ends, the transcript lands in the right project on its own, gets a cleanup pass, speaker labels, timestamps, name redaction, runs through extraction, and appears in the review queue. Nobody moves files.
+- **Export.** Today you can copy a claim with its citation. The real build is one click out, a slide-ready table or chart with the footnote attached, and a spreadsheet of the underlying data points, so numbers move into the client's deck without anyone retyping them.
+- **Review workspace.** A screen where the reviewer walks every takeaway and verdict with approve, edit, and reject, and only signed-off content ever publishes. It also keeps the record of who approved what and when, which matters the moment a client questions a claim.
+- **Stable IDs.** Every extracted data point gets a permanent ID. When we re-run extraction with a better model, existing citations keep pointing at the right moment in the right call instead of breaking in a deck the client already shipped.
+- **Client separation.** Each client's projects live in their own walled space, enforced at the data layer rather than hidden behind a setting. This has to exist before the second client's data arrives, not after.
+- **The accuracy loop.** Every reviewer correction gets saved as a test case. Before any change to extraction or theme-pulling ships, it runs against that growing set, so the product provably gets better instead of just different.
