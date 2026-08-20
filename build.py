@@ -377,23 +377,51 @@ class Raw(str):
     pass
 
 
+def expert_vendor(e):
+    """The platform an expert's figures describe: their primary_vendor from
+    facts.json, plus whether that deployment was at a prior employer. Derived
+    entirely from FACTS["experts"] -- no expert-to-vendor mapping is hardcoded."""
+    exp = next(x for x in FACTS["experts"] if x["id"] == e)
+    name = VENDOR_DISPLAY.get(exp["primary_vendor"], exp["primary_vendor"])
+    prior = bool(exp.get("employer_discussed") and exp.get("current_employer_named_in_body")
+                 and exp["employer_discussed"] != exp["current_employer_named_in_body"])
+    return name, prior
+
+
+def vendor_cell(e):
+    """Vendor name as a table cell, carrying the prior-employer tag where it applies."""
+    name, prior = expert_vendor(e)
+    tag = ' <span class="tag">prior employer</span>' if prior else ''
+    return Raw(f'{esc(name)}{tag}')
+
+
 def numeric_tables():
-    """Every other typed number the guide asked for, as its own small table."""
+    """Every other typed number the guide asked for, as its own small table.
+    Row shape: (*cells, expert, quote, ts) -- the renderer peels the last three,
+    so a display column never doubles as the citation's expert id."""
     vmap = dict(VENDORS)
+    vorder = {k: i for i, (k, _) in enumerate(VENDORS)}
     out = []
 
-    # 1. price
+    # 1. price -- vendor is the first column and rows group by vendor,
+    # ServiceNow first; the order comes from VENDORS, never hand-sorted.
+    # The Vendor cell here is the row's SUBJECT vendor (the platform priced),
+    # not the expert's primary vendor, so it carries no prior-employer tag;
+    # E1's prior-employer signal stays in the basis tooltip as before.
     rows = []
-    for p in FACTS["pricing"]:
+    for p in sorted(FACTS["pricing"],
+                    key=lambda p: (vorder.get(p["vendor"], len(VENDORS)), p["expert"])):
         op = p.get("operator", "")
         basis_html = Raw(f'<span title="{esc(p["basis"])}">{esc(basis_label(p["basis"]))}</span>')
-        rows.append((p["expert"], vmap.get(p["vendor"], p["vendor"]),
-                     f'{op}${p["usd_per_user_month"]:g}', basis_html, p["quote"], p["ts"]))
+        rows.append((vmap.get(p["vendor"], p["vendor"]), p["expert"],
+                     f'{op}${p["usd_per_user_month"]:g}', basis_html,
+                     p["expert"], p["quote"], p["ts"]))
     out.append(("Price per user per month",
                 "Three different measurement bases sit in this column. A price someone pays and a price someone was quoted are not the same fact, so every row carries its basis and the product never lets them into one average.",
-                ["Expert", "Vendor", "$/user/mo", "Basis"], rows))
+                ["Vendor", "Expert", "$/user/mo", "Basis"], rows))
 
-    # 2. commercial + implementation
+    # 2. commercial + implementation -- measure-first row order kept; the new
+    # Vendor column names the platform each figure describes.
     LBL = {"renewal_uplift_pct": "Annual renewal uplift", "implementation_months": "Implementation",
            "over_budget_pct": "Over initial budget"}
     UNIT = {"renewal_uplift_pct": "%", "implementation_months": " months", "over_budget_pct": "%"}
@@ -401,26 +429,31 @@ def numeric_tables():
     for c in FACTS["commercial_terms"]:
         v = c["value"]
         val = f'{v[0]:g}-{v[1]:g}' if v[0] != v[1] else f'{v[0]:g}'
-        rows.append((c["expert"], LBL.get(c["field"], c["field"]), val + UNIT.get(c["field"], ""),
-                     c.get("cause", ""), c["quote"], c["ts"]))
+        rows.append((c["expert"], vendor_cell(c["expert"]), LBL.get(c["field"], c["field"]),
+                     val + UNIT.get(c["field"], ""), c.get("cause", ""),
+                     c["expert"], c["quote"], c["ts"]))
     out.append(("Commercial terms and implementation",
                 "Five separate measures order the same way by company size, and two of them run opposite to intuition: the largest buyer gets the smallest annual increase and the smallest overrun. Three points cannot establish a slope, so this is a hypothesis worth three more interviews, not a trend.",
-                ["Expert", "Measure", "Value", "Driver"], rows))
+                ["Expert", "Vendor", "Measure", "Value", "Driver"], rows))
 
-    # 3. loyalty + switching
+    # 3. loyalty + switching -- the Vendor column says who each score is about,
+    # and rows group by vendor (stable sort keeps continue/recommend/switch order).
     LL = {"continue_3yr": "Likely to continue (3yr)", "recommend": "Likely to recommend"}
     rows = []
     for l in FACTS["loyalty"]:
         note = (f'SCALE MISMATCH: asked on {l["scale_asked"]}, answered {l["value"]} on {l["scale_answered"]}'
                 if l.get("scale_mismatch") else (l.get("caveat", "") or f'asked on {l["scale_asked"]}'))
-        rows.append((l["expert"], LL[l["field"]], str(l["value"]), note, l["quote"], l["ts"]))
+        rows.append((vendor_cell(l["expert"]), l["expert"], LL[l["field"]], str(l["value"]), note,
+                     l["expert"], l["quote"], l["ts"]))
     for sw in FACTS["switching"]:
         if sw.get("difficulty_1_10") is not None:
-            rows.append((sw["expert"], "Switching difficulty (1-10)", spoken(sw, "difficulty_1_10"),
-                         "", sw["quote"], sw["ts"]))
+            rows.append((vendor_cell(sw["expert"]), sw["expert"], "Switching difficulty (1-10)",
+                         spoken(sw, "difficulty_1_10"), "", sw["expert"], sw["quote"], sw["ts"]))
+    rows.sort(key=lambda r: vorder.get(
+        next(x for x in FACTS["experts"] if x["id"] == r[-3])["primary_vendor"], len(VENDORS)))
     out.append(("Loyalty and switching",
                 "One row is held out of every aggregate. At 00:44:58 the interviewer asked for a rating on a 1-7 scale and the expert answered 9 out of 10, and the interview moved on. A validator catches that every time; a human reading at volume will not.",
-                ["Expert", "Measure", "Value", "Note"], rows))
+                ["Vendor", "Expert", "Measure", "Value", "Note"], rows))
     return out
 
 
@@ -430,9 +463,8 @@ def render_numeric():
         th = "".join(f"<th>{esc(h)}</th>" for h in heads) + "<th>What we heard</th>"
         trs = []
         for r in rows:
-            cells = r[:-2]
-            quote, ts = r[-2], r[-1]
-            e = r[0]
+            cells = r[:-3]
+            e, quote, ts = r[-3], r[-2], r[-1]
             warn = ' class="weak"' if "MISMATCH" in str(cells[-1]) else ''
             tds = "".join(f"<td>{c if isinstance(c, Raw) else esc(c)}</td>" for c in cells)
             trs.append(f'<tr{warn}>{tds}<td><a class="qlink" onclick="goto(\'{e}\',\'{ts}\')">'

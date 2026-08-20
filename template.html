@@ -282,7 +282,7 @@
     <button data-t="ratings">Ratings &amp; Numbers</button>
     <button data-t="transcripts">Transcripts</button>
     <button data-t="coverage">Coverage</button>
-    <button data-t="slidecheck">Slide Check</button>
+    <button data-t="slidecheck">Summary</button>
   </nav>
 </header>
 
@@ -379,7 +379,7 @@
 <section id="slidecheck">
   <details class="howto"><summary>How to read this</summary><div class="howto-body">Each claim carries a verdict, the reason behind it, the atoms it rests on, and a footnote written to be pasted straight under your slide. Click any atom to open the transcript. A claim marked <b>not supported</b> still tells you the nearest thing this panel can defend.</div></details>
   <div class="card">
-    <p class="mute">A slide claim is only useful if it survives a partner meeting. Each claim below carries the verdict this panel can actually support, the atoms behind it, and the footnote to paste under the slide.</p>
+    <p class="mute">A summary of what this panel can defend, claim by claim. A slide claim is only useful if it survives a partner meeting, so each claim below carries the verdict this panel can actually support, the atoms behind it, and the footnote to paste under the slide.</p>
   </div>
   {{SLIDECHECK}}
 </section>
@@ -404,7 +404,7 @@ function jump(id){
   el.scrollIntoView({behavior:'smooth',block:'start'}); return false;
 }
 let origin=null;
-const LABEL={findings:'Themes & Quotes',ratings:'Ratings & Numbers',coverage:'Coverage',slidecheck:'Slide Check'};
+const LABEL={findings:'Themes & Quotes',ratings:'Ratings & Numbers',coverage:'Coverage',slidecheck:'Summary'};
 function goBack(){ if(origin){show(origin);window.scrollTo(0,0);} }
 function goto(e,ts){
   const cur=document.querySelector('main > section.on');
