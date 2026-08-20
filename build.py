@@ -116,7 +116,7 @@ def findings_rows():
         "00:12:30", price_ref=("E3", "servicenow"))
     add("E1", "Cost & TCO",
         "Anchored ServiceNow at roughly $100 per user per month, with Zendesk at half that and Jira at a fifth.",
-        "If we set ServiceNow at about $100 per user/month as a baseline",
+        "If we set ServiceNow at about $100 per user/month as a baseline, I'd put Zendesk at roughly $50-55. Jira was very inexpensive but lacked capabilities\u2014around $20-21.",
         "00:20:59", price_ref=("E1", "servicenow"))
     add("E1", "Cost & TCO",
         "Annual renewal uplift at the largest buyer was the smallest in the panel, at 3-5%.",
@@ -132,11 +132,11 @@ def findings_rows():
         "We ruled out ServiceNow pretty quickly on cost; it felt like way more platform than we needed at our size.",
         "00:03:43")
     add("E2", "Vendor selection",
-        "Four platforms were evaluated; Jira was ruled out early on CMDB and compliance depth.",
-        "We looked at ServiceNow, Ivanti Neurons for ITSM, and Freshservice. We also briefly looked at Jira Service Management but ruled it out pretty early",
+        "Four alternatives were weighed against BMC; Jira was ruled out early on CMDB and compliance depth.",
+        "We looked at ServiceNow, Ivanti Neurons for ITSM, and Freshservice. We also briefly looked at Jira Service Management but ruled it out pretty early - it just didn't have the depth we needed for CMDB and compliance workflows.",
         "00:05:19")
     add("E1", "Vendor selection",
-        "Selection was validated by live demo followed by a targeted proof of concept, not by references alone.",
+        "Would require a live demo first, then a short POC on a named integration, with customer references secondary.",
         "First, we'd want a live demo of the capabilities. From there, we might ask for customer references",
         "00:16:36")
     add("E1", "Vendor selection",
@@ -145,9 +145,10 @@ def findings_rows():
         "00:27:32")
 
     add("E1", "Compliance as funding trigger",
-        "Names GxP, ISO, SOC and SOC 2 as the regulatory load the platform had to carry.",
-        "we're subject to heavy regulations such as SOC, ISO, GxP, and SOC 2",
-        "00:04:43")
+        "Counter-case. The funding argument led on scalability and growth, with GxP one clause inside it; "
+        "escalation to a global programme came from complaints recurring across sites, not from compliance.",
+        "The business case focused on scalability. We were growing\u2014from roughly a $20B company to about $30B\u2014and adding around 10-50K users.",
+        "00:21:44")
     add("E2", "Compliance as funding trigger",
         "Reframing an IT refresh as compliance risk moved the decision up to a VP and the Head of Quality.",
         "Once I built the business case around compliance risk, it got elevated",
@@ -158,11 +159,11 @@ def findings_rows():
         "00:03:07")
 
     add("E1", "Implementation",
-        "The overrun was internal validation and UAT labour, not licence cost or a platform defect.",
+        "The 20-30% overrun was internal validation and UAT labour, not a platform defect; unbundled modules like GRC were a separate surprise.",
         "I'd say that added another 20-30% in cost. It's soft cost",
         "00:39:50")
     add("E2", "Implementation",
-        "Went live in seven months, faster than expected, but came in 15% over budget on a custom SAP integration.",
+        "Went live in seven months, faster than expected, but 15% over budget, mostly the custom SAP integration plus unscoped Digital Workplace licences.",
         "It took about seven months from kickoff to go-live, which was faster than I expected",
         "00:13:20")
     add("E3", "Implementation",
@@ -172,22 +173,22 @@ def findings_rows():
 
     add("E1", "Switching dynamics",
         "Rates switching difficulty at 7-8 out of 10, below ERP at 10, with a $1.0-1.5M cost and at least a year.",
-        "Switching would be very difficult. On a scale of 1 to 10, it's not as difficult as an ERP system",
+        "This would be around 7-8. You'd still make a significant investment, around $1M-$1.5M, and invest a lot of time\u2014at least a year for implementation.",
         "00:52:09")
     add("E2", "Switching dynamics",
-        "Would move to ServiceNow if switching at all, because the switching cost is paid once either way.",
-        "Probably ServiceNow at this point, just because if we're going to absorb switching costs anyway, I'd want the platform with the broadest long-term ecosystem and AI roadmap",
+        "Would move to ServiceNow for its ecosystem and AI roadmap, budget permitting, since the switching cost is paid once either way.",
+        "Probably ServiceNow at this point, just because if we're going to absorb switching costs anyway, I'd want the platform with the broadest long-term ecosystem and AI roadmap, assuming budget allowed it",
         "00:22:27")
     add("E3", "Switching dynamics",
         "Would also move to ServiceNow, and gave the same reason in almost the same words.",
         "Probably ServiceNow, just because if we're big enough to justify switching costs, I'd want the platform with the most long-term headroom",
         "00:17:11")
     add("E2", "Switching dynamics",
-        "BMC's partner and integrator pool is smaller than ServiceNow's, and it showed up on specialized integrations.",
+        "BMC's integrator pool is smaller than ServiceNow's, the same ecosystem gap he names at 00:22:27 as why ServiceNow would be his first look if he switched.",
         "Yes, that's fair. When we needed a specialized integration, our BMC partner pool was smaller, and it sometimes took longer to find someone who'd done exactly what we needed. With ServiceNow, there's just a much bigger community and more integrators to choose from.",
         "00:11:58")
     add("E3", "Switching dynamics",
-        "Freshservice's automation builder gets clunky as approval-chain complexity grows.",
+        "Freshservice's automation builder gets clunky as approval chains grow, the exact limit he names at 00:16:44 as his switching trigger if the company tripled.",
         "Yeah, that's fair. We're starting to feel some of that as we've added more complex approval chains for the Project module. It's not a hard wall, but you notice the automation builder gets clunky once you're chaining a lot of conditional logic.",
         "00:08:50")
     return rows
@@ -366,8 +367,8 @@ def consensus_marker(pts):
     if all(v == vals[0] for v in vals):
         return (f"unanimous {n}/{n}", "consensus-u")
     if n == 3 and (vals[0] < vals[1] < vals[2] or vals[0] > vals[1] > vals[2]):
-        return ("splits monotonically by company size", "consensus-m")
-    return ("contested", "consensus-c")
+        return (f"orders by company size, {n} raters, 1 per tier", "consensus-m")
+    return (f"spread {max(vals) - min(vals):g}, n={n}", "consensus-c")
 
 
 # ---------------------------------------------------------------- numeric tables
@@ -466,7 +467,7 @@ def slide_claims():
     claims.append(dict(
         claim="ServiceNow is rated best-in-class on integration.",
         verdict=verdict_a, reason=reason_a, atoms=atoms_a,
-        footnote="Source: 3 of 3 expert interviews (IT leaders at a large enterprise, a regulated mid-market firm, and a lower mid-market firm). Each rated ServiceNow 9/10 on integration; integration was one of the two criteria rated by the full panel.",
+        footnote="Source: 3 of 3 expert interviews, one per size tier (large enterprise, regulated mid-market, lower mid-market). Each rated ServiceNow 9/10 on integration, the top score any of them gave any vendor on that criterion, and integration is one of only two criteria the full panel rated. The large-enterprise deployment was at a prior employer. Neither of the two who evaluated ServiceNow for their current platform bought it, and both still rated it top on integration, each naming cost as the reason they went elsewhere.",
     ))
 
     # (b) price ratio
@@ -486,7 +487,7 @@ def slide_claims():
     claims.append(dict(
         claim=f"ServiceNow costs roughly {ratio:.1f}x BMC per seat.",
         verdict=verdict_b, reason=reason_b, atoms=atoms_b,
-        footnote="Source: 1 expert interview (regulated mid-market). BMC at roughly $60/user/mo blended, a price actually paid; ServiceNow at roughly $160/user/mo, a quote received but not purchased. Quoted and paid prices are different measurement bases, so treat the multiple as indicative, not audited.",
+        footnote="Source: 1 expert interview (regulated mid-market). BMC at roughly $60/user/mo blended, a price actually paid; ServiceNow at roughly $160/user/mo, a quote received but not purchased. Quoted and paid prices are different measurement bases, so treat the multiple as indicative, not audited. A quote precedes discounting while the paid figure follows it, so the mismatch leans one way and 2.7x reads high rather than uncertain in both directions. The same expert separately called ServiceNow almost triple the BMC quote, quote against quote and still near 3x, which suggests the lean is small.",
     ))
 
     # (c) switching difficulty falls with company size
@@ -508,7 +509,7 @@ def slide_claims():
     claims.append(dict(
         claim="Switching difficulty falls as company size falls.",
         verdict=verdict_c, reason=reason_c, atoms=atoms_c,
-        footnote="Source: 3 expert interviews, one per company-size tier. Switching difficulty rated 7-8, 6, and 4 out of 10 in descending size order. One respondent per tier, and company size is confounded with industry in this panel.",
+        footnote="Source: 3 expert interviews, one per company-size tier. Switching difficulty rated 7-8, 6 and 4 out of 10 in descending size order. One respondent per tier, and each tier also runs a different incumbent platform (ServiceNow, BMC Helix, Freshservice), so size cannot be separated from platform. Two of the three are life sciences firms. The largest respondent was asked a yes/no question that suggested difficulty was high, where the other two were asked open-ended. All three attribute difficulty to customisation depth and validation effort rather than to headcount.",
     ))
 
     # (d) 40% share claim
@@ -516,9 +517,9 @@ def slide_claims():
     claims.append(dict(
         claim="ServiceNow holds 40% share of the mid-market.",
         verdict="NOT SUPPORTED BY THIS PANEL",
-        reason="No key in the facts file contains any share data. Three interviews describe three individual buying decisions, not a sized market.",
+        reason="Nobody was asked about market share, and nothing in the panel measures it. Three interviews describe three individual buying decisions, not a sized market.",
         atoms=[],
-        footnote="No defensible footnote exists for a share claim from this panel. Nearest supportable sentence: \"All three respondents considered ServiceNow; both experts who chose other platforms said they would move to ServiceNow if they switched again.\" Closing the gap needs a sized survey or third-party share data.",
+        footnote="No defensible footnote exists for a share claim from this panel. Nearest supportable sentence: \"All three respondents evaluated ServiceNow and one had deployed it at a prior employer; the two who chose other platforms each named ServiceNow as the alternative they would probably evaluate first if they ever switched, one conditioning that on budget and one on being large enough to justify the switching costs (00:22:27, 00:17:11).\" Closing the gap needs a sized survey or third-party share data.",
     ))
 
     # (e) Ivanti underperforms on integration
@@ -568,6 +569,19 @@ def render_slidecheck():
             f'<button class="copy" data-text="{ft_attr}">copy footnote</button></div></div>'
         )
     return "\n".join(cards)
+
+
+
+GAP_OVERRIDES = {
+    "No expert who actually migrated away from ServiceNow to a competitor and stayed there.":
+        "No expert who migrated from ServiceNow to a rival commercial platform and stayed. The closest case is "
+        "E1&rsquo;s current employer, which replaced ServiceNow with a custom in-house tool before he joined and "
+        "is now weighing buying the asset-management module back.",
+}
+
+
+def gap_text(g):
+    return GAP_OVERRIDES.get(g, g)
 
 
 # ---------------------------------------------------------------- render
@@ -671,7 +685,7 @@ def render():
 
     # ---- coverage
     cov = FACTS["coverage"]
-    gaps = "".join(f"<li>{esc(g)}</li>" for g in cov["known_gaps"])
+    gaps = "".join(f"<li>{gap_text(esc(g))}</li>" for g in cov["known_gaps"])
     miss = "".join(f"<li>{esc(m)}</li>" for m in cov["segments_missing"])
 
     tmpl = pathlib.Path(__file__).with_name("template.html").read_text()
