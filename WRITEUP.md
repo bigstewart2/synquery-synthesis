@@ -1,5 +1,9 @@
 # Synquery Take-Home Writeup
 
+## The goal
+
+Today the client gets raw transcripts and has to mine them by hand. The goal here is that after Synquery runs a panel, the client opens one page that already answers their question, with every claim sourced, and pulls what they need straight into their deck. Three hour-long calls become slide-ready data instead of homework.
+
 ## The idea
 
 - Your interviewer already asks typed questions. Rank your top five criteria. Rate these vendors 1 to 10. Give me a per-user price. That means every transcript is secretly a filled-out survey, and today the client is the one turning it back into data by hand.
