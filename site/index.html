@@ -11,57 +11,59 @@
     --bg:#fafaf9; --panel:#fff; --ink:#191917; --ink-2:#3d3d38;
     --mute:#66665f; --line:#e6e5e1; --rule:#d3d2cc; --chip:#f2f1ed;
     /* meaning-bearing only */
-    --accent:#274a78; --accent-soft:#eef2f8;
+    --accent:#0066cc; --accent-soft:#eaf2fc; --accent-strong:#0071e3;
     --sq:#9c3f27; --sqbg:#fbeee9;
     --warn:#7d5216; --warnbg:#fdf6e8;
     --ok:#2a6440; --okbg:#e8f1eb;
     /* rhythm */
-    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:36px;
-    --r:6px;
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+    --r:12px; --r-sm:6px;
     /* semantic depth */
     --z-sticky:10; --z-bar:20; --z-tip:60;
-    --t:140ms cubic-bezier(.22,.61,.36,1);
+    --t:240ms cubic-bezier(.4,0,.6,1);
   }
   *{box-sizing:border-box}
   html{font-size:16px}
   body{margin:0;background:var(--bg);color:var(--ink);
-    font:0.9375rem/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+    font:0.9375rem/1.5 "SF Pro Text","SF Pro AR",-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
   a{color:var(--accent)}
-  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  :focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px;border-radius:var(--r-sm)}
 
-  .ghostbar{background:var(--ink);color:#f4f3ef;padding:var(--s2) var(--s5);font-size:0.75rem;
+  .ghostbar{background:var(--ink);color:#f4f3ef;padding:var(--s3) var(--s7);font-size:0.75rem;
     letter-spacing:.005em}
   .ghostbar b{color:#e8c979;font-weight:600}
 
-  header{background:var(--panel);border-bottom:1px solid var(--line);padding:var(--s4) var(--s5) 0}
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:var(--s5) var(--s7) 0}
+  header>*{max-width:1728px;margin-inline:auto}
   .brand{font-size:0.6875rem;color:var(--mute);letter-spacing:.09em;text-transform:uppercase;font-weight:600}
-  .proj{font-size:1.25rem;font-weight:650;letter-spacing:-.011em;margin:var(--s1) 0 var(--s3)}
+  .proj{font-size:1.75rem;font-weight:600;letter-spacing:-.021em;line-height:1.2;
+    margin:var(--s2) 0 var(--s4)}
   nav{display:flex;gap:0;flex-wrap:wrap}
-  nav button{background:none;border:0;border-bottom:2px solid transparent;padding:var(--s2) var(--s3) 10px;
-    font:inherit;font-size:0.875rem;color:var(--mute);cursor:pointer;transition:color var(--t)}
+  nav button{background:none;border:0;border-bottom:2px solid transparent;padding:var(--s3) var(--s4);
+    font:inherit;font-size:0.9375rem;color:var(--mute);cursor:pointer;transition:color var(--t)}
   nav button:hover{color:var(--ink-2)}
   nav button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
   nav button.parked{opacity:.45;font-style:italic}
 
-  main{padding:var(--s5);max-width:1240px}
+  main{padding:var(--s6) var(--s7) var(--s7);max-width:1728px;margin-inline:auto;width:100%}
   section{display:none} section.on{display:block}
 
   /* one surface per idea. nested boxes are flattened below. */
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-    padding:var(--s4) var(--s5) var(--s5);margin-bottom:var(--s4)}
+    padding:var(--s5) var(--s6) var(--s6);margin-bottom:var(--s5)}
   .card .card{border:0;background:none;padding:0;margin:0}
 
-  h2{font-size:1.0625rem;font-weight:650;letter-spacing:-.008em;margin:0 0 var(--s3)}
+  h2{font-size:1.3125rem;font-weight:600;letter-spacing:-.014em;line-height:1.2;margin:0 0 var(--s4)}
   h3{font-size:0.6875rem;text-transform:uppercase;letter-spacing:.09em;color:var(--mute);
     margin:0 0 var(--s2);font-weight:650}
   p{margin:0 0 var(--s2);max-width:74ch;text-wrap:pretty}
   .mute{color:var(--mute)}
 
   table{border-collapse:collapse;width:100%;font-size:0.8125rem}
-  th,td{border-bottom:1px solid var(--line);padding:var(--s2) 10px;text-align:left;vertical-align:top}
+  th,td{border-bottom:1px solid var(--line);padding:var(--s4) var(--s3);text-align:left;vertical-align:top}
   th{font-size:0.6875rem;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);
-    font-weight:650;border-bottom:1px solid var(--rule);padding-bottom:var(--s1)}
+    font-weight:600;border-bottom:1px solid var(--rule);padding:0 var(--s3) var(--s2)}
   tbody tr:last-child td,table tr:last-child td{border-bottom:0}
   td.num{text-align:center}
   tr.strong td:first-child{font-weight:650}
@@ -69,10 +71,10 @@
   tr.frow:hover td{background:#fcfcfb}
   .scroll{overflow-x:auto}
 
-  .layout{display:grid;grid-template-columns:214px 1fr;gap:var(--s4);align-items:start}
+  .layout{display:grid;grid-template-columns:232px 1fr;gap:var(--s5);align-items:start}
   .rail button{display:block;width:100%;text-align:left;background:none;border:0;
     padding:5px var(--s2);font:inherit;font-size:0.8125rem;color:var(--ink-2);
-    border-radius:4px;cursor:pointer;transition:background var(--t),color var(--t)}
+    border-radius:var(--r-sm);cursor:pointer;transition:background var(--t),color var(--t)}
   .rail button:hover{background:var(--chip);color:var(--ink)}
   .rail button.on{background:var(--accent-soft);color:var(--ink);font-weight:600}
   .rail button.sq{color:var(--sq)}
@@ -82,16 +84,16 @@
     margin:var(--s4) 0 var(--s1);padding:0 var(--s2);font-weight:650}
   .railgrp.sq{color:var(--sq)}
 
-  .thchip{background:var(--chip);border-radius:3px;padding:1px 6px;font-size:0.75rem;white-space:nowrap}
+  .thchip{background:var(--chip);border-radius:4px;padding:1px 6px;font-size:0.75rem;white-space:nowrap}
   .thchip.sq{background:var(--sqbg);color:var(--sq)}
-  .tag{display:inline-block;background:var(--chip);border-radius:3px;padding:0 5px;
+  .tag{display:inline-block;background:var(--chip);border-radius:4px;padding:0 5px;
     font-size:0.6875rem;color:var(--mute);margin-right:var(--s1)}
   .tag.weak{background:var(--warnbg);color:var(--warn)}
 
   /* the quote is the hero: it outranks every label around it */
   .quote{font-style:italic;color:var(--ink);font-size:0.875rem;line-height:1.5}
   .prov{font-size:0.6875rem;color:var(--mute);display:block;margin-top:3px;letter-spacing:.005em}
-  .qlink{cursor:pointer;display:block;border-radius:4px;transition:background var(--t)}
+  .qlink{cursor:pointer;display:block;border-radius:var(--r-sm);transition:background var(--t)}
   .qlink:hover{background:var(--accent-soft)}
   .qlink:hover .quote{color:var(--accent)}
   .jump{color:var(--accent);font-weight:650;opacity:0;transition:opacity var(--t)}
@@ -100,9 +102,9 @@
 
   .filters{display:flex;gap:var(--s2);margin-bottom:var(--s3);flex-wrap:wrap;align-items:center}
   select,input{font:inherit;font-size:0.8125rem;padding:5px var(--s2);border:1px solid var(--rule);
-    border-radius:5px;background:#fff;color:var(--ink);transition:border-color var(--t)}
+    border-radius:var(--r-sm);background:#fff;color:var(--ink);transition:border-color var(--t)}
   select:hover,input:hover{border-color:#b9b8b1}
-  .copy{border:1px solid var(--rule);background:#fff;border-radius:5px;padding:3px 9px;
+  .copy{border:1px solid var(--rule);background:#fff;border-radius:var(--r-sm);padding:3px 9px;
     font-size:0.6875rem;cursor:pointer;color:var(--mute);white-space:nowrap;
     transition:background var(--t),color var(--t),border-color var(--t)}
   .copy:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -117,7 +119,7 @@
     width:7px;height:7px;border-radius:50%;background:var(--warn)}
   .flag b{color:#5f3d0c}
 
-  .score{display:inline-block;min-width:22px;padding:1px 4px;border-radius:3px;cursor:pointer;
+  .score{display:inline-block;min-width:22px;padding:1px 4px;border-radius:4px;cursor:pointer;
     color:var(--accent);font-size:0.8125rem;transition:background var(--t)}
   .score:hover{background:var(--accent-soft)}
   .pts{display:flex;gap:10px;justify-content:center}
@@ -134,7 +136,11 @@
     letter-spacing:.07em;margin-bottom:3px}
   .tip i{display:block;color:#a8a196;font-size:0.625rem;margin-top:5px;font-style:normal}
   .sc:hover .tip{display:block}
-  #rTable{overflow:visible}
+  #rTable{overflow:visible;table-layout:fixed}
+  #rTable th:first-child,#rTable td:first-child{width:216px}
+  #rTable th:not(:first-child),#rTable td:not(:first-child){width:auto;text-align:center}
+  #rTable th:not(:first-child){text-align:center}
+  tr.frow td:nth-child(1){width:176px}
   .consensus{display:block;font-size:0.625rem;letter-spacing:.05em;margin-top:2px;
     text-transform:uppercase;font-weight:650}
   .consensus-u{color:var(--ok)}.consensus-m{color:var(--accent)}.consensus-c{color:var(--sq)}
@@ -152,7 +158,7 @@
   .claim:first-of-type{border-top:0;padding-top:var(--s2)}
   .claim .slideline{font-size:1.0625rem;font-weight:650;letter-spacing:-.008em;
     margin-bottom:var(--s2);max-width:60ch;text-wrap:balance}
-  .verdict{display:inline-block;border-radius:4px;padding:3px 9px;font-size:0.6875rem;
+  .verdict{display:inline-block;border-radius:var(--r-sm);padding:3px 9px;font-size:0.6875rem;
     font-weight:700;letter-spacing:.07em}
   .verdict-s{background:var(--okbg);color:var(--ok)}
   .verdict-w{background:var(--warnbg);color:var(--warn)}
@@ -161,7 +167,7 @@
     font-size:0.8125rem;margin-top:var(--s3);max-width:82ch;line-height:1.55;color:var(--ink-2)}
   .atoms li{font-size:0.8125rem}
 
-  .txlayout{display:grid;grid-template-columns:238px 1fr;gap:var(--s4);align-items:start}
+  .txlayout{display:grid;grid-template-columns:264px 1fr;gap:var(--s5);align-items:start}
   .toc{position:sticky;top:var(--s3);background:var(--panel);border:1px solid var(--line);
     border-radius:var(--r);padding:var(--s3) var(--s4);max-height:78vh;overflow:auto}
   .toc ol{font-size:0.75rem;margin-left:16px}
@@ -174,7 +180,7 @@
     margin:var(--s5) 0 var(--s1);padding-top:var(--s3);border-top:1px solid var(--line);font-weight:650}
 
   /* speaker is carried by weight, indent and ground -- not a coloured side stripe */
-  .turn{padding:var(--s2) var(--s3);scroll-margin-top:76px;border-radius:5px;max-width:86ch}
+  .turn{padding:var(--s2) var(--s3);scroll-margin-top:76px;border-radius:var(--r-sm);max-width:86ch}
   .turn.ai{color:var(--mute)}
   .turn.ai .say{font-size:0.8125rem}
   .turn.ex{background:#f7f7f5;color:var(--ink)}
@@ -221,7 +227,8 @@
   .card.claim:last-child{border-radius:0 0 var(--r) var(--r);margin-bottom:var(--s4)}
   .card.claim + .card.claim{border-top:1px solid var(--line)}
   .claim{padding:0;border-top:0}
-  .claim .slideline{margin-bottom:var(--s2)}
+  .claim .slideline{margin-bottom:var(--s3);font-size:1.3125rem;font-weight:600;
+    letter-spacing:-.014em;line-height:1.2}
   .claim .verdict{margin-bottom:var(--s3)}
   .claim > p{margin-top:var(--s2)}
   .footnote{position:relative;padding-right:var(--s5)}
@@ -229,16 +236,16 @@
 
   /* the expert cell was wrapping role and segment onto four lines and
      tripling row height. fix the column widths instead of the copy. */
-  tr.frow td:nth-child(1){width:132px}
-  tr.frow td:nth-child(2){width:124px}
-  tr.frow td:nth-child(3){width:25%}
-  tr.frow td:nth-child(4){width:38%}
+  tr.frow td:nth-child(1){width:164px}
+  tr.frow td:nth-child(2){width:152px}
+  tr.frow td:nth-child(3){width:27%}
+  tr.frow td:nth-child(4){width:40%}
   tr.frow td:last-child{width:56px;text-align:right}
   tr.frow td:nth-child(1) .prov{line-height:1.35}
 
   /* evidentiary tags are load-bearing but must not outshout the quote */
   .tag{font-size:0.625rem;line-height:1.6;background:#f4f3f0;color:#70706a;
-    border-radius:2px;margin:2px 3px 0 0;padding:0 4px}
+    border-radius:4px;margin:2px 3px 0 0;padding:0 4px}
   .tag.weak{background:var(--warnbg);color:var(--warn);font-weight:600}
 </style>
 </head>
