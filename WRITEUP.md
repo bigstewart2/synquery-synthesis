@@ -4,6 +4,12 @@
 
 Today the client gets raw transcripts and has to mine them by hand. The goal here is that after Synquery runs a panel, the client opens one page that already answers their question, with every claim sourced, and pulls what they need straight into their deck. Three hour-long calls become slide-ready data instead of homework.
 
+## Value added, the key principles
+
+- **Everything is cited.** Every number and quote links to the exact moment it was said, so any claim survives a "says who" in a partner meeting.
+- **Everything is structured.** Ratings, prices, rankings, and quotes become data, ready to drop into tables and slides instead of prose to mine.
+- **Everything is comparable.** The same question across all the interviews lands in one view instead of three documents.
+
 ## Assumptions
 
 - The interview guide already comes from the client's question. That's how Synquery works today.
@@ -19,7 +25,6 @@ Today the client gets raw transcripts and has to mine them by hand. The goal her
 - **Transcripts.** The full calls, cleaned and redacted. Every number and quote in the product clicks through to the exact moment here, which is what makes the rest of it defensible.
 - **Coverage.** What this panel can and can't support, stated plainly. It keeps a claim the data can't back off the client's slide, and it points at which interviews to run next.
 - **Summary.** Five claims a client might actually put on a slide, each with a verdict, supported, supported with caveat, or not supported by this panel, and a footnote written to paste under the slide.
-- **Running through all of it, three principles.** Everything is cited. Everything is structured. Everything is comparable.
 
 ## The workflow it takes over
 
