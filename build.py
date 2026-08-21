@@ -429,12 +429,12 @@ def numeric_tables():
     for c in FACTS["commercial_terms"]:
         v = c["value"]
         val = f'{v[0]:g}-{v[1]:g}' if v[0] != v[1] else f'{v[0]:g}'
-        rows.append((c["expert"], vendor_cell(c["expert"]), LBL.get(c["field"], c["field"]),
+        rows.append((vendor_cell(c["expert"]), c["expert"], LBL.get(c["field"], c["field"]),
                      val + UNIT.get(c["field"], ""), c.get("cause", ""),
                      c["expert"], c["quote"], c["ts"]))
     out.append(("Commercial terms and implementation",
                 "Five separate measures order the same way by company size, and two of them run opposite to intuition: the largest buyer gets the smallest annual increase and the smallest overrun. Three points cannot establish a slope, so this is a hypothesis worth three more interviews, not a trend.",
-                ["Expert", "Vendor", "Measure", "Value", "Driver"], rows))
+                ["Vendor", "Expert", "Measure", "Value", "Driver"], rows))
 
     # 3. loyalty + switching -- the Vendor column says who each score is about,
     # and rows group by vendor (stable sort keeps continue/recommend/switch order).
