@@ -34,23 +34,35 @@
     letter-spacing:.005em}
   .ghostbar b{color:#e8c979;font-weight:600}
 
-  header{background:var(--panel);border-bottom:1px solid var(--line);padding:var(--s5) var(--s7) 0}
-  header>*{max-width:1728px;margin-inline:auto}
-  .brand{font-size:12px;color:var(--mute);letter-spacing:.09em;text-transform:uppercase;font-weight:600}
-  .proj{font-size:32px;font-weight:600;letter-spacing:-.021em;line-height:1.2;
-    margin:var(--s2) 0 var(--s4)}
-  nav{display:flex;gap:0;flex-wrap:wrap}
-  nav button{background:none;border:0;border-bottom:2px solid transparent;padding:var(--s3) var(--s4);
-    font:inherit;font-size:15px;color:var(--mute);cursor:pointer;transition:color var(--t)}
-  nav button:hover{color:var(--ink-2)}
-  nav button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
-  nav button.parked{opacity:.45;font-style:italic}
-  nav button.raw{margin-left:auto;color:var(--mute);position:relative}
-  nav button.raw::before{content:"";position:absolute;left:calc(var(--s4) * -0.5);
-    top:50%;transform:translateY(-50%);width:1px;height:16px;background:var(--line)}
-  nav button.raw.on{color:var(--ink-2);border-bottom-color:var(--rule)}
+  /* page shell. the rail is the argument in order, main is the answer. */
+  .shell{display:grid;grid-template-columns:236px minmax(0,1fr);
+    max-width:1728px;margin-inline:auto;width:100%;align-items:stretch}
 
-  main{padding:var(--s6) var(--s7) var(--s7);max-width:1728px;margin-inline:auto;width:100%}
+  header{border-right:1px solid var(--line);background:var(--bg)}
+  .railinner{position:sticky;top:0;max-height:100vh;overflow-y:auto;
+    padding:var(--s6) var(--s4) var(--s6) var(--s5)}
+  .brand{font-size:12px;color:var(--mute);letter-spacing:.09em;text-transform:uppercase;font-weight:600}
+  .proj{font-size:23px;font-weight:600;letter-spacing:-.016em;line-height:1.25;
+    margin:var(--s2) 0 var(--s5);padding-bottom:var(--s5);border-bottom:1px solid var(--line)}
+
+  nav{display:flex;flex-direction:column;gap:2px}
+  nav button{background:none;border:0;border-left:2px solid transparent;
+    padding:9px var(--s3);text-align:left;width:100%;border-radius:0 var(--r-sm) var(--r-sm) 0;
+    font:inherit;font-size:15px;color:var(--mute);cursor:pointer;
+    transition:color var(--t),background-color var(--t),border-color var(--t)}
+  nav button:hover{color:var(--ink-2);background:var(--chip)}
+  nav button.on{color:var(--ink);border-left-color:var(--accent);
+    background:var(--accent-soft);font-weight:600}
+  nav button.parked{opacity:.45;font-style:italic}
+  /* transcripts is the archive, not a step in the argument */
+  nav button.raw{margin-top:var(--s5);padding-top:var(--s4);position:relative;font-size:14px}
+  nav button.raw::before{content:"";position:absolute;left:var(--s3);right:var(--s3);
+    top:0;height:1px;background:var(--line)}
+  nav button.raw.on{color:var(--ink-2);border-left-color:var(--rule);background:var(--chip)}
+  .railnote{margin-top:var(--s2);padding:0 var(--s3);font-size:12px;line-height:1.45;
+    color:var(--mute)}
+
+  main{padding:var(--s6) var(--s5) var(--s7) var(--s5);width:100%;min-width:0}
   section{display:none} section.on{display:block}
 
   /* one surface per idea. nested boxes are flattened below. */
@@ -75,7 +87,7 @@
   tr.frow:hover td{background:#fcfcfb}
   .scroll{overflow-x:auto}
 
-  .layout{display:grid;grid-template-columns:232px 1fr;gap:var(--s5);align-items:start}
+  .layout{display:grid;grid-template-columns:196px minmax(0,1fr);gap:var(--s4);align-items:start}
   .rail button{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s2);
     width:100%;text-align:left;background:none;border:0;
     padding:6px var(--s2);font:inherit;font-size:15px;color:var(--ink-2);
@@ -211,6 +223,21 @@
     padding:7px var(--s4);font:inherit;font-size:15px;cursor:pointer;
     box-shadow:0 2px 8px rgba(0,0,0,.14)}
 
+  @media (max-width:1040px){
+    .shell{grid-template-columns:1fr}
+    header{border-right:0;border-bottom:1px solid var(--line)}
+    .railinner{position:static;max-height:none;overflow:visible;padding:var(--s5) var(--s4)}
+    .proj{font-size:27px;border-bottom:0;padding-bottom:0;margin-bottom:var(--s4)}
+    nav{flex-direction:row;flex-wrap:wrap;gap:0}
+    nav button{width:auto;border-left:0;border-bottom:2px solid transparent;
+      border-radius:var(--r-sm) var(--r-sm) 0 0;padding:var(--s3) var(--s4)}
+    nav button.on{border-left:0;border-bottom-color:var(--accent)}
+    nav button.raw{margin-top:0;margin-left:auto;padding-top:var(--s3)}
+    nav button.raw::before{display:none}
+    nav button.raw.on{border-left:0;border-bottom-color:var(--rule)}
+    .railnote{display:none}
+    main{padding:var(--s5) var(--s4)}
+  }
   @media (max-width:860px){
     .layout,.txlayout{grid-template-columns:1fr}
     .toc{position:static;max-height:none}
@@ -278,7 +305,8 @@
 
 <div class="ghostbar">Prototype &mdash; built from 3 expert interviews. Every number and quote links to the exact moment it was said.</div>
 
-<header>
+<div class="shell">
+<header><div class="railinner">
   <div class="brand">Synquery &middot; Workstream</div>
   <div class="proj">Enterprise ITSM platform buying decisions</div>
   <nav>
@@ -288,7 +316,8 @@
     <button data-t="ratings">Ratings &amp; Numbers</button>
     <button class="raw" data-t="transcripts">Transcripts</button>
   </nav>
-</header>
+  <div class="railnote">The answer sits at the top. Everything below it is how the panel got there.</div>
+</div></header>
 
 <main>
 
@@ -910,6 +939,7 @@
 </section>
 
 </main>
+</div>
 
 <script>
 function show(t){
