@@ -45,6 +45,10 @@
   nav button:hover{color:var(--ink-2)}
   nav button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
   nav button.parked{opacity:.45;font-style:italic}
+  nav button.raw{margin-left:auto;color:var(--mute);position:relative}
+  nav button.raw::before{content:"";position:absolute;left:calc(var(--s4) * -0.5);
+    top:50%;transform:translateY(-50%);width:1px;height:16px;background:var(--line)}
+  nav button.raw.on{color:var(--ink-2);border-bottom-color:var(--rule)}
 
   main{padding:var(--s6) var(--s7) var(--s7);max-width:1728px;margin-inline:auto;width:100%}
   section{display:none} section.on{display:block}
@@ -278,17 +282,17 @@
   <div class="brand">Synquery &middot; Workstream</div>
   <div class="proj">Enterprise ITSM platform buying decisions</div>
   <nav>
-    <button class="on" data-t="findings">Themes &amp; Quotes</button>
-    <button data-t="ratings">Ratings &amp; Numbers</button>
-    <button data-t="transcripts">Transcripts</button>
+    <button class="on" data-t="slidecheck">Summary</button>
     <button data-t="coverage">Coverage</button>
-    <button data-t="slidecheck">Summary</button>
+    <button data-t="findings">Themes &amp; Quotes</button>
+    <button data-t="ratings">Ratings &amp; Numbers</button>
+    <button class="raw" data-t="transcripts">Transcripts</button>
   </nav>
 </header>
 
 <main>
 
-<section id="findings" class="on">
+<section id="findings">
   <details class="howto"><summary>How to read this</summary><div class="howto-body">Filter by <b>theme</b> on the left, or by expert and free text above. Every quote is a link — click one to open the exact moment it was said in the transcript, then use the back button to return. <b>Copy</b> takes the claim and its citation together, so it arrives in your deck already sourced. The small grey labels under each quote are its evidentiary state: whether the expert volunteered it or only agreed when prompted, and whether a price was paid or merely quoted.</div></details>
  <div class="layout">
   <div class="card rail">
@@ -376,7 +380,7 @@
   </div>
 </section>
 
-<section id="slidecheck">
+<section id="slidecheck" class="on">
   <details class="howto"><summary>How to read this</summary><div class="howto-body">Each claim carries a verdict, the reason behind it, the atoms it rests on, and a footnote written to be pasted straight under your slide. Click any atom to open the transcript. A claim marked <b>not supported</b> still tells you the nearest thing this panel can defend.</div></details>
   <div class="card">
     <p class="mute">A summary of what this panel can defend, claim by claim. A slide claim is only useful if it survives a partner meeting, so each claim below carries the verdict this panel can actually support, the atoms behind it, and the footnote to paste under the slide.</p>

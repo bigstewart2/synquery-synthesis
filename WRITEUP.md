@@ -23,11 +23,13 @@ This takes four manual steps off the client's plate, pulling themes, pulling quo
 
 ## What the prototype includes, by tab
 
+Ordered the way a partner reads a deck. The answer first, then how you know it holds, then the evidence underneath it. Transcripts sit apart as the raw material rather than a step in the argument.
+
+- **Summary.** Five claims a client might actually put on a slide, each with a verdict, supported, supported with caveat, or not supported by this panel, and a footnote written to paste under the slide.
+- **Coverage.** What this panel can and can't support, stated plainly. It keeps a claim the data can't back off the client's slide, and it points at which interviews to run next.
 - **Themes and Quotes.** Every finding is a row, who said it, the theme, the takeaway, the verbatim quote. Filter by theme or expert and you have the raw material for a slide in seconds, with the client's themes kept visually separate from the ones we added.
 - **Ratings and Numbers.** All the typed answers laid out as tables, the vendor ratings matrix, prices, commercial terms, loyalty and switching. This is where three separate conversations become one comparison.
 - **Transcripts.** The full calls, cleaned and redacted. Every number and quote in the product clicks through to the exact moment here, which is what makes the rest of it defensible.
-- **Coverage.** What this panel can and can't support, stated plainly. It keeps a claim the data can't back off the client's slide, and it points at which interviews to run next.
-- **Summary.** Five claims a client might actually put on a slide, each with a verdict, supported, supported with caveat, or not supported by this panel, and a footnote written to paste under the slide.
 
 ## The workflow it takes over
 
