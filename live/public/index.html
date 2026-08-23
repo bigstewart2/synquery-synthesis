@@ -334,6 +334,10 @@ drop.addEventListener("drop", e => pickFile(e.dataTransfer.files[0]));
 function pickFile(f){
   if (!f) return;
   state.file = f;
+  // Derive the expert label from the filename. The default used to be a silent E1,
+  // which mislabelled every downstream atom and every drafted theme.
+  const m = f.name.match(/expert\s*_?(\d+)/i);
+  if (m) $("#expert").value = "E" + m[1];
   $("#chosen").innerHTML =
     `<span class="pill neutral">${esc(f.name)}</span> ` +
     `<span class="mute" style="font-size:13px">${(f.size/1024).toFixed(0)} KB</span>`;
