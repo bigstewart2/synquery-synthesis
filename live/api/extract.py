@@ -27,7 +27,8 @@ from http.server import BaseHTTPRequestHandler
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from _pipeline import (  # noqa: E402
-    GROUPS, GROUP_LABELS, MODEL, extract_group, verify_citations,
+    GROUPS, GROUP_LABELS, MODEL, THEME_MODEL, draft_themes, extract_group,
+    verify_citations,
 )
 
 MAX_BYTES = 4 * 1024 * 1024        # a long transcript is ~100KB; this is generous
@@ -125,6 +126,48 @@ def run_extraction(text, expert_label):
     return atoms, {"input_tokens": tok_in, "output_tokens": tok_out}, failures
 
 
+MAX_ATOMS = 400
+
+
+def run_themes(payload):
+    """Draft themes from atoms the client says the human confirmed.
+
+    The client sends only confirmed atoms. That is the whole gate: an atom the analyst
+    rejected is never in this request, so the model cannot build an argument on it.
+    """
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise Bad(500, "Server is missing ANTHROPIC_API_KEY.")
+
+    confirmed = payload.get("confirmed") or {}
+    if not isinstance(confirmed, dict) or not confirmed:
+        raise Bad(400, "No confirmed atoms were sent. Confirm some atoms first.")
+    if len(confirmed) > MAX_ATOMS:
+        raise Bad(413, f"More than {MAX_ATOMS} atoms sent.")
+    for aid, a in confirmed.items():
+        if not isinstance(a, dict) or "quote" not in a:
+            raise Bad(400, f"Atom {aid} is malformed.")
+
+    expert = payload.get("expert") or "this expert"
+    n_experts = payload.get("n_experts") or 1
+    note = (
+        f"These atoms come from {n_experts} expert interview"
+        f"{'' if n_experts == 1 else 's'} (label: {expert}). "
+        + ("Because this is a single expert, no theme may be written as if the whole "
+           "panel agreed." if n_experts == 1 else "")
+    )
+
+    import anthropic
+    themes, not_supported, dropped = draft_themes(anthropic.Anthropic(), confirmed, note)
+    return {
+        "ok": True,
+        "themes": themes,
+        "not_supported": not_supported,
+        "dropped_citations": dropped,
+        "model": THEME_MODEL,
+        "atoms_used": len(confirmed),
+    }
+
+
 # --------------------------------------------------------------- handler
 class handler(BaseHTTPRequestHandler):
 
@@ -163,6 +206,13 @@ class handler(BaseHTTPRequestHandler):
                 raise Bad(400, "Request body was not valid JSON.")
 
             check_passcode(payload.get("passcode"))
+
+            # One entrypoint serves both routes; branch on the path.
+            if self.path.rstrip("/").endswith("/themes"):
+                result = run_themes(payload)
+                result["elapsed_s"] = round(time.time() - started, 1)
+                self._send(200, result)
+                return
 
             filename = payload.get("filename") or "transcript.txt"
             text = decode_upload(filename, payload.get("b64"))

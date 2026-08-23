@@ -23,7 +23,11 @@ Three things that cannot happen in a browser or in a committed HTML file:
 
 So that half becomes a **review queue**: every atom shows its verbatim quote, timestamp, confidence, and a verified badge, and a human confirms or rejects it. Rollup tables are computed by arithmetic from confirmed atoms only. An unverified or unconfirmed atom never reaches a table.
 
-**Themes are not generated.** Typed facts are extractable; the argument across them is analyst judgment. The Themes tab is a text box, labelled as such. The submission's 20 finding rows were written by me, and this prototype won't pretend a model wrote them.
+**Themes are drafted, under the same discipline.** Extraction cites the transcript and the server checks every quote verbatim. Drafting cites *atoms* and the server checks every atom id against the confirmed set. Only confirmed atoms are ever sent, so an atom the analyst rejected cannot appear in an argument — the human's confirm/reject decisions bound what the model is allowed to say. Each theme carries its supporting atoms, a strength label (one expert / several / whole panel), and a citations-resolve badge. A draft also returns **what this panel does not support**, which is the half analysts skip.
+
+Drafting runs on `claude-opus-5` rather than the pinned `claude-sonnet-5`, because it has no scoring parity to preserve and the work is judgment-heavy.
+
+The output is a first draft for an analyst to edit, labelled as such, and it sits above a free-text notes box that is still yours.
 
 ## What it does not do
 

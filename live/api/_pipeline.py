@@ -11,6 +11,7 @@ no ground truth -- does the quote actually appear in the source -- and leaves th
 judgement to a human in the review queue.
 """
 
+import json
 import re
 import unicodedata
 
@@ -157,6 +158,124 @@ GROUP_LABELS = {
     "loyalty": "Loyalty & satisfaction",
     "switching": "Switching",
 }
+
+
+# --------------------------------------------------------------- theme drafting
+#
+# Drafting is a SEPARATE step from extraction, on purpose, and it obeys the same rule
+# that makes extraction trustworthy: nothing may be asserted that isn't traceable.
+#
+# Extraction cites the transcript, and the server checks every quote verbatim.
+# Drafting cites ATOMS, and the server checks every atom id against the confirmed set.
+# A theme resting on an atom the analyst rejected cannot survive that check. So the
+# human's confirm/reject decisions bound what the model is allowed to argue.
+#
+# Model differs from extraction deliberately. Extraction is pinned to sonnet-5 because
+# the 52/52 and 11/11 figures were measured on it. Drafting has no such parity to keep
+# and is judgment-heavy, so it runs on the stronger model.
+
+THEME_MODEL = "claude-opus-5"
+
+THEME_TOOL = {
+    "name": "emit_themes",
+    "description": "Draft candidate themes strictly from the confirmed atoms supplied.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "themes": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "theme": {
+                            "type": "string",
+                            "description": "Short label, two to five words. No punctuation.",
+                        },
+                        "takeaway": {
+                            "type": "string",
+                            "description": "One sentence an analyst could put on a slide. Every "
+                            "number in it must appear in a cited atom.",
+                        },
+                        "atom_ids": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "ids of the confirmed atoms this rests on, copied "
+                            "exactly from the supplied list. Never invent an id.",
+                        },
+                        "strength": {
+                            "type": "string",
+                            "enum": ["one expert", "several experts", "whole panel"],
+                            "description": "How much of the panel actually supports this.",
+                        },
+                    },
+                    "required": ["theme", "takeaway", "atom_ids", "strength"],
+                },
+            },
+            "not_supported": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Claims a reader might expect this panel to support but it does "
+                "not, given what was and was not asked. Name real gaps, not hedges.",
+            },
+        },
+        "required": ["themes", "not_supported"],
+    },
+}
+
+THEME_SYSTEM = """You draft candidate themes for an analyst from expert-interview facts that a human has already reviewed and confirmed.
+
+You are writing a FIRST DRAFT that the analyst will edit. You are not the author of record.
+
+Rules, in priority order:
+1. Every theme must cite at least one atom id from the supplied list, copied exactly. Never cite an id that was not supplied.
+2. Never state a number, vendor, or fact that does not appear in a cited atom. If you cannot cite it, do not write it.
+3. Do not average, extrapolate, or reconcile inconsistent atoms. If two atoms disagree, that disagreement is itself the theme.
+4. Match the strength claim to the evidence. Facts from a single transcript are "one expert" and must not be written as if the whole panel agreed.
+5. Prefer four sharp themes to eight soft ones. A theme that restates one atom is not a theme.
+6. not_supported must name real gaps a partner would otherwise assume were covered. Silence on a topic is a gap, not a finding.
+"""
+
+
+def draft_themes(client, atoms_by_id, expert_note):
+    """Draft themes from confirmed atoms, then drop any citation that does not resolve.
+
+    Returns (themes, not_supported, dropped_ids). A theme left with no valid citation is
+    kept and flagged rather than silently deleted -- a disappearing theme hides a bug.
+    """
+    listing = "\n".join(
+        f"[{aid}] {json.dumps({k: v for k, v in a.items() if k != 'verified'}, ensure_ascii=False)}"
+        for aid, a in atoms_by_id.items()
+    )
+    msg = client.messages.create(
+        model=THEME_MODEL,
+        max_tokens=8000,
+        system=THEME_SYSTEM,
+        tools=[THEME_TOOL],
+        tool_choice={"type": "tool", "name": "emit_themes"},
+        thinking={"type": "adaptive"},
+        messages=[{
+            "role": "user",
+            "content": f"{expert_note}\n\nConfirmed atoms:\n{listing}\n\n"
+                       f"Draft the themes these atoms support.",
+        }],
+    )
+    payload = {}
+    for block in msg.content:
+        if block.type == "tool_use":
+            payload = block.input
+            break
+
+    known, dropped = set(atoms_by_id), []
+    themes = []
+    for t in payload.get("themes", []):
+        cited = t.get("atom_ids", []) or []
+        good = [i for i in cited if i in known]
+        dropped.extend(i for i in cited if i not in known)
+        t["atom_ids"] = good
+        t["citations_resolve"] = bool(good) and len(good) == len(cited)
+        themes.append(t)
+
+    return themes, payload.get("not_supported", []), dropped
 
 
 # --------------------------------------------------------------- citation check

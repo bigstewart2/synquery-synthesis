@@ -112,6 +112,20 @@
 
   .grouphead{display:flex;align-items:baseline;gap:var(--s3);margin:var(--s6) 0 var(--s3)}
   .grouphead h3{margin:0}
+
+  .theme{border:1px solid var(--line);border-left:4px solid var(--accent);
+         border-radius:var(--r-sm);padding:var(--s4);margin-bottom:var(--s3);background:var(--panel)}
+  .theme .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;
+              color:var(--accent);font-weight:700}
+  .theme .take{margin:var(--s2) 0 var(--s3);font-size:16px;line-height:1.45}
+  .theme details{font-size:14px}
+  .theme summary{cursor:pointer;color:var(--mute);font-size:13px}
+  .theme details ul{margin:var(--s2) 0 0;padding-left:var(--s5);color:var(--ink-2)}
+  .theme details li{margin-bottom:var(--s1)}
+  .nots{background:var(--warnbg);border:1px solid #e8d5a8;border-radius:var(--r-sm);
+        padding:var(--s4);margin-top:var(--s4)}
+  .nots h3{color:var(--warn);margin-bottom:var(--s2)}
+  .nots ul{margin:0;padding-left:var(--s5);color:var(--ink-2)}
   .err{background:var(--sqbg);color:var(--sq);border:1px solid #e8c3b7;border-radius:var(--r-sm);
        padding:var(--s3) var(--s4);margin-bottom:var(--s4);font-size:14px}
   .hide{display:none !important}
@@ -220,10 +234,18 @@
 
       <div id="tab-themes" class="hide">
         <p class="mute">
-          The pipeline does not write themes and this prototype will not pretend otherwise.
-          Typed facts are extractable; the argument across them is analyst judgment. This
-          box is where that judgment goes, saved in this browser.
+          Drafted from <b>confirmed atoms only</b>, and every theme cites the atoms it
+          rests on. An atom you rejected is never sent, so it cannot appear in an
+          argument. These are a first draft for an analyst to edit, not a finding.
         </p>
+        <div style="display:flex;gap:var(--s4);align-items:center;flex-wrap:wrap;margin:var(--s4) 0">
+          <button id="draftBtn" class="btn">Draft themes</button>
+          <span id="draftNote" class="mute" style="font-size:13px"></span>
+        </div>
+        <div id="draftErr" class="err hide"></div>
+        <div id="draft"></div>
+
+        <h3 style="margin-top:var(--s6)">Your notes</h3>
         <textarea id="themes" placeholder="What does this panel actually support?"></textarea>
         <div id="themeSaved" class="mute" style="font-size:13px;margin-top:var(--s2)"></div>
       </div>
@@ -244,14 +266,14 @@
 const $ = (s) => document.querySelector(s);
 const KEY = "synq.live.v1";
 
-let state = { pass:"", file:null, data:null, marks:{}, themes:"" };
+let state = { pass:"", file:null, data:null, marks:{}, themes:"", draft:null };
 
 // ------------------------------------------------------------------ storage
 function save(){
   try {
     sessionStorage.setItem(KEY + ".pass", state.pass);
     localStorage.setItem(KEY, JSON.stringify({
-      data: state.data, marks: state.marks, themes: state.themes
+      data: state.data, marks: state.marks, themes: state.themes, draft: state.draft
     }));
   } catch (e) { /* private window, quota — the app still works, just forgets */ }
 }
@@ -264,6 +286,7 @@ function load(){
       state.data = o.data || null;
       state.marks = o.marks || {};
       state.themes = o.themes || "";
+      state.draft = o.draft || null;
     }
   } catch (e) { /* ignore */ }
 }
@@ -370,7 +393,8 @@ $("#run").onclick = async () => {
 };
 
 $("#reset").onclick = () => {
-  state.data = null; state.marks = {}; state.themes = "";
+  state.data = null; state.marks = {}; state.themes = ""; state.draft = null;
+  $("#draft").innerHTML = "";
   try { localStorage.removeItem(KEY); } catch(e){}
   show($("#results"), false);
   show($("#upload"), true);
@@ -411,6 +435,7 @@ function render(){
     : "";
 
   $("#themes").value = state.themes || "";
+  renderDraft();
   renderQueue();
 }
 
@@ -573,7 +598,89 @@ function renderRollup(){
     : `<p class="mute">No atoms confirmed yet. Confirm some in the review queue and they appear here.</p>`;
 }
 
-// ------------------------------------------------------------------ themes
+// ------------------------------------------------------------ theme drafting
+function confirmedMap(){
+  const d = state.data, out = {};
+  if (!d) return out;
+  for (const g of Object.keys(d.atoms))
+    (d.atoms[g] || []).forEach((a, i) => {
+      const id = atomId(g, i);
+      if (state.marks[id] === "y") out[id] = a;
+    });
+  return out;
+}
+
+function describeAtom(a){
+  const fields = Object.keys(a).filter(k => !CITE.has(k))
+    .map(k => `${k.replace(/_/g," ")} ${a[k]}`).join(", ");
+  return `${esc(fields)} — “${esc(a.quote)}” @ ${esc(a.timestamp)}`;
+}
+
+$("#draftBtn").onclick = async () => {
+  const map = confirmedMap(), n = Object.keys(map).length;
+  err($("#draftErr"), "");
+  if (!n){
+    err($("#draftErr"), "Nothing confirmed yet. Confirm atoms in the review queue first — the draft is built only from what you approved.");
+    return;
+  }
+  const btn = $("#draftBtn");
+  btn.disabled = true;
+  $("#draftNote").innerHTML = `<span class="spin"></span> drafting from ${n} confirmed atom${n===1?"":"s"}`;
+  try {
+    const r = await fetch("/api/themes", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ passcode: state.pass, expert: state.data.expert,
+                             n_experts: 1, confirmed: map })
+    });
+    const j = await r.json().catch(() => ({ok:false, error:"Server sent a non-JSON response."}));
+    if (!r.ok || !j.ok) throw new Error(j.error || ("Server returned " + r.status));
+    state.draft = j; save(); renderDraft();
+  } catch (e){
+    err($("#draftErr"), e.message || "Drafting failed.");
+  } finally {
+    btn.disabled = false;
+    $("#draftNote").textContent = "";
+  }
+};
+
+function renderDraft(){
+  const j = state.draft;
+  if (!j){ $("#draft").innerHTML = ""; return; }
+  const map = confirmedMap();
+  const out = [];
+
+  out.push(`<p class="mute" style="font-size:13px">Drafted by ${esc(j.model)} from ` +
+           `${j.atoms_used} confirmed atom(s) in ${j.elapsed_s}s. Every citation below ` +
+           `was checked against that set server-side.</p>`);
+
+  if (j.dropped_citations && j.dropped_citations.length)
+    out.push(`<div class="err">${j.dropped_citations.length} citation(s) pointed at atoms ` +
+             `that were not confirmed and were dropped. A theme resting only on those is ` +
+             `flagged below.</div>`);
+
+  (j.themes || []).forEach(t => {
+    out.push(`
+      <div class="theme">
+        <div class="lbl">${esc(t.theme)}</div>
+        <div class="take">${esc(t.takeaway)}</div>
+        <span class="pill neutral">${esc(t.strength)}</span>
+        <span class="pill ${t.citations_resolve ? "ok" : "bad"}">${
+          t.citations_resolve ? "citations resolve" : "unresolved citation"}</span>
+        <details style="margin-top:var(--s3)">
+          <summary>${t.atom_ids.length} supporting atom${t.atom_ids.length===1?"":"s"}</summary>
+          <ul>${t.atom_ids.map(id => `<li>${map[id] ? describeAtom(map[id]) : esc(id)}</li>`).join("")}</ul>
+        </details>
+      </div>`);
+  });
+
+  if (j.not_supported && j.not_supported.length)
+    out.push(`<div class="nots"><h3>What this panel does not support</h3><ul>` +
+             j.not_supported.map(s => `<li>${esc(s)}</li>`).join("") + `</ul></div>`);
+
+  $("#draft").innerHTML = out.join("");
+}
+
+// ------------------------------------------------------------------ notes
 let themeTimer;
 $("#themes").addEventListener("input", () => {
   state.themes = $("#themes").value;
