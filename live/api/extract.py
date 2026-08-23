@@ -182,10 +182,11 @@ def run_themes(payload):
     confirmed = confirmed_from(payload)
 
     import anthropic
-    themes, not_supported, dropped = draft_themes(
+    summary, themes, not_supported, dropped = draft_themes(
         anthropic.Anthropic(), confirmed, expert_note_from(payload))
     return {
         "ok": True,
+        "summary": summary,
         "themes": themes,
         "not_supported": not_supported,
         "dropped_citations": dropped,

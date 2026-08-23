@@ -182,6 +182,25 @@ THEME_TOOL = {
     "input_schema": {
         "type": "object",
         "properties": {
+            "summary": {
+                "type": "object",
+                "description": "The connected paragraph a client reads first, before any "
+                "bullet. This is prose, not a list of the themes restated.",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "Three to five sentences. Lead with the finding that "
+                        "changes a decision, not with background. Every number in it must "
+                        "appear in a cited atom. Name the sample size in the last sentence.",
+                    },
+                    "atom_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "ids of every atom the summary rests on, copied exactly.",
+                    },
+                },
+                "required": ["text", "atom_ids"],
+            },
             "themes": {
                 "type": "array",
                 "items": {
@@ -218,7 +237,7 @@ THEME_TOOL = {
                 "not, given what was and was not asked. Name real gaps, not hedges.",
             },
         },
-        "required": ["themes", "not_supported"],
+        "required": ["summary", "themes", "not_supported"],
     },
 }
 
@@ -233,13 +252,14 @@ Rules, in priority order:
 4. Match the strength claim to the evidence. Facts from a single transcript are "one expert" and must not be written as if the whole panel agreed.
 5. Prefer four sharp themes to eight soft ones. A theme that restates one atom is not a theme.
 6. not_supported must name real gaps a partner would otherwise assume were covered. Silence on a topic is a gap, not a finding.
+7. The summary is prose a client reads before any bullet. Lead with what changes a decision. Do not open with background, do not restate the theme list, and do not end on a flourish. Name the sample size plainly in the last sentence.
 """
 
 
 def draft_themes(client, atoms_by_id, expert_note):
     """Draft themes from confirmed atoms, then drop any citation that does not resolve.
 
-    Returns (themes, not_supported, dropped_ids). A theme left with no valid citation is
+    Returns (summary, themes, not_supported, dropped_ids). A theme left with no valid citation is
     kept and flagged rather than silently deleted -- a disappearing theme hides a bug.
     """
     listing = "\n".join(
@@ -266,6 +286,14 @@ def draft_themes(client, atoms_by_id, expert_note):
             break
 
     known, dropped = set(atoms_by_id), []
+
+    summary = payload.get("summary") or {}
+    s_cited = summary.get("atom_ids", []) or []
+    s_good = [i for i in s_cited if i in known]
+    dropped.extend(i for i in s_cited if i not in known)
+    summary["atom_ids"] = s_good
+    summary["citations_resolve"] = bool(s_good) and len(s_good) == len(s_cited)
+
     themes = []
     for t in payload.get("themes", []):
         cited = t.get("atom_ids", []) or []
@@ -275,7 +303,7 @@ def draft_themes(client, atoms_by_id, expert_note):
         t["citations_resolve"] = bool(good) and len(good) == len(cited)
         themes.append(t)
 
-    return themes, payload.get("not_supported", []), dropped
+    return summary, themes, payload.get("not_supported", []), dropped
 
 
 # --------------------------------------------------------------- slide check

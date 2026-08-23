@@ -113,6 +113,10 @@
   .grouphead{display:flex;align-items:baseline;gap:var(--s3);margin:var(--s6) 0 var(--s3)}
   .grouphead h3{margin:0}
 
+  .summ{background:var(--accent-soft);border:1px solid #cfe0f5;border-radius:var(--r);
+        padding:var(--s5);margin-bottom:var(--s5)}
+  .summ h3{color:var(--accent);margin-bottom:var(--s3)}
+  .summ p{font-size:17px;line-height:1.55;color:var(--ink);margin:0;max-width:72ch}
   .theme{border:1px solid var(--line);border-left:4px solid var(--accent);
          border-radius:var(--r-sm);padding:var(--s4);margin-bottom:var(--s3);background:var(--panel)}
   .theme .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;
@@ -689,6 +693,24 @@ function renderDraft(){
            `${j.atoms_used} confirmed atom(s) in ${j.elapsed_s}s. Every citation below ` +
            `was checked against that set server-side.</p>`);
 
+  const sm = j.summary;
+  if (sm && sm.text)
+    out.push(`
+      <div class="summ">
+        <h3>Summary</h3>
+        <p>${esc(sm.text)}</p>
+        <div style="margin-top:var(--s3)">
+          <span class="pill ${sm.citations_resolve ? "ok" : "bad"}">${
+            sm.citations_resolve ? "citations resolve" : "unresolved citation"}</span>
+          <details style="display:inline-block;margin-left:var(--s3);font-size:13px">
+            <summary>${sm.atom_ids.length} supporting atom${sm.atom_ids.length===1?"":"s"}</summary>
+            <ul style="margin:var(--s2) 0 0;padding-left:var(--s5);font-size:14px">${
+              sm.atom_ids.map(id => `<li>${map[id] ? describeAtom(map[id]) : esc(id)}</li>`).join("")}</ul>
+          </details>
+          <button id="copySumm" class="btn-2" style="margin-left:var(--s3);font-size:13px">Copy summary</button>
+        </div>
+      </div>`);
+
   if (j.dropped_citations && j.dropped_citations.length)
     out.push(`<div class="err">${j.dropped_citations.length} citation(s) pointed at atoms ` +
              `that were not confirmed and were dropped. A theme resting only on those is ` +
@@ -714,6 +736,15 @@ function renderDraft(){
              j.not_supported.map(s => `<li>${esc(s)}</li>`).join("") + `</ul></div>`);
 
   $("#draft").innerHTML = out.join("");
+
+  const cs = $("#copySumm");
+  if (cs) cs.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(j.summary.text);
+      cs.textContent = "Copied";
+      setTimeout(() => { cs.textContent = "Copy summary"; }, 1600);
+    } catch (e) { cs.textContent = "Select the text to copy"; }
+  };
 }
 
 // ----------------------------------------------------------- slide check

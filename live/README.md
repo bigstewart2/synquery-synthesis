@@ -27,7 +27,9 @@ So that half becomes a **review queue**: every atom shows its verbatim quote, ti
 
 Drafting runs on `claude-opus-5` rather than the pinned `claude-sonnet-5`, because it has no scoring parity to preserve and the work is judgment-heavy.
 
-The output is a first draft for an analyst to edit, labelled as such, and it sits above a free-text notes box that is still yours.
+A draft leads with a **Summary** — the connected paragraph a client reads before any bullet. Same discipline: every figure in it must appear in a cited atom, the server checks those ids, and the schema requires the last sentence to name the sample size plainly. The prompt forbids opening with background, restating the theme list, or ending on a flourish.
+
+The whole output is a first draft for an analyst to edit, labelled as such, and it sits above a free-text notes box that is still yours.
 
 ## Summary — the live form of Slide Check
 
