@@ -179,13 +179,16 @@ THEME_MODEL = "claude-opus-5"
 THEME_TOOL = {
     "name": "emit_themes",
     "description": "Draft candidate themes strictly from the confirmed atoms supplied.",
+    "strict": True,
     "input_schema": {
         "type": "object",
+        "additionalProperties": False,
         "properties": {
             "summary": {
                 "type": "object",
                 "description": "The connected paragraph a client reads first, before any "
                 "bullet. This is prose, not a list of the themes restated.",
+                "additionalProperties": False,
                 "properties": {
                     "text": {
                         "type": "string",
@@ -205,6 +208,7 @@ THEME_TOOL = {
                 "type": "array",
                 "items": {
                     "type": "object",
+                    "additionalProperties": False,
                     "properties": {
                         "theme": {
                             "type": "string",
@@ -288,15 +292,21 @@ def draft_themes(client, atoms_by_id, expert_note):
     known, dropped = set(atoms_by_id), []
 
     summary = payload.get("summary") or {}
-    s_cited = summary.get("atom_ids", []) or []
+    if isinstance(summary, str):          # seen in the wild: prose instead of the object
+        summary = {"text": summary, "atom_ids": []}
+    elif not isinstance(summary, dict):
+        summary = {"text": "", "atom_ids": []}
+    s_cited = summary.get("atom_ids") or []
     s_good = [i for i in s_cited if i in known]
     dropped.extend(i for i in s_cited if i not in known)
     summary["atom_ids"] = s_good
     summary["citations_resolve"] = bool(s_good) and len(s_good) == len(s_cited)
 
     themes = []
-    for t in payload.get("themes", []):
-        cited = t.get("atom_ids", []) or []
+    for t in payload.get("themes", []) or []:
+        if not isinstance(t, dict):
+            continue
+        cited = t.get("atom_ids") or []
         good = [i for i in cited if i in known]
         dropped.extend(i for i in cited if i not in known)
         t["atom_ids"] = good
@@ -318,8 +328,10 @@ def draft_themes(client, atoms_by_id, expert_note):
 CHECK_TOOL = {
     "name": "emit_verdict",
     "description": "Grade one claim against the confirmed atoms supplied.",
+    "strict": True,
     "input_schema": {
         "type": "object",
+        "additionalProperties": False,
         "properties": {
             "verdict": {
                 "type": "string",
@@ -395,7 +407,9 @@ def check_claim(client, claim, atoms_by_id, expert_note):
             break
 
     known = set(atoms_by_id)
-    cited = out.get("atom_ids", []) or []
+    if not isinstance(out, dict):
+        out = {}
+    cited = out.get("atom_ids") or []
     good = [i for i in cited if i in known]
     out["atom_ids"] = good
     out["citations_resolve"] = len(good) == len(cited)
