@@ -143,12 +143,25 @@ def confirmed_from(payload):
 
 
 def expert_note_from(payload):
-    expert = payload.get("expert") or "this expert"
-    n = payload.get("n_experts") or 1
-    return (f"These atoms come from {n} expert interview{'' if n == 1 else 's'} "
-            f"(label: {expert}). "
-            + ("Because this is a single expert, nothing here may be written or graded "
-               "as if the whole panel agreed." if n == 1 else ""))
+    """Tell the model exactly how many experts it is reasoning over.
+
+    This is what licenses panel-level language. With one transcript, any claim about
+    agreement is unsupportable; with three, "several experts" becomes a real finding and
+    a disagreement between them is itself the finding.
+    """
+    labels = payload.get("experts") or [payload.get("expert") or "E1"]
+    n = len(labels)
+    ids = ", ".join(str(x) for x in labels)
+    if n == 1:
+        return (f"These atoms come from 1 expert interview (label: {ids}). "
+                "Because this is a single expert, nothing here may be written or graded "
+                "as if a panel agreed.")
+    return (f"These atoms come from a panel of {n} expert interviews ({ids}). "
+            f"Every atom id is prefixed with its expert label. "
+            f"Attribute every figure to the expert it came from. A claim covering all {n} "
+            f"needs support from all {n}; two out of three is 'several experts', never the "
+            f"whole panel. Where experts disagree, the disagreement is the finding -- "
+            f"never average them.")
 
 
 def run_check(payload):

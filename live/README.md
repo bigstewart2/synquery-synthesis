@@ -39,6 +39,16 @@ You get a verdict (supported / partially supported / not supported / contradicte
 
 The grading rules are written to refuse, not to please. A claim about "buyers" or "the market" backed by one expert comes back *not supported* however true it sounds. A claim that is directionally right and numerically wrong is *partially supported*, never supported.
 
+## Panel, not one interview at a time
+
+The product is panel synthesis, so the app holds several interviews at once. Transcripts load one after another and stack in a bar across the top; the review queue switches between them; and **every downstream view computes across every confirmed atom from every expert**.
+
+- **Rollups** — the ratings grid is criterion x vendor with each cell carrying every expert who scored it, and a `split` marker where they disagree. Divergence is displayed, never averaged. A "rated by 2 of 3" column shows at a glance what is actually comparable.
+- **Coverage** — who is in the panel, which vendors are rated versus actually run by someone, which criteria are comparable across all experts versus one only, the matrix fill rate, and a derived list of what the panel *cannot* support. All counting, no judgment.
+- **Synthesis and Claim check** — receive the whole panel with every atom id prefixed by its expert. The prompt requires a claim covering all N to have support from all N; two of three is "several experts", never the whole panel.
+
+Verified on the three real ITSM transcripts: 107 confirmed atoms, and the draft correctly labelled seven themes "whole panel" and one "several experts" (the two who discussed Freshservice), while refusing to average a ServiceNow price that was recalled at $100, quoted at $160 and quoted at $150 by the three experts.
+
 ## What it does not do
 
 | Not built | Why | What it would take |
@@ -46,7 +56,7 @@ The grading rules are written to refuse, not to please. A claim about "buyers" o
 | Multi-user persistence | demo scope | Postgres + auth |
 | Cross-device results | results are in localStorage | the same |
 | Real accounts | one shared passcode | SSO or magic links |
-| Panel view across experts | one transcript at a time | a workstream model |
+| Multiple workstreams | one panel at a time | a project model |
 
 State lives in the viewer's browser. Clear site data and it's gone. That's a deliberate v1 bound, not an oversight.
 

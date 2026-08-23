@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Synquery Synthesis — live extraction</title>
+<title>Synquery Synthesis — live panel</title>
 <style>
   :root{
     --bg:#fafaf9; --panel:#fff; --ink:#191917; --ink-2:#3d3d38;
@@ -57,6 +57,7 @@
   tbody tr:last-child td{border-bottom:0}
   td.num,th.num{text-align:center}
   .scroll{overflow-x:auto}
+  .ex{font-size:11px;color:var(--mute);font-weight:600}
 
   .pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;
         padding:2px 7px;border-radius:999px;white-space:nowrap}
@@ -64,32 +65,41 @@
   .pill.bad{background:var(--sqbg);color:var(--sq)}
   .pill.warn{background:var(--warnbg);color:var(--warn)}
   .pill.neutral{background:var(--chip);color:var(--mute)}
+  .pill.acc{background:var(--accent-soft);color:var(--accent)}
 
-  .drop{border:2px dashed var(--rule);border-radius:var(--r);padding:var(--s7) var(--s5);
+  .drop{border:2px dashed var(--rule);border-radius:var(--r);padding:var(--s6) var(--s5);
         text-align:center;color:var(--mute);transition:border-color var(--t),background var(--t)}
   .drop.hot{border-color:var(--accent);background:var(--accent-soft);color:var(--ink-2)}
+
+  /* The panel bar. The point of the rebuild: several interviews held at once. */
+  .panelbar{display:flex;gap:var(--s2);flex-wrap:wrap;align-items:center;
+            padding-bottom:var(--s4);border-bottom:1px solid var(--line);margin-bottom:var(--s5)}
+  .exchip{display:flex;flex-direction:column;gap:2px;text-align:left;
+          border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--panel);
+          padding:var(--s2) var(--s4);min-width:132px}
+  .exchip:hover{background:var(--chip)}
+  .exchip.on{border-color:var(--accent);background:var(--accent-soft)}
+  .exchip .id{font-weight:700;font-size:15px}
+  .exchip .meta{font-size:12px;color:var(--mute)}
 
   .statbar{display:flex;flex-wrap:wrap;gap:var(--s5);padding:var(--s4) 0 var(--s5);
            border-bottom:1px solid var(--line);margin-bottom:var(--s5)}
   .stat .k{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);font-weight:600}
   .stat .v{font-size:23px;font-weight:600;letter-spacing:-.016em}
 
-  .tabs{display:flex;gap:2px;margin-bottom:var(--s5);border-bottom:1px solid var(--line)}
+  .tabs{display:flex;gap:2px;margin-bottom:var(--s5);border-bottom:1px solid var(--line);flex-wrap:wrap}
   .tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:9px var(--s4);
                color:var(--mute);font-size:15px;border-radius:0}
   .tabs button:hover{color:var(--ink-2)}
   .tabs button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
 
-  /* Pending, confirmed and rejected have to be tellable apart from across a room.
-     A demo where "I clicked it" and "it registered" look the same is a broken demo. */
   .atom{border:1px solid var(--line);border-left:4px solid var(--rule);
         border-radius:var(--r-sm);padding:var(--s3) var(--s4);margin-bottom:var(--s2);
         background:var(--panel);
         transition:opacity var(--t),border-color var(--t),background var(--t)}
   .atom.confirmed{border-color:#9cc7ac;border-left-color:var(--ok);background:var(--okbg)}
   .atom.rejected{border-color:#e3bcae;border-left-color:var(--sq);background:var(--sqbg);opacity:.62}
-  .atom.rejected blockquote{text-decoration:line-through;
-        text-decoration-color:rgba(156,63,39,.45)}
+  .atom.rejected blockquote{text-decoration:line-through;text-decoration-color:rgba(156,63,39,.45)}
   .atom .state{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
   .atom.confirmed .state{color:var(--ok)}
   .atom.rejected .state{color:var(--sq)}
@@ -102,7 +112,6 @@
   .atom .acts button.on-y{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:600}
   .atom .acts button.on-n{background:var(--sq);border-color:var(--sq);color:#fff;font-weight:600}
 
-  /* Running tally. The one number that answers "did that do anything". */
   .tally{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;
          background:var(--chip);border-radius:var(--r-sm);padding:var(--s3) var(--s4);
          margin:var(--s4) 0 var(--s5)}
@@ -122,10 +131,11 @@
   .theme .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;
               color:var(--accent);font-weight:700}
   .theme .take{margin:var(--s2) 0 var(--s3);font-size:16px;line-height:1.45}
-  .theme details{font-size:14px}
-  .theme summary{cursor:pointer;color:var(--mute);font-size:13px}
-  .theme details ul{margin:var(--s2) 0 0;padding-left:var(--s5);color:var(--ink-2)}
-  .theme details li{margin-bottom:var(--s1)}
+  .theme details,.verdict details{font-size:14px}
+  .theme summary,.verdict summary{cursor:pointer;color:var(--mute);font-size:13px}
+  .theme details ul,.verdict details ul{margin:var(--s2) 0 0;padding-left:var(--s5);color:var(--ink-2)}
+  .theme details li,.verdict details li{margin-bottom:var(--s1)}
+
   .verdict{border:1px solid var(--line);border-left:4px solid var(--rule);
            border-radius:var(--r-sm);padding:var(--s4);margin-bottom:var(--s3);background:var(--panel)}
   .verdict.v-supported{border-left-color:var(--ok)}
@@ -140,6 +150,7 @@
         padding:var(--s4);margin-top:var(--s4)}
   .nots h3{color:var(--warn);margin-bottom:var(--s2)}
   .nots ul{margin:0;padding-left:var(--s5);color:var(--ink-2)}
+
   .err{background:var(--sqbg);color:var(--sq);border:1px solid #e8c3b7;border-radius:var(--r-sm);
        padding:var(--s3) var(--s4);margin-bottom:var(--s4);font-size:14px}
   .hide{display:none !important}
@@ -154,8 +165,8 @@
 
 <div class="ghostbar">
   <b>Live prototype.</b>
-  Extraction runs server-side on upload. This is the working sibling of the static
-  submission — same schema, no answer key, human confirms every atom.
+  Load the whole panel. Extraction runs server-side per transcript; every rollup,
+  theme and claim check computes across every atom you confirm, from every expert.
 </div>
 
 <div class="wrap">
@@ -164,8 +175,9 @@
   <section id="gate" class="card">
     <h1>Synquery panel synthesis</h1>
     <p class="mute" style="margin-top:var(--s2)">
-      Upload an expert-interview transcript and get back typed, quote-cited atoms you can
-      confirm or reject. Passcode-gated because extraction spends real model credits.
+      Load expert-interview transcripts and get back typed, quote-cited atoms you confirm
+      or reject, then synthesis across the whole panel. Passcode-gated because extraction
+      spends real model credits.
     </p>
     <div id="gateErr" class="err hide"></div>
     <div style="max-width:320px;margin-top:var(--s5)">
@@ -175,113 +187,123 @@
     </div>
   </section>
 
-  <!-- -------------------------------------------------------------- upload -->
-  <section id="upload" class="card hide">
-    <h2>Add a transcript</h2>
-    <p class="mute">
-      <code>.txt</code>, <code>.md</code>, or <code>.docx</code>. Nothing is stored on the
-      server — the file is read in memory, extracted, and discarded. Results live in this
-      browser only.
-    </p>
-    <div id="uploadErr" class="err hide"></div>
-
-    <div id="drop" class="drop" style="margin-top:var(--s5)">
-      <div style="font-size:15px;color:var(--ink-2);font-weight:600">Drop a transcript here</div>
-      <div style="margin-top:var(--s2)">or <button id="pick" class="btn-2">choose a file</button></div>
-      <div id="chosen" style="margin-top:var(--s3)"></div>
-      <input id="file" type="file" accept=".txt,.md,.docx,text/plain" class="hide">
-    </div>
-
-    <div style="display:flex;gap:var(--s4);align-items:flex-end;margin-top:var(--s5);flex-wrap:wrap">
-      <div style="max-width:180px">
-        <label for="expert">Expert label</label>
-        <input id="expert" type="text" value="E1" spellcheck="false">
-      </div>
-      <button id="run" class="btn" disabled>Extract</button>
-      <span id="runNote" class="mute" style="font-size:13px"></span>
-    </div>
-  </section>
-
-  <!-- ------------------------------------------------------------- results -->
-  <section id="results" class="hide">
+  <!-- ----------------------------------------------------------- workspace -->
+  <section id="work" class="hide">
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--s4);flex-wrap:wrap">
-        <h2 style="margin:0" id="resultTitle">Extraction</h2>
-        <button id="reset" class="btn-2">Start over</button>
-      </div>
-      <div class="statbar" id="statbar"></div>
-      <div id="failures"></div>
 
-      <div class="tabs">
-        <button data-tab="queue" class="on">Review queue</button>
-        <button data-tab="rollup">Rollups</button>
-        <button data-tab="themes">Themes</button>
-        <button data-tab="summary">Summary</button>
-      </div>
+      <div class="panelbar" id="panelbar"></div>
 
-      <div id="tab-queue">
+      <div id="uploadBox">
+        <h2 id="uploadTitle">Add a transcript</h2>
         <p class="mute">
-          Every atom below was located by the model and carries the verbatim span it came
-          from. <b>Verified</b> means that span was found character-for-character in the
-          file you uploaded — a deterministic check, no model involved. It says nothing
-          about whether the reading is right. That is your call.
+          <code>.txt</code>, <code>.md</code>, or <code>.docx</code>. Add them one at a
+          time; each stays loaded. Nothing is stored on the server — files are read in
+          memory and discarded. Results live in this browser only.
         </p>
-        <div style="margin:var(--s4) 0">
-          <button id="allYes" class="btn-2">Confirm all verified</button>
-          <button id="allClear" class="btn-2">Clear all</button>
+        <div id="uploadErr" class="err hide"></div>
+
+        <div id="drop" class="drop" style="margin-top:var(--s4)">
+          <div style="font-size:15px;color:var(--ink-2);font-weight:600">Drop a transcript here</div>
+          <div style="margin-top:var(--s2)">or <button id="pick" class="btn-2">choose a file</button></div>
+          <div id="chosen" style="margin-top:var(--s3)"></div>
+          <input id="file" type="file" accept=".txt,.md,.docx,text/plain" class="hide">
         </div>
-        <div class="tally">
-          <span class="n" id="tallyN">0 of 0</span>
-          <span class="mute">confirmed</span>
-          <span class="bar"><i id="tallyBar"></i></span>
-          <span id="tallyNote" class="mute" style="font-size:13px"></span>
-        </div>
-        <div id="queue"></div>
-      </div>
 
-      <div id="tab-rollup" class="hide">
-        <p class="mute">
-          Computed from <b>confirmed</b> atoms only, by arithmetic, not by the model.
-          Nothing appears here until you confirm it above.
-        </p>
-        <div id="rollup"></div>
-      </div>
-
-      <div id="tab-themes" class="hide">
-        <p class="mute">
-          Drafted from <b>confirmed atoms only</b>, and every theme cites the atoms it
-          rests on. An atom you rejected is never sent, so it cannot appear in an
-          argument. These are a first draft for an analyst to edit, not a finding.
-        </p>
-        <div style="display:flex;gap:var(--s4);align-items:center;flex-wrap:wrap;margin:var(--s4) 0">
-          <button id="draftBtn" class="btn">Draft themes</button>
-          <span id="draftNote" class="mute" style="font-size:13px"></span>
-        </div>
-        <div id="draftErr" class="err hide"></div>
-        <div id="draft"></div>
-
-        <h3 style="margin-top:var(--s6)">Your notes</h3>
-        <textarea id="themes" placeholder="What does this panel actually support?"></textarea>
-        <div id="themeSaved" class="mute" style="font-size:13px;margin-top:var(--s2)"></div>
-      </div>
-
-      <div id="tab-summary" class="hide">
-        <p class="mute">
-          Write the claim you want on the slide. It gets graded against your confirmed
-          atoms and comes back with a verdict, the atoms that bear on it, what a reader
-          would wrongly assume, and a footnote you can paste under the number.
-        </p>
-        <div style="margin:var(--s4) 0">
-          <textarea id="claim" style="min-height:80px"
-            placeholder="e.g. ServiceNow is priced at roughly 2.7x what mid-market buyers actually pay"></textarea>
-          <div style="display:flex;gap:var(--s4);align-items:center;margin-top:var(--s3);flex-wrap:wrap">
-            <button id="checkBtn" class="btn">Check this claim</button>
-            <button id="checkClear" class="btn-2">Clear checked</button>
-            <span id="checkNote" class="mute" style="font-size:13px"></span>
+        <div style="display:flex;gap:var(--s4);align-items:flex-end;margin-top:var(--s4);flex-wrap:wrap">
+          <div style="max-width:180px">
+            <label for="expert">Expert label</label>
+            <input id="expert" type="text" value="E1" spellcheck="false">
           </div>
+          <button id="run" class="btn" disabled>Extract</button>
+          <button id="cancelAdd" class="btn-2 hide">Cancel</button>
+          <span id="runNote" class="mute" style="font-size:13px"></span>
         </div>
-        <div id="checkErr" class="err hide"></div>
-        <div id="checks"></div>
+      </div>
+
+      <div id="results" class="hide">
+        <div class="statbar" id="statbar"></div>
+        <div id="failures"></div>
+
+        <div class="tabs">
+          <button data-tab="queue" class="on">Review queue</button>
+          <button data-tab="rollup">Rollups</button>
+          <button data-tab="coverage">Coverage</button>
+          <button data-tab="themes">Synthesis</button>
+          <button data-tab="claim">Claim check</button>
+        </div>
+
+        <div id="tab-queue">
+          <p class="mute">
+            Reviewing <b id="queueWho">—</b>. Every atom was located by the model and
+            carries the verbatim span it came from. <b>Verified</b> means that span was
+            found character-for-character in the file you uploaded — deterministic, no
+            model involved. It says nothing about whether the reading is right.
+          </p>
+          <div style="margin:var(--s4) 0">
+            <button id="allYes" class="btn-2">Confirm all verified in this interview</button>
+            <button id="allClear" class="btn-2">Clear this interview</button>
+          </div>
+          <div class="tally">
+            <span class="n" id="tallyN">0 of 0</span>
+            <span class="mute">confirmed across the panel</span>
+            <span class="bar"><i id="tallyBar"></i></span>
+            <span id="tallyNote" class="mute" style="font-size:13px"></span>
+          </div>
+          <div id="queue"></div>
+        </div>
+
+        <div id="tab-rollup" class="hide">
+          <p class="mute">
+            Computed from <b>confirmed</b> atoms across every loaded interview, by
+            arithmetic, not by the model. Each cell names the expert it came from.
+          </p>
+          <div id="rollup"></div>
+        </div>
+
+        <div id="tab-coverage" class="hide">
+          <p class="mute">
+            What this panel can and cannot answer. All of it derived from confirmed atoms —
+            no judgment, just counting.
+          </p>
+          <div id="coverage"></div>
+        </div>
+
+        <div id="tab-themes" class="hide">
+          <p class="mute">
+            Drafted from <b>confirmed atoms only</b>, across the whole panel. Every claim
+            cites the atoms it rests on and each atom carries its expert. A claim covering
+            all experts needs support from all of them.
+          </p>
+          <div style="display:flex;gap:var(--s4);align-items:center;flex-wrap:wrap;margin:var(--s4) 0">
+            <button id="draftBtn" class="btn">Draft synthesis</button>
+            <span id="draftNote" class="mute" style="font-size:13px"></span>
+          </div>
+          <div id="draftErr" class="err hide"></div>
+          <div id="draft"></div>
+
+          <h3 style="margin-top:var(--s6)">Your notes</h3>
+          <textarea id="themes" placeholder="What does this panel actually support?"></textarea>
+          <div id="themeSaved" class="mute" style="font-size:13px;margin-top:var(--s2)"></div>
+        </div>
+
+        <div id="tab-claim" class="hide">
+          <p class="mute">
+            Write the claim you want on the slide. It is graded against every confirmed
+            atom in the panel and comes back with a verdict, the atoms bearing on it, what
+            a reader would wrongly assume, and a footnote you can paste under the number.
+          </p>
+          <div style="margin:var(--s4) 0">
+            <textarea id="claim" style="min-height:80px"
+              placeholder="e.g. ServiceNow is quoted at roughly 2.7x what mid-market buyers actually pay"></textarea>
+            <div style="display:flex;gap:var(--s4);align-items:center;margin-top:var(--s3);flex-wrap:wrap">
+              <button id="checkBtn" class="btn">Check this claim</button>
+              <button id="checkClear" class="btn-2">Clear checked</button>
+              <span id="checkNote" class="mute" style="font-size:13px"></span>
+            </div>
+          </div>
+          <div id="checkErr" class="err hide"></div>
+          <div id="checks"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -298,18 +320,22 @@
 "use strict";
 
 const $ = (s) => document.querySelector(s);
-const KEY = "synq.live.v1";
+const KEY = "synq.live.v2";
 
-let state = { pass:"", file:null, data:null, marks:{}, themes:"", draft:null, checks:[] };
+// experts: { E1: {filename, atoms, labels, stats, failures} }
+// marks:   { "E1:ratings:3": "y" | "n" }
+let state = { pass:"", file:null, experts:{}, order:[], sel:null,
+              marks:{}, themes:"", draft:null, checks:[] };
 
 // ------------------------------------------------------------------ storage
 function save(){
   try {
     sessionStorage.setItem(KEY + ".pass", state.pass);
     localStorage.setItem(KEY, JSON.stringify({
-      data: state.data, marks: state.marks, themes: state.themes, draft: state.draft, checks: state.checks
+      experts: state.experts, order: state.order, sel: state.sel,
+      marks: state.marks, themes: state.themes, draft: state.draft, checks: state.checks
     }));
-  } catch (e) { /* private window, quota — the app still works, just forgets */ }
+  } catch (e) { /* private window or quota — the app still works, it just forgets */ }
 }
 function load(){
   try {
@@ -317,11 +343,13 @@ function load(){
     const raw = localStorage.getItem(KEY);
     if (raw){
       const o = JSON.parse(raw);
-      state.data = o.data || null;
-      state.marks = o.marks || {};
-      state.themes = o.themes || "";
-      state.draft = o.draft || null;
-      state.checks = o.checks || [];
+      state.experts = o.experts || {};
+      state.order   = o.order   || Object.keys(state.experts);
+      state.sel     = o.sel     || state.order[0] || null;
+      state.marks   = o.marks   || {};
+      state.themes  = o.themes  || "";
+      state.draft   = o.draft   || null;
+      state.checks  = o.checks  || [];
     }
   } catch (e) { /* ignore */ }
 }
@@ -329,29 +357,60 @@ function load(){
 // ------------------------------------------------------------------- helpers
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => (
   {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const show = (el, on) => el.classList.toggle("hide", !on);
+const err  = (el, msg) => { el.textContent = msg; show(el, !!msg); };
 
-function show(el, on){ el.classList.toggle("hide", !on); }
-function err(el, msg){ el.textContent = msg; show(el, !!msg); }
+const atomId = (ex, group, i) => `${ex}:${group}:${i}`;
+const CITE = new Set(["quote","timestamp","confidence","verified","expert"]);
 
-function atomId(group, i){ return group + ":" + i; }
-
-// The typed fields of an atom, minus the citation envelope every atom shares.
-const CITE = new Set(["quote","timestamp","confidence","verified"]);
 function describe(a){
   return Object.keys(a).filter(k => !CITE.has(k))
     .map(k => `${k.replace(/_/g," ")}: <span class="val">${esc(a[k])}</span>`)
     .join(" &nbsp;·&nbsp; ");
 }
+function describeAtom(a){
+  const f = Object.keys(a).filter(k => !CITE.has(k))
+    .map(k => `${k.replace(/_/g," ")} ${a[k]}`).join(", ");
+  return `<b>${esc(a.expert)}</b> — ${esc(f)} — &ldquo;${esc(a.quote)}&rdquo; @ ${esc(a.timestamp)}`;
+}
+
+/** Every confirmed atom in the panel, keyed by its panel-wide id. */
+function confirmedMap(){
+  const out = {};
+  for (const ex of state.order){
+    const d = state.experts[ex]; if (!d) continue;
+    for (const g of Object.keys(d.atoms))
+      (d.atoms[g] || []).forEach((a, i) => {
+        const id = atomId(ex, g, i);
+        if (state.marks[id] === "y") out[id] = Object.assign({}, a, {expert: ex});
+      });
+  }
+  return out;
+}
+/** Confirmed atoms of one group, panel-wide, each tagged with its expert. */
+function confirmedGroup(group){
+  const out = [];
+  for (const ex of state.order){
+    const d = state.experts[ex]; if (!d) continue;
+    (d.atoms[group] || []).forEach((a, i) => {
+      if (state.marks[atomId(ex, group, i)] === "y") out.push(Object.assign({}, a, {expert: ex}));
+    });
+  }
+  return out;
+}
+const panelExperts = () => {
+  const seen = new Set(Object.values(confirmedMap()).map(a => a.expert));
+  return state.order.filter(e => seen.has(e));
+};
 
 // -------------------------------------------------------------------- gate
-$("#gateGo").onclick = async () => {
+$("#gateGo").onclick = () => {
   const v = $("#pass").value.trim();
   if (!v){ err($("#gateErr"), "Enter the passcode."); return; }
   state.pass = v; save();
   err($("#gateErr"), "");
-  show($("#gate"), false);
-  show($("#upload"), true);
-  if (state.data) render();
+  show($("#gate"), false); show($("#work"), true);
+  renderAll();
 };
 $("#pass").addEventListener("keydown", e => { if (e.key === "Enter") $("#gateGo").click(); });
 
@@ -359,20 +418,23 @@ $("#pass").addEventListener("keydown", e => { if (e.key === "Enter") $("#gateGo"
 const drop = $("#drop"), fileInput = $("#file");
 $("#pick").onclick = () => fileInput.click();
 fileInput.onchange = () => pickFile(fileInput.files[0]);
-
 ["dragenter","dragover"].forEach(ev =>
   drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("hot"); }));
 ["dragleave","drop"].forEach(ev =>
   drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("hot"); }));
 drop.addEventListener("drop", e => pickFile(e.dataTransfer.files[0]));
 
+function nextLabel(){
+  for (let i = 1; i < 99; i++) if (!state.experts["E" + i]) return "E" + i;
+  return "E99";
+}
+
 function pickFile(f){
   if (!f) return;
   state.file = f;
-  // Derive the expert label from the filename. The default used to be a silent E1,
-  // which mislabelled every downstream atom and every drafted theme.
+  // Derive the label from the filename; fall back to the next free slot.
   const m = f.name.match(/expert\s*_?(\d+)/i);
-  if (m) $("#expert").value = "E" + m[1];
+  $("#expert").value = m ? "E" + m[1] : nextLabel();
   $("#chosen").innerHTML =
     `<span class="pill neutral">${esc(f.name)}</span> ` +
     `<span class="mute" style="font-size:13px">${(f.size/1024).toFixed(0)} KB</span>`;
@@ -380,129 +442,159 @@ function pickFile(f){
   err($("#uploadErr"), "");
 }
 
-function toB64(file){
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(String(r.result).split(",")[1]);
-    r.onerror = () => rej(new Error("Could not read that file."));
-    r.readAsDataURL(file);
-  });
-}
+const toB64 = (file) => new Promise((res, rej) => {
+  const r = new FileReader();
+  r.onload = () => res(String(r.result).split(",")[1]);
+  r.onerror = () => rej(new Error("Could not read that file."));
+  r.readAsDataURL(file);
+});
 
 $("#run").onclick = async () => {
   if (!state.file) return;
+  const label = $("#expert").value.trim() || nextLabel();
+  if (state.experts[label] &&
+      !confirm(label + " is already loaded (" + state.experts[label].filename + "). Replace it?")) return;
+
   const btn = $("#run");
   btn.disabled = true;
   err($("#uploadErr"), "");
-  $("#runNote").innerHTML =
-    `<span class="spin"></span> six extraction passes running concurrently — 30 to 90 seconds`;
-
+  $("#runNote").innerHTML = `<span class="spin"></span> six extraction passes running concurrently — 15 to 60 seconds`;
   try {
     const b64 = await toB64(state.file);
     const r = await fetch("/api/extract", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        passcode: state.pass,
-        filename: state.file.name,
-        expert: $("#expert").value.trim() || "E1",
-        b64
-      })
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({passcode: state.pass, filename: state.file.name, expert: label, b64})
     });
     const j = await r.json().catch(() => ({ok:false, error:"Server sent a non-JSON response."}));
     if (!r.ok || !j.ok){
       if (r.status === 401){
         state.pass = ""; save();
-        show($("#upload"), false); show($("#gate"), true);
+        show($("#work"), false); show($("#gate"), true);
         err($("#gateErr"), "That passcode was rejected. Try again.");
         return;
       }
       throw new Error(j.error || ("Server returned " + r.status));
     }
-    state.data = j;
-    state.marks = {};
-    save();
-    render();
+    // Replacing an expert drops its stale marks; ids would otherwise point at new atoms.
+    Object.keys(state.marks).forEach(k => { if (k.indexOf(label + ":") === 0) delete state.marks[k]; });
+    state.experts[label] = {filename: j.filename, atoms: j.atoms, labels: j.labels,
+                            stats: j.stats, failures: j.failures};
+    if (state.order.indexOf(label) === -1) state.order.push(label);
+    state.sel = label;
+    state.file = null;
+    $("#chosen").textContent = ""; $("#run").disabled = true; fileInput.value = "";
+    // A new interview invalidates panel-level output built from the old set.
+    state.draft = null; state.checks = [];
+    save(); renderAll();
   } catch (e){
     err($("#uploadErr"), e.message || "Extraction failed.");
   } finally {
-    btn.disabled = false;
-    $("#runNote").textContent = "";
+    btn.disabled = false; $("#runNote").textContent = "";
   }
 };
 
-$("#reset").onclick = () => {
-  state.data = null; state.marks = {}; state.themes = ""; state.draft = null; state.checks = [];
-  $("#draft").innerHTML = ""; $("#checks").innerHTML = "";
-  try { localStorage.removeItem(KEY); } catch(e){}
-  show($("#results"), false);
-  show($("#upload"), true);
-  $("#chosen").textContent = ""; $("#run").disabled = true; state.file = null;
-};
+$("#cancelAdd").onclick = () => showUpload(false);
 
-// ------------------------------------------------------------------- tabs
-document.querySelectorAll(".tabs button").forEach(b => {
-  b.onclick = () => {
-    document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
-    ["queue","rollup","themes","summary"].forEach(t => show($("#tab-" + t), t === b.dataset.tab));
-    if (b.dataset.tab === "rollup") renderRollup();
-  };
-});
-
-// ------------------------------------------------------------------ render
-function render(){
-  const d = state.data;
-  if (!d) return;
-  show($("#upload"), false);
-  show($("#results"), true);
-
-  $("#resultTitle").textContent = `${d.filename} — ${d.expert}`;
-
-  const s = d.stats, pct = s.total ? Math.round(100 * s.verified / s.total) : 0;
-  $("#statbar").innerHTML = [
-    ["Atoms extracted", s.total],
-    ["Quotes verified verbatim", `${s.verified} / ${s.total} <span class="pill ${pct===100?"ok":"warn"}">${pct}%</span>`],
-    ["Elapsed", s.elapsed_s + "s"],
-    ["Model", s.model],
-    ["Tokens", `${(s.usage.input_tokens/1000).toFixed(1)}k in / ${(s.usage.output_tokens/1000).toFixed(1)}k out`],
-  ].map(([k,v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
-
-  $("#failures").innerHTML = (d.failures && d.failures.length)
-    ? `<div class="err">${d.failures.length} extraction group(s) failed and returned empty: ` +
-      d.failures.map(f => `<b>${esc(f.group)}</b> (${esc(f.error)})`).join(", ") +
-      `. Re-run to retry.</div>`
-    : "";
-
-  $("#themes").value = state.themes || "";
-  renderDraft();
-  renderChecks();
-  renderQueue();
+function showUpload(on){
+  show($("#uploadBox"), on);
+  show($("#results"), !on && state.order.length > 0);
+  show($("#cancelAdd"), on && state.order.length > 0);
+  $("#uploadTitle").textContent = state.order.length ? "Add another transcript" : "Add a transcript";
 }
 
+// -------------------------------------------------------------- panel bar
+function renderPanelBar(){
+  const bar = $("#panelbar");
+  const chips = state.order.map(ex => {
+    const d = state.experts[ex];
+    const total = Object.values(d.atoms).reduce((n, a) => n + a.length, 0);
+    const conf = Object.keys(state.marks).filter(k => k.indexOf(ex + ":") === 0 && state.marks[k] === "y").length;
+    return `<button class="exchip ${ex === state.sel ? "on" : ""}" data-ex="${esc(ex)}">
+              <span class="id">${esc(ex)}</span>
+              <span class="meta">${conf}/${total} confirmed</span>
+            </button>`;
+  }).join("");
+  bar.innerHTML = chips +
+    `<button id="addMore" class="btn-2" style="align-self:stretch">+ Add transcript</button>` +
+    (state.order.length ? `<button id="resetAll" class="btn-2" style="margin-left:auto">Start over</button>` : "");
+
+  bar.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => {
+    state.sel = b.dataset.ex; save(); renderAll();
+  });
+  $("#addMore").onclick = () => showUpload(true);
+  const ra = $("#resetAll");
+  if (ra) ra.onclick = () => {
+    if (!confirm("Clear every loaded interview and start over?")) return;
+    state = {pass: state.pass, file:null, experts:{}, order:[], sel:null,
+             marks:{}, themes:"", draft:null, checks:[]};
+    try { localStorage.removeItem(KEY); } catch(e){}
+    save(); renderAll();
+  };
+}
+
+// ------------------------------------------------------------------ render
+function renderAll(){
+  renderPanelBar();
+  if (!state.order.length){ showUpload(true); return; }
+  if (!state.sel || !state.experts[state.sel]) state.sel = state.order[0];
+  showUpload(false);
+  renderStats();
+  renderQueue();
+  renderRollup();
+  renderCoverage();
+  renderDraft();
+  renderChecks();
+  $("#themes").value = state.themes || "";
+}
+
+function renderStats(){
+  let atoms = 0, verified = 0, secs = 0, tin = 0, tout = 0;
+  state.order.forEach(ex => {
+    const s = state.experts[ex].stats;
+    atoms += s.total; verified += s.verified; secs += s.elapsed_s;
+    tin += s.usage.input_tokens; tout += s.usage.output_tokens;
+  });
+  const conf = Object.values(state.marks).filter(v => v === "y").length;
+  const pct = atoms ? Math.round(100 * verified / atoms) : 0;
+  $("#statbar").innerHTML = [
+    ["Interviews", state.order.length],
+    ["Atoms extracted", atoms],
+    ["Quotes verified verbatim", `${verified} / ${atoms} <span class="pill ${pct===100?"ok":"warn"}">${pct}%</span>`],
+    ["Confirmed", conf],
+    ["Extraction time", secs.toFixed(1) + "s"],
+    ["Tokens", `${(tin/1000).toFixed(1)}k in / ${(tout/1000).toFixed(1)}k out`],
+  ].map(([k,v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+
+  const fails = [];
+  state.order.forEach(ex => (state.experts[ex].failures || []).forEach(f =>
+    fails.push(`<b>${esc(ex)}/${esc(f.group)}</b> (${esc(f.error)})`)));
+  $("#failures").innerHTML = fails.length
+    ? `<div class="err">${fails.length} extraction group(s) failed and returned empty: ${fails.join(", ")}. Re-extract that interview to retry.</div>` : "";
+}
+
+// ------------------------------------------------------------------- queue
 function renderQueue(){
-  const d = state.data, out = [];
-  let total = 0, confirmedAll = 0, rejectedAll = 0;
+  const ex = state.sel, d = state.experts[ex];
+  if (!d){ $("#queue").innerHTML = ""; return; }
+  $("#queueWho").textContent = `${ex} · ${d.filename}`;
+
+  const out = [];
   for (const group of Object.keys(d.atoms)){
     const items = d.atoms[group] || [];
     const label = (d.labels && d.labels[group]) || group;
-    const conf = items.filter((_, i) => state.marks[atomId(group,i)] === "y").length;
-    total += items.length;
-    confirmedAll += conf;
-    rejectedAll += items.filter((_, i) => state.marks[atomId(group,i)] === "n").length;
-    out.push(
-      `<div class="grouphead"><h3>${esc(label)}</h3>` +
+    const conf = items.filter((_, i) => state.marks[atomId(ex,group,i)] === "y").length;
+    out.push(`<div class="grouphead"><h3>${esc(label)}</h3>` +
       `<span class="mute" style="font-size:13px">${items.length} atom${items.length===1?"":"s"}` +
-      (items.length ? ` · ${conf} confirmed` : "") + `</span></div>`
-    );
+      (items.length ? ` · ${conf} confirmed` : "") + `</span></div>`);
     if (!items.length){
       out.push(`<p class="mute" style="font-size:14px">Nothing extracted — an empty group is a valid answer when the expert was not asked.</p>`);
       continue;
     }
     items.forEach((a, i) => {
-      const id = atomId(group, i), mark = state.marks[id] || "";
+      const id = atomId(ex, group, i), mark = state.marks[id] || "";
       const cls = mark === "y" ? "confirmed" : mark === "n" ? "rejected" : "";
-      const state_label = mark === "y" ? `<span class="state">✓ confirmed</span>`
-                        : mark === "n" ? `<span class="state">✕ rejected</span>` : "";
+      const lab = mark === "y" ? `<span class="state">&#10003; confirmed</span>`
+                : mark === "n" ? `<span class="state">&#10005; rejected</span>` : "";
       out.push(`
         <div class="atom ${cls}" data-id="${id}">
           <div class="top">
@@ -510,244 +602,281 @@ function renderQueue(){
             <span class="pill ${a.verified ? "ok" : "bad"}">${a.verified ? "verified" : "quote not found"}</span>
             <span class="pill neutral">${esc(a.confidence)} confidence</span>
             <span class="mute" style="font-size:13px">@ ${esc(a.timestamp)}</span>
-            ${state_label}
+            ${lab}
           </div>
           <blockquote>${esc(a.quote)}</blockquote>
           <div class="acts">
-            <button data-m="y" class="${mark==="y"?"on-y":""}">${mark==="y"?"✓ Confirmed":"Confirm"}</button>
-            <button data-m="n" class="${mark==="n"?"on-n":""}">${mark==="n"?"✕ Rejected":"Reject"}</button>
+            <button data-m="y" class="${mark==="y"?"on-y":""}">${mark==="y"?"&#10003; Confirmed":"Confirm"}</button>
+            <button data-m="n" class="${mark==="n"?"on-n":""}">${mark==="n"?"&#10005; Rejected":"Reject"}</button>
           </div>
         </div>`);
     });
   }
   $("#queue").innerHTML = out.join("");
+  $("#queue").querySelectorAll(".atom").forEach(el =>
+    el.querySelectorAll(".acts button").forEach(b => b.onclick = () => {
+      const id = el.dataset.id, m = b.dataset.m;
+      state.marks[id] = (state.marks[id] === m) ? "" : m;
+      save(); renderQueue(); renderPanelBar(); renderStats(); renderRollup(); renderCoverage();
+    }));
 
-  // The running tally is the answer to "did that button do anything".
-  const pending = total - confirmedAll - rejectedAll;
-  $("#tallyN").textContent = `${confirmedAll} of ${total}`;
-  $("#tallyBar").style.width = total ? (100 * confirmedAll / total) + "%" : "0%";
-  $("#tallyNote").textContent =
-    rejectedAll || pending
-      ? `${rejectedAll} rejected · ${pending} still pending`
-      : (total ? "every atom reviewed" : "");
-
-  $("#queue").querySelectorAll(".atom").forEach(el => {
-    el.querySelectorAll(".acts button").forEach(b => {
-      b.onclick = () => {
-        const id = el.dataset.id, m = b.dataset.m;
-        state.marks[id] = (state.marks[id] === m) ? "" : m;
-        save(); renderQueue();
-      };
+  // Panel-wide tally: the review gate is about the whole panel, not one interview.
+  let total = 0, conf = 0, rej = 0;
+  state.order.forEach(e2 => {
+    const dd = state.experts[e2];
+    for (const g of Object.keys(dd.atoms)) dd.atoms[g].forEach((_, i) => {
+      total++;
+      const m = state.marks[atomId(e2,g,i)];
+      if (m === "y") conf++; else if (m === "n") rej++;
     });
   });
+  const pending = total - conf - rej;
+  $("#tallyN").textContent = `${conf} of ${total}`;
+  $("#tallyBar").style.width = total ? (100*conf/total) + "%" : "0%";
+  $("#tallyNote").textContent = (rej || pending)
+    ? `${rej} rejected · ${pending} still pending` : (total ? "every atom reviewed" : "");
 }
 
 $("#allYes").onclick = () => {
-  const d = state.data;
+  const ex = state.sel, d = state.experts[ex]; if (!d) return;
   for (const g of Object.keys(d.atoms))
-    (d.atoms[g] || []).forEach((a, i) => { if (a.verified) state.marks[atomId(g,i)] = "y"; });
-  save(); renderQueue();
+    d.atoms[g].forEach((a, i) => { if (a.verified) state.marks[atomId(ex,g,i)] = "y"; });
+  save(); renderAll();
 };
-$("#allClear").onclick = () => { state.marks = {}; save(); renderQueue(); };
+$("#allClear").onclick = () => {
+  const ex = state.sel;
+  Object.keys(state.marks).forEach(k => { if (k.indexOf(ex + ":") === 0) delete state.marks[k]; });
+  save(); renderAll();
+};
 
 // ----------------------------------------------------------------- rollups
-function confirmed(group){
-  const d = state.data;
-  return (d.atoms[group] || []).filter((_, i) => state.marks[atomId(group,i)] === "y");
-}
-
 function table(head, rows){
   if (!rows.length) return "";
   return `<div class="scroll"><table><thead><tr>` +
     head.map(h => `<th${h.n?' class="num"':''}>${esc(h.t)}</th>`).join("") +
     `</tr></thead><tbody>` +
-    rows.map(r => `<tr>` + r.map((c, i) =>
-      `<td${head[i].n?' class="num"':''}>${c}</td>`).join("") + `</tr>`).join("") +
+    rows.map(r => `<tr>` + r.map((c,i) => `<td${head[i].n?' class="num"':''}>${c}</td>`).join("") + `</tr>`).join("") +
     `</tbody></table></div>`;
 }
 
 function renderRollup(){
-  const out = [];
+  const out = [], experts = panelExperts();
 
-  // ratings: criterion x vendor grid, built only from confirmed atoms
-  const rat = confirmed("ratings");
+  // Ratings: criterion x vendor, each cell carrying every expert who scored it.
+  // Divergence is shown, never averaged.
+  const rat = confirmedGroup("ratings");
   if (rat.length){
     const vendors = [...new Set(rat.map(r => r.vendor))].sort();
     const crits = [...new Set(rat.map(r => r.criterion))];
     const cell = {};
-    rat.forEach(r => { cell[r.criterion + "|" + r.vendor] = r; });
-    out.push(`<h3 style="margin-top:var(--s5)">Vendor ratings</h3>` + table(
-      [{t:"Criterion"}, ...vendors.map(v => ({t:v, n:true}))],
-      crits.map(c => [esc(c), ...vendors.map(v => {
-        const r = cell[c + "|" + v];
-        return r ? `${r.score}<span class="mute" style="font-size:12px">/${r.scale_max}</span>` : `<span class="mute">—</span>`;
-      })])
+    rat.forEach(r => { const k = r.criterion+"|"+r.vendor; (cell[k] = cell[k] || []).push(r); });
+    out.push(`<h3 style="margin-top:var(--s5)">Vendor ratings, as asked</h3>` + table(
+      [{t:"Criterion"}, ...vendors.map(v => ({t:v, n:true})), {t:"Rated by", n:true}],
+      crits.map(c => {
+        const raters = new Set();
+        const cells = vendors.map(v => {
+          const rs = cell[c+"|"+v];
+          if (!rs) return `<span class="mute">&mdash;</span>`;
+          rs.forEach(r => raters.add(r.expert));
+          const scores = [...new Set(rs.map(r => r.score))];
+          const spread = scores.length > 1 ? ` <span class="pill warn">split</span>` : "";
+          return rs.map(r => `${r.score}<span class="mute" style="font-size:12px">/${r.scale_max}</span> <span class="ex">${esc(r.expert)}</span>`).join("<br>") + spread;
+        });
+        return [esc(c), ...cells,
+          `${raters.size} of ${experts.length}` +
+          (raters.size === experts.length && experts.length > 1 ? ` <span class="pill ok">all</span>` : "")];
+      })
     ));
   }
 
-  const price = confirmed("pricing");
-  if (price.length){
-    out.push(`<h3 style="margin-top:var(--s5)">Pricing</h3>` + table(
-      [{t:"Vendor"},{t:"USD / user / month", n:true},{t:"Basis"},{t:"Timestamp"}],
-      price.sort((a,b) => b.usd_per_user_month - a.usd_per_user_month).map(p => [
-        esc(p.vendor),
-        `${p.operator && p.operator !== "=" ? esc(p.operator) + " " : ""}$${p.usd_per_user_month}`,
+  const price = confirmedGroup("pricing");
+  if (price.length)
+    out.push(`<h3 style="margin-top:var(--s5)">Price per user per month</h3>` + table(
+      [{t:"Vendor"},{t:"Expert"},{t:"USD / user / month", n:true},{t:"Basis"},{t:"At"}],
+      price.slice().sort((a,b) => b.usd_per_user_month - a.usd_per_user_month).map(p => [
+        esc(p.vendor), `<b>${esc(p.expert)}</b>`,
+        `${p.operator && p.operator !== "=" ? esc(p.operator)+" " : ""}$${p.usd_per_user_month}`,
         `<span class="pill neutral">${esc(p.basis)}</span>`,
-        `<span class="mute">${esc(p.timestamp)}</span>`
-      ])
-    ));
-  }
+        `<span class="mute">${esc(p.timestamp)}</span>`])));
 
-  const terms = confirmed("commercial_terms");
-  if (terms.length){
-    out.push(`<h3 style="margin-top:var(--s5)">Commercial terms</h3>` + table(
-      [{t:"Field"},{t:"Low", n:true},{t:"High", n:true}],
-      terms.map(t => [esc(t.field.replace(/_/g," ")), t.low, t.high])
-    ));
-  }
+  const terms = confirmedGroup("commercial_terms");
+  if (terms.length)
+    out.push(`<h3 style="margin-top:var(--s5)">Commercial terms and implementation</h3>` + table(
+      [{t:"Field"},{t:"Expert"},{t:"Low", n:true},{t:"High", n:true}],
+      terms.map(t => [esc(t.field.replace(/_/g," ")), `<b>${esc(t.expert)}</b>`, t.low, t.high])));
 
-  const loy = confirmed("loyalty");
-  if (loy.length){
-    out.push(`<h3 style="margin-top:var(--s5)">Loyalty & satisfaction</h3>` + table(
-      [{t:"Field"},{t:"Value", n:true},{t:"Scale asked", n:true},{t:"Scale answered", n:true},{t:""}],
-      loy.map(l => [
-        esc(l.field.replace(/_/g," ")), l.value, l.scale_asked_max, l.scale_answered_max,
-        l.scale_asked_max !== l.scale_answered_max
-          ? `<span class="pill warn">scale mismatch</span>` : ""
-      ])
-    ));
-  }
+  const loy = confirmedGroup("loyalty");
+  if (loy.length)
+    out.push(`<h3 style="margin-top:var(--s5)">Loyalty and satisfaction</h3>` + table(
+      [{t:"Field"},{t:"Expert"},{t:"Value", n:true},{t:"Asked", n:true},{t:"Answered", n:true},{t:""}],
+      loy.map(l => [esc(l.field.replace(/_/g," ")), `<b>${esc(l.expert)}</b>`, l.value,
+        l.scale_asked_max, l.scale_answered_max,
+        l.scale_asked_max !== l.scale_answered_max ? `<span class="pill warn">scale mismatch</span>` : ""])));
 
-  const sw = confirmed("switching");
-  if (sw.length){
+  const sw = confirmedGroup("switching");
+  if (sw.length)
     out.push(`<h3 style="margin-top:var(--s5)">Switching</h3>` + table(
-      [{t:"Difficulty (1-10)", n:true},{t:"Would evaluate next"},{t:"Trigger"}],
-      sw.map(s => [s.difficulty_1_10, esc(s.next_platform || "—"), esc(s.trigger || "—")])
-    ));
-  }
+      [{t:"Expert"},{t:"Difficulty (1-10)", n:true},{t:"Would evaluate next"},{t:"Trigger"}],
+      sw.map(s => [`<b>${esc(s.expert)}</b>`, s.difficulty_1_10,
+                   esc(s.next_platform || "—"), esc(s.trigger || "—")])));
 
-  const rc = confirmed("ranked_criteria");
+  const rc = confirmedGroup("ranked_criteria");
   if (rc.length){
-    out.push(`<h3 style="margin-top:var(--s5)">Ranked criteria</h3>` + table(
-      [{t:"Rank", n:true},{t:"Criterion"}],
-      rc.sort((a,b) => a.rank - b.rank).map(r => [r.rank, esc(r.criterion)])
-    ));
+    const byEx = {};
+    rc.forEach(r => { (byEx[r.expert] = byEx[r.expert] || []).push(r); });
+    const cols = Object.keys(byEx);
+    const ranks = [...new Set(rc.map(r => r.rank))].sort((a,b) => a-b);
+    out.push(`<h3 style="margin-top:var(--s5)">Ranked criteria, side by side</h3>` + table(
+      [{t:"Rank", n:true}, ...cols.map(e => ({t:e}))],
+      ranks.map(rk => [rk, ...cols.map(e => {
+        const hit = byEx[e].find(r => r.rank === rk);
+        return hit ? esc(hit.criterion) : `<span class="mute">&mdash;</span>`;
+      })])));
   }
 
   $("#rollup").innerHTML = out.length ? out.join("")
     : `<p class="mute">No atoms confirmed yet. Confirm some in the review queue and they appear here.</p>`;
 }
 
-// ------------------------------------------------------------ theme drafting
-function confirmedMap(){
-  const d = state.data, out = {};
-  if (!d) return out;
-  for (const g of Object.keys(d.atoms))
-    (d.atoms[g] || []).forEach((a, i) => {
-      const id = atomId(g, i);
-      if (state.marks[id] === "y") out[id] = a;
-    });
-  return out;
-}
-
-function describeAtom(a){
-  const fields = Object.keys(a).filter(k => !CITE.has(k))
-    .map(k => `${k.replace(/_/g," ")} ${a[k]}`).join(", ");
-  return `${esc(fields)} — “${esc(a.quote)}” @ ${esc(a.timestamp)}`;
-}
-
-$("#draftBtn").onclick = async () => {
-  const map = confirmedMap(), n = Object.keys(map).length;
-  err($("#draftErr"), "");
-  if (!n){
-    err($("#draftErr"), "Nothing confirmed yet. Confirm atoms in the review queue first — the draft is built only from what you approved.");
-    return;
+// ---------------------------------------------------------------- coverage
+function renderCoverage(){
+  const map = confirmedMap(), experts = panelExperts();
+  if (!Object.keys(map).length){
+    $("#coverage").innerHTML = `<p class="mute">Nothing confirmed yet.</p>`; return;
   }
-  const btn = $("#draftBtn");
-  btn.disabled = true;
-  $("#draftNote").innerHTML = `<span class="spin"></span> drafting from ${n} confirmed atom${n===1?"":"s"}`;
+  const rat = confirmedGroup("ratings"), price = confirmedGroup("pricing");
+  const out = [];
+
+  out.push(`<h3>Panel</h3>` + table(
+    [{t:"Expert"},{t:"Transcript"},{t:"Confirmed atoms", n:true}],
+    experts.map(e => [`<b>${esc(e)}</b>`, esc(state.experts[e].filename),
+      Object.values(map).filter(a => a.expert === e).length])));
+
+  // Vendors: rated versus actually run. "Runs it" = somebody pays for it.
+  const rated = {}, owned = {};
+  rat.forEach(r => { (rated[r.vendor] = rated[r.vendor] || new Set()).add(r.expert); });
+  price.filter(p => p.basis === "paid").forEach(p => { (owned[p.vendor] = owned[p.vendor] || new Set()).add(p.expert); });
+  const vendors = [...new Set(Object.keys(rated).concat(Object.keys(owned)))].sort();
+  if (vendors.length)
+    out.push(`<h3 style="margin-top:var(--s5)">Vendors: rated versus actually run</h3>` + table(
+      [{t:"Vendor"},{t:"Rated by", n:true},{t:"Runs it today"},{t:""}],
+      vendors.map(v => {
+        const r = rated[v] ? rated[v].size : 0, o = owned[v] ? owned[v].size : 0;
+        return [esc(v), r || `<span class="mute">0</span>`,
+                o ? [...owned[v]].join(", ") : `<span class="mute">nobody</span>`,
+                (r && !o) ? `<span class="pill warn">rated but nobody runs it</span>` : ""];
+      })));
+
+  // Which criteria are actually comparable across the panel.
+  const byCrit = {};
+  rat.forEach(r => { (byCrit[r.criterion] = byCrit[r.criterion] || new Set()).add(r.expert); });
+  const crits = Object.keys(byCrit);
+  if (crits.length){
+    const n = experts.length;
+    out.push(`<h3 style="margin-top:var(--s5)">Criterion comparability</h3>` + table(
+      [{t:"Criterion"},{t:"Rated by", n:true},{t:"Comparable across the panel"}],
+      crits.sort((a,b) => byCrit[b].size - byCrit[a].size).map(c => {
+        const k = byCrit[c].size;
+        return [esc(c), `${k} of ${n}`,
+          (k === n && n > 1) ? `<span class="pill ok">yes, all ${n}</span>`
+          : k > 1 ? `<span class="pill warn">partial &mdash; ${[...byCrit[c]].join(", ")}</span>`
+                  : `<span class="pill bad">one expert only (${[...byCrit[c]][0]})</span>`];
+      })));
+
+    const cells = crits.length * [...new Set(rat.map(r => r.vendor))].length * experts.length;
+    out.push(`<p class="mute" style="margin-top:var(--s4)">Matrix fill rate: <b>${
+      cells ? Math.round(100*rat.length/cells) : 0}%</b> &mdash; ${rat.length} of a possible ${cells} ` +
+      `criterion x vendor x expert cells carry a confirmed score. A sparse matrix is not a flaw; ` +
+      `it is what happens when experts are asked about the vendors they actually know.</p>`);
+  }
+
+  const gaps = [];
+  if (experts.length < 3)
+    gaps.push(`Only ${experts.length} interview${experts.length===1?"":"s"} loaded — no claim here can describe a market.`);
+  crits.filter(c => byCrit[c].size === 1).forEach(c =>
+    gaps.push(`"${c}" was rated by one expert only, so it cannot be compared across the panel.`));
+  vendors.filter(v => rated[v] && !owned[v]).forEach(v =>
+    gaps.push(`${v} is rated but nobody in the panel runs it — those scores are impressions, not operating experience.`));
+  confirmedGroup("loyalty").filter(l => l.scale_asked_max !== l.scale_answered_max).forEach(l =>
+    gaps.push(`${l.expert} answered "${l.field.replace(/_/g," ")}" on a ${l.scale_answered_max}-point scale when a ${l.scale_asked_max}-point scale was asked — not comparable to the others as written.`));
+  if (gaps.length)
+    out.push(`<div class="nots"><h3>What this panel cannot support</h3><ul>` +
+             gaps.map(g => `<li>${esc(g)}</li>`).join("") + `</ul></div>`);
+
+  $("#coverage").innerHTML = out.join("");
+}
+
+// ------------------------------------------------------------------- tabs
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+  ["queue","rollup","coverage","themes","claim"].forEach(t => show($("#tab-"+t), t === b.dataset.tab));
+});
+
+// --------------------------------------------------------------- synthesis
+$("#draftBtn").onclick = async () => {
+  const map = confirmedMap(), n = Object.keys(map).length, experts = panelExperts();
+  err($("#draftErr"), "");
+  if (!n){ err($("#draftErr"), "Nothing confirmed yet. Confirm atoms in the review queue first — the draft is built only from what you approved."); return; }
+  const btn = $("#draftBtn"); btn.disabled = true;
+  $("#draftNote").innerHTML = `<span class="spin"></span> drafting from ${n} confirmed atom${n===1?"":"s"} across ${experts.length} interview${experts.length===1?"":"s"}`;
   try {
     const r = await fetch("/api/themes", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ passcode: state.pass, expert: state.data.expert,
-                             n_experts: 1, confirmed: map })
+      body: JSON.stringify({passcode: state.pass, experts, n_experts: experts.length, confirmed: map})
     });
     const j = await r.json().catch(() => ({ok:false, error:"Server sent a non-JSON response."}));
     if (!r.ok || !j.ok) throw new Error(j.error || ("Server returned " + r.status));
     state.draft = j; save(); renderDraft();
-  } catch (e){
-    err($("#draftErr"), e.message || "Drafting failed.");
-  } finally {
-    btn.disabled = false;
-    $("#draftNote").textContent = "";
-  }
+  } catch (e){ err($("#draftErr"), e.message || "Drafting failed."); }
+  finally { btn.disabled = false; $("#draftNote").textContent = ""; }
 };
 
 function renderDraft(){
   const j = state.draft;
   if (!j){ $("#draft").innerHTML = ""; return; }
-  const map = confirmedMap();
-  const out = [];
-
+  const map = confirmedMap(), out = [];
   out.push(`<p class="mute" style="font-size:13px">Drafted by ${esc(j.model)} from ` +
-           `${j.atoms_used} confirmed atom(s) in ${j.elapsed_s}s. Every citation below ` +
-           `was checked against that set server-side.</p>`);
+           `${j.atoms_used} confirmed atom(s) in ${j.elapsed_s}s. Every citation below was ` +
+           `checked against that set server-side.</p>`);
 
   const sm = j.summary;
   if (sm && sm.text)
-    out.push(`
-      <div class="summ">
-        <h3>Summary</h3>
-        <p>${esc(sm.text)}</p>
-        <div style="margin-top:var(--s3)">
-          <span class="pill ${sm.citations_resolve ? "ok" : "bad"}">${
-            sm.citations_resolve ? "citations resolve" : "unresolved citation"}</span>
-          <details style="display:inline-block;margin-left:var(--s3);font-size:13px">
-            <summary>${sm.atom_ids.length} supporting atom${sm.atom_ids.length===1?"":"s"}</summary>
-            <ul style="margin:var(--s2) 0 0;padding-left:var(--s5);font-size:14px">${
-              sm.atom_ids.map(id => `<li>${map[id] ? describeAtom(map[id]) : esc(id)}</li>`).join("")}</ul>
-          </details>
-          <button id="copySumm" class="btn-2" style="margin-left:var(--s3);font-size:13px">Copy summary</button>
-        </div>
-      </div>`);
-
-  if (j.dropped_citations && j.dropped_citations.length)
-    out.push(`<div class="err">${j.dropped_citations.length} citation(s) pointed at atoms ` +
-             `that were not confirmed and were dropped. A theme resting only on those is ` +
-             `flagged below.</div>`);
-
-  (j.themes || []).forEach(t => {
-    out.push(`
-      <div class="theme">
-        <div class="lbl">${esc(t.theme)}</div>
-        <div class="take">${esc(t.takeaway)}</div>
-        <span class="pill neutral">${esc(t.strength)}</span>
-        <span class="pill ${t.citations_resolve ? "ok" : "bad"}">${
-          t.citations_resolve ? "citations resolve" : "unresolved citation"}</span>
-        <details style="margin-top:var(--s3)">
-          <summary>${t.atom_ids.length} supporting atom${t.atom_ids.length===1?"":"s"}</summary>
-          <ul>${t.atom_ids.map(id => `<li>${map[id] ? describeAtom(map[id]) : esc(id)}</li>`).join("")}</ul>
+    out.push(`<div class="summ"><h3>Summary</h3><p>${esc(sm.text)}</p>
+      <div style="margin-top:var(--s3)">
+        <span class="pill ${sm.citations_resolve ? "ok":"bad"}">${sm.citations_resolve ? "citations resolve":"unresolved citation"}</span>
+        <details style="display:inline-block;margin-left:var(--s3)">
+          <summary>${sm.atom_ids.length} supporting atom${sm.atom_ids.length===1?"":"s"}</summary>
+          <ul>${sm.atom_ids.map(id => `<li>${map[id] ? describeAtom(map[id]) : esc(id)}</li>`).join("")}</ul>
         </details>
-      </div>`);
-  });
+        <button id="copySumm" class="btn-2" style="margin-left:var(--s3);font-size:13px">Copy summary</button>
+      </div></div>`);
+
+  (j.themes || []).forEach(t => out.push(`
+    <div class="theme">
+      <div class="lbl">${esc(t.theme)}</div>
+      <div class="take">${esc(t.takeaway)}</div>
+      <span class="pill acc">${esc(t.strength)}</span>
+      <span class="pill ${t.citations_resolve ? "ok":"bad"}">${t.citations_resolve ? "citations resolve":"unresolved citation"}</span>
+      <details style="margin-top:var(--s3)">
+        <summary>${t.atom_ids.length} supporting atom${t.atom_ids.length===1?"":"s"}</summary>
+        <ul>${t.atom_ids.map(id => `<li>${map[id] ? describeAtom(map[id]) : esc(id)}</li>`).join("")}</ul>
+      </details>
+    </div>`));
 
   if (j.not_supported && j.not_supported.length)
     out.push(`<div class="nots"><h3>What this panel does not support</h3><ul>` +
              j.not_supported.map(s => `<li>${esc(s)}</li>`).join("") + `</ul></div>`);
 
   $("#draft").innerHTML = out.join("");
-
   const cs = $("#copySumm");
   if (cs) cs.onclick = async () => {
-    try {
-      await navigator.clipboard.writeText(j.summary.text);
-      cs.textContent = "Copied";
-      setTimeout(() => { cs.textContent = "Copy summary"; }, 1600);
-    } catch (e) { cs.textContent = "Select the text to copy"; }
+    try { await navigator.clipboard.writeText(j.summary.text); cs.textContent = "Copied";
+          setTimeout(() => { cs.textContent = "Copy summary"; }, 1600); }
+    catch (e){ cs.textContent = "Select the text to copy"; }
   };
 }
 
-// ----------------------------------------------------------- slide check
+// -------------------------------------------------------------- claim check
 const VCLASS = {"supported":"v-supported","partially supported":"v-partial",
                 "not supported":"v-none","contradicted":"v-contra"};
 const VPILL  = {"supported":"ok","partially supported":"warn",
@@ -755,32 +884,25 @@ const VPILL  = {"supported":"ok","partially supported":"warn",
 
 $("#checkBtn").onclick = async () => {
   const claim = $("#claim").value.trim();
-  const map = confirmedMap(), n = Object.keys(map).length;
+  const map = confirmedMap(), n = Object.keys(map).length, experts = panelExperts();
   err($("#checkErr"), "");
   if (claim.length < 10){ err($("#checkErr"), "Write the claim you want graded."); return; }
   if (!n){ err($("#checkErr"), "Nothing confirmed yet. A claim can only be graded against atoms you approved."); return; }
-
-  const btn = $("#checkBtn");
-  btn.disabled = true;
-  $("#checkNote").innerHTML = `<span class="spin"></span> grading against ${n} confirmed atom${n===1?"":"s"}`;
+  const btn = $("#checkBtn"); btn.disabled = true;
+  $("#checkNote").innerHTML = `<span class="spin"></span> grading against ${n} confirmed atom${n===1?"":"s"} from ${experts.length} interview${experts.length===1?"":"s"}`;
   try {
     const r = await fetch("/api/check", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ passcode: state.pass, expert: state.data.expert,
-                             n_experts: 1, claim, confirmed: map })
+      body: JSON.stringify({passcode: state.pass, experts, n_experts: experts.length, claim, confirmed: map})
     });
     const j = await r.json().catch(() => ({ok:false, error:"Server sent a non-JSON response."}));
     if (!r.ok || !j.ok) throw new Error(j.error || ("Server returned " + r.status));
     state.checks = [j].concat(state.checks || []);
     $("#claim").value = "";
     save(); renderChecks();
-  } catch (e){
-    err($("#checkErr"), e.message || "Check failed.");
-  } finally {
-    btn.disabled = false; $("#checkNote").textContent = "";
-  }
+  } catch (e){ err($("#checkErr"), e.message || "Check failed."); }
+  finally { btn.disabled = false; $("#checkNote").textContent = ""; }
 };
-
 $("#checkClear").onclick = () => { state.checks = []; save(); renderChecks(); };
 
 function renderChecks(){
@@ -790,29 +912,20 @@ function renderChecks(){
     <div class="verdict ${VCLASS[c.verdict] || ""}">
       <div class="claim">${esc(c.claim)}</div>
       <span class="pill ${VPILL[c.verdict] || "neutral"}">${esc(c.verdict)}</span>
-      <span class="pill ${c.citations_resolve ? "ok" : "bad"}">${
-        c.citations_resolve ? "citations resolve" : "unresolved citation"}</span>
+      <span class="pill ${c.citations_resolve ? "ok":"bad"}">${c.citations_resolve ? "citations resolve":"unresolved citation"}</span>
       <p style="margin-top:var(--s3)">${esc(c.reasoning)}</p>
-      ${(c.caveats && c.caveats.length) ? `<details style="font-size:14px">
-        <summary>${c.caveats.length} caveat${c.caveats.length===1?"":"s"}</summary>
-        <ul style="margin:var(--s2) 0 0;padding-left:var(--s5)">${
-          c.caveats.map(x => `<li>${esc(x)}</li>`).join("")}</ul></details>` : ""}
-      ${(c.atom_ids && c.atom_ids.length) ? `<details style="font-size:14px;margin-top:var(--s2)">
+      ${(c.caveats && c.caveats.length) ? `<details><summary>${c.caveats.length} caveat${c.caveats.length===1?"":"s"}</summary>
+        <ul>${c.caveats.map(x => `<li>${esc(x)}</li>`).join("")}</ul></details>` : ""}
+      ${(c.atom_ids && c.atom_ids.length) ? `<details style="margin-top:var(--s2)">
         <summary>${c.atom_ids.length} atom${c.atom_ids.length===1?"":"s"} bearing on this</summary>
-        <ul style="margin:var(--s2) 0 0;padding-left:var(--s5)">${
-          c.atom_ids.map(id => `<li>${map[id] ? describeAtom(map[id]) : esc(id)}</li>`).join("")}</ul></details>` : ""}
+        <ul>${c.atom_ids.map(id => `<li>${map[id] ? describeAtom(map[id]) : esc(id)}</li>`).join("")}</ul></details>` : ""}
       <div class="foot"><span class="lab">Paste-ready footnote</span>${esc(c.footnote)}</div>
       <button class="btn-2" data-copy="${idx}" style="margin-top:var(--s2);font-size:13px">Copy footnote</button>
     </div>`).join("");
-
-  $("#checks").querySelectorAll("[data-copy]").forEach(b => {
-    b.onclick = async () => {
-      try {
-        await navigator.clipboard.writeText(list[+b.dataset.copy].footnote);
-        b.textContent = "Copied";
-        setTimeout(() => { b.textContent = "Copy footnote"; }, 1600);
-      } catch (e) { b.textContent = "Select the text above to copy"; }
-    };
+  $("#checks").querySelectorAll("[data-copy]").forEach(b => b.onclick = async () => {
+    try { await navigator.clipboard.writeText(list[+b.dataset.copy].footnote);
+          b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy footnote"; }, 1600); }
+    catch (e){ b.textContent = "Select the text above to copy"; }
   });
 }
 
@@ -826,11 +939,7 @@ $("#themes").addEventListener("input", () => {
 
 // -------------------------------------------------------------------- boot
 load();
-if (state.pass){
-  show($("#gate"), false);
-  show($("#upload"), true);
-  if (state.data) render();
-}
+if (state.pass){ show($("#gate"), false); show($("#work"), true); renderAll(); }
 </script>
 </body>
 </html>
