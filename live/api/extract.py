@@ -27,8 +27,8 @@ from http.server import BaseHTTPRequestHandler
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from _pipeline import (  # noqa: E402
-    GROUPS, GROUP_LABELS, MODEL, THEME_MODEL, draft_themes, extract_group,
-    verify_citations,
+    GROUPS, GROUP_LABELS, MODEL, THEME_MODEL, check_claim, draft_themes,
+    extract_group, verify_citations,
 )
 
 MAX_BYTES = 4 * 1024 * 1024        # a long transcript is ~100KB; this is generous
@@ -129,6 +129,47 @@ def run_extraction(text, expert_label):
 MAX_ATOMS = 400
 
 
+def confirmed_from(payload):
+    """Pull and validate the confirmed-atom set both judgement routes depend on."""
+    confirmed = payload.get("confirmed") or {}
+    if not isinstance(confirmed, dict) or not confirmed:
+        raise Bad(400, "No confirmed atoms were sent. Confirm some atoms first.")
+    if len(confirmed) > MAX_ATOMS:
+        raise Bad(413, f"More than {MAX_ATOMS} atoms sent.")
+    for aid, a in confirmed.items():
+        if not isinstance(a, dict) or "quote" not in a:
+            raise Bad(400, f"Atom {aid} is malformed.")
+    return confirmed
+
+
+def expert_note_from(payload):
+    expert = payload.get("expert") or "this expert"
+    n = payload.get("n_experts") or 1
+    return (f"These atoms come from {n} expert interview{'' if n == 1 else 's'} "
+            f"(label: {expert}). "
+            + ("Because this is a single expert, nothing here may be written or graded "
+               "as if the whole panel agreed." if n == 1 else ""))
+
+
+def run_check(payload):
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise Bad(500, "Server is missing ANTHROPIC_API_KEY.")
+    claim = (payload.get("claim") or "").strip()
+    if len(claim) < 10:
+        raise Bad(400, "Write a claim to check — at least a sentence.")
+    if len(claim) > 2000:
+        raise Bad(413, "Claim is too long.")
+    confirmed = confirmed_from(payload)
+
+    import anthropic
+    result = check_claim(anthropic.Anthropic(), claim, confirmed,
+                         expert_note_from(payload))
+    result["ok"] = True
+    result["model"] = THEME_MODEL
+    result["atoms_used"] = len(confirmed)
+    return result
+
+
 def run_themes(payload):
     """Draft themes from atoms the client says the human confirmed.
 
@@ -138,26 +179,11 @@ def run_themes(payload):
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise Bad(500, "Server is missing ANTHROPIC_API_KEY.")
 
-    confirmed = payload.get("confirmed") or {}
-    if not isinstance(confirmed, dict) or not confirmed:
-        raise Bad(400, "No confirmed atoms were sent. Confirm some atoms first.")
-    if len(confirmed) > MAX_ATOMS:
-        raise Bad(413, f"More than {MAX_ATOMS} atoms sent.")
-    for aid, a in confirmed.items():
-        if not isinstance(a, dict) or "quote" not in a:
-            raise Bad(400, f"Atom {aid} is malformed.")
-
-    expert = payload.get("expert") or "this expert"
-    n_experts = payload.get("n_experts") or 1
-    note = (
-        f"These atoms come from {n_experts} expert interview"
-        f"{'' if n_experts == 1 else 's'} (label: {expert}). "
-        + ("Because this is a single expert, no theme may be written as if the whole "
-           "panel agreed." if n_experts == 1 else "")
-    )
+    confirmed = confirmed_from(payload)
 
     import anthropic
-    themes, not_supported, dropped = draft_themes(anthropic.Anthropic(), confirmed, note)
+    themes, not_supported, dropped = draft_themes(
+        anthropic.Anthropic(), confirmed, expert_note_from(payload))
     return {
         "ok": True,
         "themes": themes,
@@ -208,8 +234,10 @@ class handler(BaseHTTPRequestHandler):
             check_passcode(payload.get("passcode"))
 
             # One entrypoint serves both routes; branch on the path.
-            if self.path.rstrip("/").endswith("/themes"):
-                result = run_themes(payload)
+            route = self.path.rstrip("/")
+            if route.endswith("/themes") or route.endswith("/check"):
+                result = run_themes(payload) if route.endswith("/themes") \
+                    else run_check(payload)
                 result["elapsed_s"] = round(time.time() - started, 1)
                 self._send(200, result)
                 return

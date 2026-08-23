@@ -122,6 +122,16 @@
   .theme summary{cursor:pointer;color:var(--mute);font-size:13px}
   .theme details ul{margin:var(--s2) 0 0;padding-left:var(--s5);color:var(--ink-2)}
   .theme details li{margin-bottom:var(--s1)}
+  .verdict{border:1px solid var(--line);border-left:4px solid var(--rule);
+           border-radius:var(--r-sm);padding:var(--s4);margin-bottom:var(--s3);background:var(--panel)}
+  .verdict.v-supported{border-left-color:var(--ok)}
+  .verdict.v-partial{border-left-color:var(--warn)}
+  .verdict.v-none,.verdict.v-contra{border-left-color:var(--sq)}
+  .verdict .claim{font-size:16px;line-height:1.45;margin-bottom:var(--s3)}
+  .foot{background:var(--chip);border-radius:var(--r-sm);padding:var(--s3);
+        font-size:13px;line-height:1.5;color:var(--ink-2);margin-top:var(--s3)}
+  .foot .lab{font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+             color:var(--mute);font-weight:700;display:block;margin-bottom:var(--s1)}
   .nots{background:var(--warnbg);border:1px solid #e8d5a8;border-radius:var(--r-sm);
         padding:var(--s4);margin-top:var(--s4)}
   .nots h3{color:var(--warn);margin-bottom:var(--s2)}
@@ -202,6 +212,7 @@
         <button data-tab="queue" class="on">Review queue</button>
         <button data-tab="rollup">Rollups</button>
         <button data-tab="themes">Themes</button>
+        <button data-tab="summary">Summary</button>
       </div>
 
       <div id="tab-queue">
@@ -249,6 +260,25 @@
         <textarea id="themes" placeholder="What does this panel actually support?"></textarea>
         <div id="themeSaved" class="mute" style="font-size:13px;margin-top:var(--s2)"></div>
       </div>
+
+      <div id="tab-summary" class="hide">
+        <p class="mute">
+          Write the claim you want on the slide. It gets graded against your confirmed
+          atoms and comes back with a verdict, the atoms that bear on it, what a reader
+          would wrongly assume, and a footnote you can paste under the number.
+        </p>
+        <div style="margin:var(--s4) 0">
+          <textarea id="claim" style="min-height:80px"
+            placeholder="e.g. ServiceNow is priced at roughly 2.7x what mid-market buyers actually pay"></textarea>
+          <div style="display:flex;gap:var(--s4);align-items:center;margin-top:var(--s3);flex-wrap:wrap">
+            <button id="checkBtn" class="btn">Check this claim</button>
+            <button id="checkClear" class="btn-2">Clear checked</button>
+            <span id="checkNote" class="mute" style="font-size:13px"></span>
+          </div>
+        </div>
+        <div id="checkErr" class="err hide"></div>
+        <div id="checks"></div>
+      </div>
     </div>
   </section>
 
@@ -266,14 +296,14 @@
 const $ = (s) => document.querySelector(s);
 const KEY = "synq.live.v1";
 
-let state = { pass:"", file:null, data:null, marks:{}, themes:"", draft:null };
+let state = { pass:"", file:null, data:null, marks:{}, themes:"", draft:null, checks:[] };
 
 // ------------------------------------------------------------------ storage
 function save(){
   try {
     sessionStorage.setItem(KEY + ".pass", state.pass);
     localStorage.setItem(KEY, JSON.stringify({
-      data: state.data, marks: state.marks, themes: state.themes, draft: state.draft
+      data: state.data, marks: state.marks, themes: state.themes, draft: state.draft, checks: state.checks
     }));
   } catch (e) { /* private window, quota — the app still works, just forgets */ }
 }
@@ -287,6 +317,7 @@ function load(){
       state.marks = o.marks || {};
       state.themes = o.themes || "";
       state.draft = o.draft || null;
+      state.checks = o.checks || [];
     }
   } catch (e) { /* ignore */ }
 }
@@ -397,8 +428,8 @@ $("#run").onclick = async () => {
 };
 
 $("#reset").onclick = () => {
-  state.data = null; state.marks = {}; state.themes = ""; state.draft = null;
-  $("#draft").innerHTML = "";
+  state.data = null; state.marks = {}; state.themes = ""; state.draft = null; state.checks = [];
+  $("#draft").innerHTML = ""; $("#checks").innerHTML = "";
   try { localStorage.removeItem(KEY); } catch(e){}
   show($("#results"), false);
   show($("#upload"), true);
@@ -409,7 +440,7 @@ $("#reset").onclick = () => {
 document.querySelectorAll(".tabs button").forEach(b => {
   b.onclick = () => {
     document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
-    ["queue","rollup","themes"].forEach(t => show($("#tab-" + t), t === b.dataset.tab));
+    ["queue","rollup","themes","summary"].forEach(t => show($("#tab-" + t), t === b.dataset.tab));
     if (b.dataset.tab === "rollup") renderRollup();
   };
 });
@@ -440,6 +471,7 @@ function render(){
 
   $("#themes").value = state.themes || "";
   renderDraft();
+  renderChecks();
   renderQueue();
 }
 
@@ -682,6 +714,75 @@ function renderDraft(){
              j.not_supported.map(s => `<li>${esc(s)}</li>`).join("") + `</ul></div>`);
 
   $("#draft").innerHTML = out.join("");
+}
+
+// ----------------------------------------------------------- slide check
+const VCLASS = {"supported":"v-supported","partially supported":"v-partial",
+                "not supported":"v-none","contradicted":"v-contra"};
+const VPILL  = {"supported":"ok","partially supported":"warn",
+                "not supported":"bad","contradicted":"bad"};
+
+$("#checkBtn").onclick = async () => {
+  const claim = $("#claim").value.trim();
+  const map = confirmedMap(), n = Object.keys(map).length;
+  err($("#checkErr"), "");
+  if (claim.length < 10){ err($("#checkErr"), "Write the claim you want graded."); return; }
+  if (!n){ err($("#checkErr"), "Nothing confirmed yet. A claim can only be graded against atoms you approved."); return; }
+
+  const btn = $("#checkBtn");
+  btn.disabled = true;
+  $("#checkNote").innerHTML = `<span class="spin"></span> grading against ${n} confirmed atom${n===1?"":"s"}`;
+  try {
+    const r = await fetch("/api/check", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ passcode: state.pass, expert: state.data.expert,
+                             n_experts: 1, claim, confirmed: map })
+    });
+    const j = await r.json().catch(() => ({ok:false, error:"Server sent a non-JSON response."}));
+    if (!r.ok || !j.ok) throw new Error(j.error || ("Server returned " + r.status));
+    state.checks = [j].concat(state.checks || []);
+    $("#claim").value = "";
+    save(); renderChecks();
+  } catch (e){
+    err($("#checkErr"), e.message || "Check failed.");
+  } finally {
+    btn.disabled = false; $("#checkNote").textContent = "";
+  }
+};
+
+$("#checkClear").onclick = () => { state.checks = []; save(); renderChecks(); };
+
+function renderChecks(){
+  const list = state.checks || [], map = confirmedMap();
+  if (!list.length){ $("#checks").innerHTML = ""; return; }
+  $("#checks").innerHTML = list.map((c, idx) => `
+    <div class="verdict ${VCLASS[c.verdict] || ""}">
+      <div class="claim">${esc(c.claim)}</div>
+      <span class="pill ${VPILL[c.verdict] || "neutral"}">${esc(c.verdict)}</span>
+      <span class="pill ${c.citations_resolve ? "ok" : "bad"}">${
+        c.citations_resolve ? "citations resolve" : "unresolved citation"}</span>
+      <p style="margin-top:var(--s3)">${esc(c.reasoning)}</p>
+      ${(c.caveats && c.caveats.length) ? `<details style="font-size:14px">
+        <summary>${c.caveats.length} caveat${c.caveats.length===1?"":"s"}</summary>
+        <ul style="margin:var(--s2) 0 0;padding-left:var(--s5)">${
+          c.caveats.map(x => `<li>${esc(x)}</li>`).join("")}</ul></details>` : ""}
+      ${(c.atom_ids && c.atom_ids.length) ? `<details style="font-size:14px;margin-top:var(--s2)">
+        <summary>${c.atom_ids.length} atom${c.atom_ids.length===1?"":"s"} bearing on this</summary>
+        <ul style="margin:var(--s2) 0 0;padding-left:var(--s5)">${
+          c.atom_ids.map(id => `<li>${map[id] ? describeAtom(map[id]) : esc(id)}</li>`).join("")}</ul></details>` : ""}
+      <div class="foot"><span class="lab">Paste-ready footnote</span>${esc(c.footnote)}</div>
+      <button class="btn-2" data-copy="${idx}" style="margin-top:var(--s2);font-size:13px">Copy footnote</button>
+    </div>`).join("");
+
+  $("#checks").querySelectorAll("[data-copy]").forEach(b => {
+    b.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(list[+b.dataset.copy].footnote);
+        b.textContent = "Copied";
+        setTimeout(() => { b.textContent = "Copy footnote"; }, 1600);
+      } catch (e) { b.textContent = "Select the text above to copy"; }
+    };
+  });
 }
 
 // ------------------------------------------------------------------ notes

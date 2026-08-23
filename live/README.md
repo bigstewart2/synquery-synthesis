@@ -29,6 +29,14 @@ Drafting runs on `claude-opus-5` rather than the pinned `claude-sonnet-5`, becau
 
 The output is a first draft for an analyst to edit, labelled as such, and it sits above a free-text notes box that is still yours.
 
+## Summary — the live form of Slide Check
+
+The submitted site's **Summary** tab graded five representative slide claims against `facts.json`. That needs an answer key. The live version grades *any* claim you type against whatever you confirmed, which works on a transcript nobody has read.
+
+You get a verdict (supported / partially supported / not supported / contradicted), one sentence naming which half of the claim the evidence carries, the atoms bearing on it, the caveats a reader would otherwise assume away, and a **paste-ready footnote** with figures and timestamps so provenance travels with the number.
+
+The grading rules are written to refuse, not to please. A claim about "buyers" or "the market" backed by one expert comes back *not supported* however true it sounds. A claim that is directionally right and numerically wrong is *partially supported*, never supported.
+
 ## What it does not do
 
 | Not built | Why | What it would take |

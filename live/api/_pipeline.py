@@ -278,6 +278,103 @@ def draft_themes(client, atoms_by_id, expert_note):
     return themes, payload.get("not_supported", []), dropped
 
 
+# --------------------------------------------------------------- slide check
+#
+# The live form of the submitted site's Summary tab. There, five representative slide
+# claims were graded against facts.json. Here any claim can be graded against whatever
+# the analyst confirmed, which is the version that works on a transcript nobody read.
+#
+# The verdict is the model's. The footnote is what makes it usable: a partner pastes it
+# under the claim and the provenance travels with the number.
+
+CHECK_TOOL = {
+    "name": "emit_verdict",
+    "description": "Grade one claim against the confirmed atoms supplied.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "verdict": {
+                "type": "string",
+                "enum": ["supported", "partially supported", "not supported", "contradicted"],
+                "description": "not supported = no atom bears on it. contradicted = an atom "
+                "says the opposite. Never use 'supported' when the atoms only imply it.",
+            },
+            "reasoning": {
+                "type": "string",
+                "description": "One sentence naming exactly which part of the claim the atoms "
+                "carry and which part they do not.",
+            },
+            "atom_ids": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "ids of every confirmed atom bearing on this claim, supporting "
+                "or contradicting. Copy exactly. Never invent an id.",
+            },
+            "footnote": {
+                "type": "string",
+                "description": "A paste-ready source note for the bottom of a slide. Name the "
+                "expert label, the figures, and the timestamps. One or two sentences. No "
+                "hedging language and no citation of anything outside the atoms.",
+            },
+            "caveats": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "What a reader would wrongly assume from this claim. Include "
+                "sample size whenever the evidence is one expert.",
+            },
+        },
+        "required": ["verdict", "reasoning", "atom_ids", "footnote", "caveats"],
+    },
+}
+
+CHECK_SYSTEM = """You grade a claim an analyst intends to put on a slide against expert-interview facts a human has already confirmed.
+
+You are a check, not an advocate. Your job is to stop a claim the evidence cannot carry.
+
+Rules, in priority order:
+1. Judge only against the supplied atoms. If nothing bears on the claim, the verdict is "not supported" -- that is a correct and useful answer, not a failure.
+2. Never state a number that does not appear in a cited atom.
+3. A claim that is directionally right but numerically wrong is "partially supported", never "supported". Say which number is off.
+4. Evidence from one expert can never support a claim written about buyers, the market, or most companies. Grade the claim as written.
+5. The footnote must let a reader trace every figure back without the transcript in front of them.
+6. Caveats name what a reader would wrongly conclude. Sample size is always one of them when the evidence is a single expert.
+"""
+
+
+def check_claim(client, claim, atoms_by_id, expert_note):
+    """Grade one claim. Same citation discipline as drafting -- ids must resolve."""
+    listing = "\n".join(
+        f"[{aid}] {json.dumps({k: v for k, v in a.items() if k != 'verified'}, ensure_ascii=False)}"
+        for aid, a in atoms_by_id.items()
+    )
+    msg = client.messages.create(
+        model=THEME_MODEL,
+        max_tokens=4000,
+        system=CHECK_SYSTEM,
+        tools=[CHECK_TOOL],
+        tool_choice={"type": "tool", "name": "emit_verdict"},
+        thinking={"type": "adaptive"},
+        messages=[{
+            "role": "user",
+            "content": f"{expert_note}\n\nConfirmed atoms:\n{listing}\n\n"
+                       f"Claim to grade:\n\"{claim}\"",
+        }],
+    )
+    out = {}
+    for block in msg.content:
+        if block.type == "tool_use":
+            out = block.input
+            break
+
+    known = set(atoms_by_id)
+    cited = out.get("atom_ids", []) or []
+    good = [i for i in cited if i in known]
+    out["atom_ids"] = good
+    out["citations_resolve"] = len(good) == len(cited)
+    out["claim"] = claim
+    return out
+
+
 # --------------------------------------------------------------- citation check
 def norm(s):
     """Normalise for verbatim comparison. Identical to pipeline/score.py's norm()."""
