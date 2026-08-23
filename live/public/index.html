@@ -80,18 +80,35 @@
   .tabs button:hover{color:var(--ink-2)}
   .tabs button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
 
-  .atom{border:1px solid var(--line);border-radius:var(--r-sm);padding:var(--s3) var(--s4);
-        margin-bottom:var(--s2);background:var(--panel);transition:opacity var(--t),border-color var(--t)}
-  .atom.rejected{opacity:.42}
-  .atom.confirmed{border-color:#bcd8c6;background:#fcfefd}
+  /* Pending, confirmed and rejected have to be tellable apart from across a room.
+     A demo where "I clicked it" and "it registered" look the same is a broken demo. */
+  .atom{border:1px solid var(--line);border-left:4px solid var(--rule);
+        border-radius:var(--r-sm);padding:var(--s3) var(--s4);margin-bottom:var(--s2);
+        background:var(--panel);
+        transition:opacity var(--t),border-color var(--t),background var(--t)}
+  .atom.confirmed{border-color:#9cc7ac;border-left-color:var(--ok);background:var(--okbg)}
+  .atom.rejected{border-color:#e3bcae;border-left-color:var(--sq);background:var(--sqbg);opacity:.62}
+  .atom.rejected blockquote{text-decoration:line-through;
+        text-decoration-color:rgba(156,63,39,.45)}
+  .atom .state{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .atom.confirmed .state{color:var(--ok)}
+  .atom.rejected .state{color:var(--sq)}
   .atom .top{display:flex;gap:var(--s3);align-items:baseline;flex-wrap:wrap;margin-bottom:var(--s2)}
   .atom .val{font-weight:600}
   .atom blockquote{margin:var(--s2) 0 0;padding-left:var(--s3);border-left:2px solid var(--rule);
                    color:var(--ink-2);font-size:14px;line-height:1.5}
   .atom .acts{display:flex;gap:var(--s2);margin-top:var(--s3)}
   .atom .acts button{padding:4px var(--s3);font-size:13px;border:1px solid var(--rule);background:var(--panel);color:var(--mute)}
-  .atom .acts button.on-y{background:var(--okbg);border-color:#bcd8c6;color:var(--ok);font-weight:600}
-  .atom .acts button.on-n{background:var(--sqbg);border-color:#e8c3b7;color:var(--sq);font-weight:600}
+  .atom .acts button.on-y{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:600}
+  .atom .acts button.on-n{background:var(--sq);border-color:var(--sq);color:#fff;font-weight:600}
+
+  /* Running tally. The one number that answers "did that do anything". */
+  .tally{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;
+         background:var(--chip);border-radius:var(--r-sm);padding:var(--s3) var(--s4);
+         margin:var(--s4) 0 var(--s5)}
+  .tally .n{font-size:20px;font-weight:600;letter-spacing:-.014em}
+  .tally .bar{flex:1;min-width:120px;height:6px;border-radius:999px;background:var(--rule);overflow:hidden}
+  .tally .bar i{display:block;height:100%;background:var(--ok);width:0;transition:width var(--t)}
 
   .grouphead{display:flex;align-items:baseline;gap:var(--s3);margin:var(--s6) 0 var(--s3)}
   .grouphead h3{margin:0}
@@ -183,6 +200,12 @@
         <div style="margin:var(--s4) 0">
           <button id="allYes" class="btn-2">Confirm all verified</button>
           <button id="allClear" class="btn-2">Clear all</button>
+        </div>
+        <div class="tally">
+          <span class="n" id="tallyN">0 of 0</span>
+          <span class="mute">confirmed</span>
+          <span class="bar"><i id="tallyBar"></i></span>
+          <span id="tallyNote" class="mute" style="font-size:13px"></span>
         </div>
         <div id="queue"></div>
       </div>
@@ -393,10 +416,14 @@ function render(){
 
 function renderQueue(){
   const d = state.data, out = [];
+  let total = 0, confirmedAll = 0, rejectedAll = 0;
   for (const group of Object.keys(d.atoms)){
     const items = d.atoms[group] || [];
     const label = (d.labels && d.labels[group]) || group;
     const conf = items.filter((_, i) => state.marks[atomId(group,i)] === "y").length;
+    total += items.length;
+    confirmedAll += conf;
+    rejectedAll += items.filter((_, i) => state.marks[atomId(group,i)] === "n").length;
     out.push(
       `<div class="grouphead"><h3>${esc(label)}</h3>` +
       `<span class="mute" style="font-size:13px">${items.length} atom${items.length===1?"":"s"}` +
@@ -409,6 +436,8 @@ function renderQueue(){
     items.forEach((a, i) => {
       const id = atomId(group, i), mark = state.marks[id] || "";
       const cls = mark === "y" ? "confirmed" : mark === "n" ? "rejected" : "";
+      const state_label = mark === "y" ? `<span class="state">✓ confirmed</span>`
+                        : mark === "n" ? `<span class="state">✕ rejected</span>` : "";
       out.push(`
         <div class="atom ${cls}" data-id="${id}">
           <div class="top">
@@ -416,16 +445,26 @@ function renderQueue(){
             <span class="pill ${a.verified ? "ok" : "bad"}">${a.verified ? "verified" : "quote not found"}</span>
             <span class="pill neutral">${esc(a.confidence)} confidence</span>
             <span class="mute" style="font-size:13px">@ ${esc(a.timestamp)}</span>
+            ${state_label}
           </div>
           <blockquote>${esc(a.quote)}</blockquote>
           <div class="acts">
-            <button data-m="y" class="${mark==="y"?"on-y":""}">Confirm</button>
-            <button data-m="n" class="${mark==="n"?"on-n":""}">Reject</button>
+            <button data-m="y" class="${mark==="y"?"on-y":""}">${mark==="y"?"✓ Confirmed":"Confirm"}</button>
+            <button data-m="n" class="${mark==="n"?"on-n":""}">${mark==="n"?"✕ Rejected":"Reject"}</button>
           </div>
         </div>`);
     });
   }
   $("#queue").innerHTML = out.join("");
+
+  // The running tally is the answer to "did that button do anything".
+  const pending = total - confirmedAll - rejectedAll;
+  $("#tallyN").textContent = `${confirmedAll} of ${total}`;
+  $("#tallyBar").style.width = total ? (100 * confirmedAll / total) + "%" : "0%";
+  $("#tallyNote").textContent =
+    rejectedAll || pending
+      ? `${rejectedAll} rejected · ${pending} still pending`
+      : (total ? "every atom reviewed" : "");
 
   $("#queue").querySelectorAll(".atom").forEach(el => {
     el.querySelectorAll(".acts button").forEach(b => {
