@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Synquery Synthesis — live extraction</title>
+<style>
+  :root{
+    --bg:#fafaf9; --panel:#fff; --ink:#191917; --ink-2:#3d3d38;
+    --mute:#66665f; --line:#e6e5e1; --rule:#d3d2cc; --chip:#f2f1ed;
+    --accent:#0066cc; --accent-soft:#eaf2fc; --accent-strong:#0071e3;
+    --sq:#9c3f27; --sqbg:#fbeee9;
+    --warn:#7d5216; --warnbg:#fdf6e8;
+    --ok:#2a6440; --okbg:#e8f1eb;
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+    --r:12px; --r-sm:6px;
+    --t:240ms cubic-bezier(.4,0,.6,1);
+  }
+  *{box-sizing:border-box}
+  html{font-size:15px}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 "SF Pro Text",-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+  :focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px;border-radius:var(--r-sm)}
+  h1{font-size:23px;font-weight:600;letter-spacing:-.016em;margin:0}
+  h2{font-size:20px;font-weight:600;letter-spacing:-.014em;margin:0 0 var(--s4)}
+  h3{font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--mute);
+     margin:0 0 var(--s3);font-weight:600}
+  p{margin:0 0 var(--s2);max-width:74ch;text-wrap:pretty}
+  .mute{color:var(--mute)}
+
+  .ghostbar{background:var(--ink);color:#f4f3ef;padding:var(--s3) var(--s6);font-size:12px}
+  .ghostbar b{color:#e8c979;font-weight:600}
+
+  .wrap{max-width:1180px;margin-inline:auto;padding:var(--s6) var(--s5) var(--s7)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+        padding:var(--s5) var(--s6) var(--s6);margin-bottom:var(--s5)}
+
+  button{font:inherit;cursor:pointer;border-radius:var(--r-sm);transition:background var(--t),color var(--t),border-color var(--t)}
+  .btn{background:var(--accent);color:#fff;border:1px solid var(--accent);padding:9px var(--s5);font-weight:600}
+  .btn:hover:not(:disabled){background:var(--accent-strong)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn-2{background:var(--panel);color:var(--ink-2);border:1px solid var(--rule);padding:7px var(--s4)}
+  .btn-2:hover{background:var(--chip);color:var(--ink)}
+  input[type=text],input[type=password],textarea{
+    font:inherit;padding:9px var(--s3);border:1px solid var(--rule);border-radius:var(--r-sm);
+    background:var(--panel);color:var(--ink);width:100%}
+  textarea{min-height:120px;resize:vertical;line-height:1.55}
+  label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.07em;
+        color:var(--mute);font-weight:600;margin-bottom:var(--s2)}
+
+  table{border-collapse:collapse;width:100%;font-size:15px}
+  th,td{border-bottom:1px solid var(--line);padding:var(--s3);text-align:left;vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);
+     font-weight:600;border-bottom:1px solid var(--rule);padding:0 var(--s3) var(--s2)}
+  tbody tr:last-child td{border-bottom:0}
+  td.num,th.num{text-align:center}
+  .scroll{overflow-x:auto}
+
+  .pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;
+        padding:2px 7px;border-radius:999px;white-space:nowrap}
+  .pill.ok{background:var(--okbg);color:var(--ok)}
+  .pill.bad{background:var(--sqbg);color:var(--sq)}
+  .pill.warn{background:var(--warnbg);color:var(--warn)}
+  .pill.neutral{background:var(--chip);color:var(--mute)}
+
+  .drop{border:2px dashed var(--rule);border-radius:var(--r);padding:var(--s7) var(--s5);
+        text-align:center;color:var(--mute);transition:border-color var(--t),background var(--t)}
+  .drop.hot{border-color:var(--accent);background:var(--accent-soft);color:var(--ink-2)}
+
+  .statbar{display:flex;flex-wrap:wrap;gap:var(--s5);padding:var(--s4) 0 var(--s5);
+           border-bottom:1px solid var(--line);margin-bottom:var(--s5)}
+  .stat .k{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);font-weight:600}
+  .stat .v{font-size:23px;font-weight:600;letter-spacing:-.016em}
+
+  .tabs{display:flex;gap:2px;margin-bottom:var(--s5);border-bottom:1px solid var(--line)}
+  .tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:9px var(--s4);
+               color:var(--mute);font-size:15px;border-radius:0}
+  .tabs button:hover{color:var(--ink-2)}
+  .tabs button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+
+  .atom{border:1px solid var(--line);border-radius:var(--r-sm);padding:var(--s3) var(--s4);
+        margin-bottom:var(--s2);background:var(--panel);transition:opacity var(--t),border-color var(--t)}
+  .atom.rejected{opacity:.42}
+  .atom.confirmed{border-color:#bcd8c6;background:#fcfefd}
+  .atom .top{display:flex;gap:var(--s3);align-items:baseline;flex-wrap:wrap;margin-bottom:var(--s2)}
+  .atom .val{font-weight:600}
+  .atom blockquote{margin:var(--s2) 0 0;padding-left:var(--s3);border-left:2px solid var(--rule);
+                   color:var(--ink-2);font-size:14px;line-height:1.5}
+  .atom .acts{display:flex;gap:var(--s2);margin-top:var(--s3)}
+  .atom .acts button{padding:4px var(--s3);font-size:13px;border:1px solid var(--rule);background:var(--panel);color:var(--mute)}
+  .atom .acts button.on-y{background:var(--okbg);border-color:#bcd8c6;color:var(--ok);font-weight:600}
+  .atom .acts button.on-n{background:var(--sqbg);border-color:#e8c3b7;color:var(--sq);font-weight:600}
+
+  .grouphead{display:flex;align-items:baseline;gap:var(--s3);margin:var(--s6) 0 var(--s3)}
+  .grouphead h3{margin:0}
+  .err{background:var(--sqbg);color:var(--sq);border:1px solid #e8c3b7;border-radius:var(--r-sm);
+       padding:var(--s3) var(--s4);margin-bottom:var(--s4);font-size:14px}
+  .hide{display:none !important}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--rule);
+        border-top-color:var(--accent);border-radius:50%;animation:s .8s linear infinite;vertical-align:-2px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  footer{border-top:1px solid var(--line);margin-top:var(--s6);padding-top:var(--s4);
+         font-size:13px;color:var(--mute)}
+</style>
+</head>
+<body>
+
+<div class="ghostbar">
+  <b>Live prototype.</b>
+  Extraction runs server-side on upload. This is the working sibling of the static
+  submission — same schema, no answer key, human confirms every atom.
+</div>
+
+<div class="wrap">
+
+  <!-- ---------------------------------------------------------------- gate -->
+  <section id="gate" class="card">
+    <h1>Synquery panel synthesis</h1>
+    <p class="mute" style="margin-top:var(--s2)">
+      Upload an expert-interview transcript and get back typed, quote-cited atoms you can
+      confirm or reject. Passcode-gated because extraction spends real model credits.
+    </p>
+    <div id="gateErr" class="err hide"></div>
+    <div style="max-width:320px;margin-top:var(--s5)">
+      <label for="pass">Passcode</label>
+      <input id="pass" type="password" autocomplete="off" spellcheck="false">
+      <button id="gateGo" class="btn" style="margin-top:var(--s3)">Enter</button>
+    </div>
+  </section>
+
+  <!-- -------------------------------------------------------------- upload -->
+  <section id="upload" class="card hide">
+    <h2>Add a transcript</h2>
+    <p class="mute">
+      <code>.txt</code>, <code>.md</code>, or <code>.docx</code>. Nothing is stored on the
+      server — the file is read in memory, extracted, and discarded. Results live in this
+      browser only.
+    </p>
+    <div id="uploadErr" class="err hide"></div>
+
+    <div id="drop" class="drop" style="margin-top:var(--s5)">
+      <div style="font-size:15px;color:var(--ink-2);font-weight:600">Drop a transcript here</div>
+      <div style="margin-top:var(--s2)">or <button id="pick" class="btn-2">choose a file</button></div>
+      <div id="chosen" style="margin-top:var(--s3)"></div>
+      <input id="file" type="file" accept=".txt,.md,.docx,text/plain" class="hide">
+    </div>
+
+    <div style="display:flex;gap:var(--s4);align-items:flex-end;margin-top:var(--s5);flex-wrap:wrap">
+      <div style="max-width:180px">
+        <label for="expert">Expert label</label>
+        <input id="expert" type="text" value="E1" spellcheck="false">
+      </div>
+      <button id="run" class="btn" disabled>Extract</button>
+      <span id="runNote" class="mute" style="font-size:13px"></span>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------- results -->
+  <section id="results" class="hide">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--s4);flex-wrap:wrap">
+        <h2 style="margin:0" id="resultTitle">Extraction</h2>
+        <button id="reset" class="btn-2">Start over</button>
+      </div>
+      <div class="statbar" id="statbar"></div>
+      <div id="failures"></div>
+
+      <div class="tabs">
+        <button data-tab="queue" class="on">Review queue</button>
+        <button data-tab="rollup">Rollups</button>
+        <button data-tab="themes">Themes</button>
+      </div>
+
+      <div id="tab-queue">
+        <p class="mute">
+          Every atom below was located by the model and carries the verbatim span it came
+          from. <b>Verified</b> means that span was found character-for-character in the
+          file you uploaded — a deterministic check, no model involved. It says nothing
+          about whether the reading is right. That is your call.
+        </p>
+        <div style="margin:var(--s4) 0">
+          <button id="allYes" class="btn-2">Confirm all verified</button>
+          <button id="allClear" class="btn-2">Clear all</button>
+        </div>
+        <div id="queue"></div>
+      </div>
+
+      <div id="tab-rollup" class="hide">
+        <p class="mute">
+          Computed from <b>confirmed</b> atoms only, by arithmetic, not by the model.
+          Nothing appears here until you confirm it above.
+        </p>
+        <div id="rollup"></div>
+      </div>
+
+      <div id="tab-themes" class="hide">
+        <p class="mute">
+          The pipeline does not write themes and this prototype will not pretend otherwise.
+          Typed facts are extractable; the argument across them is analyst judgment. This
+          box is where that judgment goes, saved in this browser.
+        </p>
+        <textarea id="themes" placeholder="What does this panel actually support?"></textarea>
+        <div id="themeSaved" class="mute" style="font-size:13px;margin-top:var(--s2)"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Sibling of the static submission at
+    <a href="https://synquery-synthesis.vercel.app">synquery-synthesis.vercel.app</a>,
+    which renders a hand-verified panel and does not run at request time.
+    This one has a back end: server-held key, concurrent extraction, live citation check.
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+const $ = (s) => document.querySelector(s);
+const KEY = "synq.live.v1";
+
+let state = { pass:"", file:null, data:null, marks:{}, themes:"" };
+
+// ------------------------------------------------------------------ storage
+function save(){
+  try {
+    sessionStorage.setItem(KEY + ".pass", state.pass);
+    localStorage.setItem(KEY, JSON.stringify({
+      data: state.data, marks: state.marks, themes: state.themes
+    }));
+  } catch (e) { /* private window, quota — the app still works, just forgets */ }
+}
+function load(){
+  try {
+    state.pass = sessionStorage.getItem(KEY + ".pass") || "";
+    const raw = localStorage.getItem(KEY);
+    if (raw){
+      const o = JSON.parse(raw);
+      state.data = o.data || null;
+      state.marks = o.marks || {};
+      state.themes = o.themes || "";
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// ------------------------------------------------------------------- helpers
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => (
+  {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function show(el, on){ el.classList.toggle("hide", !on); }
+function err(el, msg){ el.textContent = msg; show(el, !!msg); }
+
+function atomId(group, i){ return group + ":" + i; }
+
+// The typed fields of an atom, minus the citation envelope every atom shares.
+const CITE = new Set(["quote","timestamp","confidence","verified"]);
+function describe(a){
+  return Object.keys(a).filter(k => !CITE.has(k))
+    .map(k => `${k.replace(/_/g," ")}: <span class="val">${esc(a[k])}</span>`)
+    .join(" &nbsp;·&nbsp; ");
+}
+
+// -------------------------------------------------------------------- gate
+$("#gateGo").onclick = async () => {
+  const v = $("#pass").value.trim();
+  if (!v){ err($("#gateErr"), "Enter the passcode."); return; }
+  state.pass = v; save();
+  err($("#gateErr"), "");
+  show($("#gate"), false);
+  show($("#upload"), true);
+  if (state.data) render();
+};
+$("#pass").addEventListener("keydown", e => { if (e.key === "Enter") $("#gateGo").click(); });
+
+// ------------------------------------------------------------------ upload
+const drop = $("#drop"), fileInput = $("#file");
+$("#pick").onclick = () => fileInput.click();
+fileInput.onchange = () => pickFile(fileInput.files[0]);
+
+["dragenter","dragover"].forEach(ev =>
+  drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("hot"); }));
+["dragleave","drop"].forEach(ev =>
+  drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("hot"); }));
+drop.addEventListener("drop", e => pickFile(e.dataTransfer.files[0]));
+
+function pickFile(f){
+  if (!f) return;
+  state.file = f;
+  $("#chosen").innerHTML =
+    `<span class="pill neutral">${esc(f.name)}</span> ` +
+    `<span class="mute" style="font-size:13px">${(f.size/1024).toFixed(0)} KB</span>`;
+  $("#run").disabled = false;
+  err($("#uploadErr"), "");
+}
+
+function toB64(file){
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(",")[1]);
+    r.onerror = () => rej(new Error("Could not read that file."));
+    r.readAsDataURL(file);
+  });
+}
+
+$("#run").onclick = async () => {
+  if (!state.file) return;
+  const btn = $("#run");
+  btn.disabled = true;
+  err($("#uploadErr"), "");
+  $("#runNote").innerHTML =
+    `<span class="spin"></span> six extraction passes running concurrently — 30 to 90 seconds`;
+
+  try {
+    const b64 = await toB64(state.file);
+    const r = await fetch("/api/extract", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        passcode: state.pass,
+        filename: state.file.name,
+        expert: $("#expert").value.trim() || "E1",
+        b64
+      })
+    });
+    const j = await r.json().catch(() => ({ok:false, error:"Server sent a non-JSON response."}));
+    if (!r.ok || !j.ok){
+      if (r.status === 401){
+        state.pass = ""; save();
+        show($("#upload"), false); show($("#gate"), true);
+        err($("#gateErr"), "That passcode was rejected. Try again.");
+        return;
+      }
+      throw new Error(j.error || ("Server returned " + r.status));
+    }
+    state.data = j;
+    state.marks = {};
+    save();
+    render();
+  } catch (e){
+    err($("#uploadErr"), e.message || "Extraction failed.");
+  } finally {
+    btn.disabled = false;
+    $("#runNote").textContent = "";
+  }
+};
+
+$("#reset").onclick = () => {
+  state.data = null; state.marks = {}; state.themes = "";
+  try { localStorage.removeItem(KEY); } catch(e){}
+  show($("#results"), false);
+  show($("#upload"), true);
+  $("#chosen").textContent = ""; $("#run").disabled = true; state.file = null;
+};
+
+// ------------------------------------------------------------------- tabs
+document.querySelectorAll(".tabs button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+    ["queue","rollup","themes"].forEach(t => show($("#tab-" + t), t === b.dataset.tab));
+    if (b.dataset.tab === "rollup") renderRollup();
+  };
+});
+
+// ------------------------------------------------------------------ render
+function render(){
+  const d = state.data;
+  if (!d) return;
+  show($("#upload"), false);
+  show($("#results"), true);
+
+  $("#resultTitle").textContent = `${d.filename} — ${d.expert}`;
+
+  const s = d.stats, pct = s.total ? Math.round(100 * s.verified / s.total) : 0;
+  $("#statbar").innerHTML = [
+    ["Atoms extracted", s.total],
+    ["Quotes verified verbatim", `${s.verified} / ${s.total} <span class="pill ${pct===100?"ok":"warn"}">${pct}%</span>`],
+    ["Elapsed", s.elapsed_s + "s"],
+    ["Model", s.model],
+    ["Tokens", `${(s.usage.input_tokens/1000).toFixed(1)}k in / ${(s.usage.output_tokens/1000).toFixed(1)}k out`],
+  ].map(([k,v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+
+  $("#failures").innerHTML = (d.failures && d.failures.length)
+    ? `<div class="err">${d.failures.length} extraction group(s) failed and returned empty: ` +
+      d.failures.map(f => `<b>${esc(f.group)}</b> (${esc(f.error)})`).join(", ") +
+      `. Re-run to retry.</div>`
+    : "";
+
+  $("#themes").value = state.themes || "";
+  renderQueue();
+}
+
+function renderQueue(){
+  const d = state.data, out = [];
+  for (const group of Object.keys(d.atoms)){
+    const items = d.atoms[group] || [];
+    const label = (d.labels && d.labels[group]) || group;
+    const conf = items.filter((_, i) => state.marks[atomId(group,i)] === "y").length;
+    out.push(
+      `<div class="grouphead"><h3>${esc(label)}</h3>` +
+      `<span class="mute" style="font-size:13px">${items.length} atom${items.length===1?"":"s"}` +
+      (items.length ? ` · ${conf} confirmed` : "") + `</span></div>`
+    );
+    if (!items.length){
+      out.push(`<p class="mute" style="font-size:14px">Nothing extracted — an empty group is a valid answer when the expert was not asked.</p>`);
+      continue;
+    }
+    items.forEach((a, i) => {
+      const id = atomId(group, i), mark = state.marks[id] || "";
+      const cls = mark === "y" ? "confirmed" : mark === "n" ? "rejected" : "";
+      out.push(`
+        <div class="atom ${cls}" data-id="${id}">
+          <div class="top">
+            <span>${describe(a)}</span>
+            <span class="pill ${a.verified ? "ok" : "bad"}">${a.verified ? "verified" : "quote not found"}</span>
+            <span class="pill neutral">${esc(a.confidence)} confidence</span>
+            <span class="mute" style="font-size:13px">@ ${esc(a.timestamp)}</span>
+          </div>
+          <blockquote>${esc(a.quote)}</blockquote>
+          <div class="acts">
+            <button data-m="y" class="${mark==="y"?"on-y":""}">Confirm</button>
+            <button data-m="n" class="${mark==="n"?"on-n":""}">Reject</button>
+          </div>
+        </div>`);
+    });
+  }
+  $("#queue").innerHTML = out.join("");
+
+  $("#queue").querySelectorAll(".atom").forEach(el => {
+    el.querySelectorAll(".acts button").forEach(b => {
+      b.onclick = () => {
+        const id = el.dataset.id, m = b.dataset.m;
+        state.marks[id] = (state.marks[id] === m) ? "" : m;
+        save(); renderQueue();
+      };
+    });
+  });
+}
+
+$("#allYes").onclick = () => {
+  const d = state.data;
+  for (const g of Object.keys(d.atoms))
+    (d.atoms[g] || []).forEach((a, i) => { if (a.verified) state.marks[atomId(g,i)] = "y"; });
+  save(); renderQueue();
+};
+$("#allClear").onclick = () => { state.marks = {}; save(); renderQueue(); };
+
+// ----------------------------------------------------------------- rollups
+function confirmed(group){
+  const d = state.data;
+  return (d.atoms[group] || []).filter((_, i) => state.marks[atomId(group,i)] === "y");
+}
+
+function table(head, rows){
+  if (!rows.length) return "";
+  return `<div class="scroll"><table><thead><tr>` +
+    head.map(h => `<th${h.n?' class="num"':''}>${esc(h.t)}</th>`).join("") +
+    `</tr></thead><tbody>` +
+    rows.map(r => `<tr>` + r.map((c, i) =>
+      `<td${head[i].n?' class="num"':''}>${c}</td>`).join("") + `</tr>`).join("") +
+    `</tbody></table></div>`;
+}
+
+function renderRollup(){
+  const out = [];
+
+  // ratings: criterion x vendor grid, built only from confirmed atoms
+  const rat = confirmed("ratings");
+  if (rat.length){
+    const vendors = [...new Set(rat.map(r => r.vendor))].sort();
+    const crits = [...new Set(rat.map(r => r.criterion))];
+    const cell = {};
+    rat.forEach(r => { cell[r.criterion + "|" + r.vendor] = r; });
+    out.push(`<h3 style="margin-top:var(--s5)">Vendor ratings</h3>` + table(
+      [{t:"Criterion"}, ...vendors.map(v => ({t:v, n:true}))],
+      crits.map(c => [esc(c), ...vendors.map(v => {
+        const r = cell[c + "|" + v];
+        return r ? `${r.score}<span class="mute" style="font-size:12px">/${r.scale_max}</span>` : `<span class="mute">—</span>`;
+      })])
+    ));
+  }
+
+  const price = confirmed("pricing");
+  if (price.length){
+    out.push(`<h3 style="margin-top:var(--s5)">Pricing</h3>` + table(
+      [{t:"Vendor"},{t:"USD / user / month", n:true},{t:"Basis"},{t:"Timestamp"}],
+      price.sort((a,b) => b.usd_per_user_month - a.usd_per_user_month).map(p => [
+        esc(p.vendor),
+        `${p.operator && p.operator !== "=" ? esc(p.operator) + " " : ""}$${p.usd_per_user_month}`,
+        `<span class="pill neutral">${esc(p.basis)}</span>`,
+        `<span class="mute">${esc(p.timestamp)}</span>`
+      ])
+    ));
+  }
+
+  const terms = confirmed("commercial_terms");
+  if (terms.length){
+    out.push(`<h3 style="margin-top:var(--s5)">Commercial terms</h3>` + table(
+      [{t:"Field"},{t:"Low", n:true},{t:"High", n:true}],
+      terms.map(t => [esc(t.field.replace(/_/g," ")), t.low, t.high])
+    ));
+  }
+
+  const loy = confirmed("loyalty");
+  if (loy.length){
+    out.push(`<h3 style="margin-top:var(--s5)">Loyalty & satisfaction</h3>` + table(
+      [{t:"Field"},{t:"Value", n:true},{t:"Scale asked", n:true},{t:"Scale answered", n:true},{t:""}],
+      loy.map(l => [
+        esc(l.field.replace(/_/g," ")), l.value, l.scale_asked_max, l.scale_answered_max,
+        l.scale_asked_max !== l.scale_answered_max
+          ? `<span class="pill warn">scale mismatch</span>` : ""
+      ])
+    ));
+  }
+
+  const sw = confirmed("switching");
+  if (sw.length){
+    out.push(`<h3 style="margin-top:var(--s5)">Switching</h3>` + table(
+      [{t:"Difficulty (1-10)", n:true},{t:"Would evaluate next"},{t:"Trigger"}],
+      sw.map(s => [s.difficulty_1_10, esc(s.next_platform || "—"), esc(s.trigger || "—")])
+    ));
+  }
+
+  const rc = confirmed("ranked_criteria");
+  if (rc.length){
+    out.push(`<h3 style="margin-top:var(--s5)">Ranked criteria</h3>` + table(
+      [{t:"Rank", n:true},{t:"Criterion"}],
+      rc.sort((a,b) => a.rank - b.rank).map(r => [r.rank, esc(r.criterion)])
+    ));
+  }
+
+  $("#rollup").innerHTML = out.length ? out.join("")
+    : `<p class="mute">No atoms confirmed yet. Confirm some in the review queue and they appear here.</p>`;
+}
+
+// ------------------------------------------------------------------ themes
+let themeTimer;
+$("#themes").addEventListener("input", () => {
+  state.themes = $("#themes").value;
+  clearTimeout(themeTimer);
+  themeTimer = setTimeout(() => { save(); $("#themeSaved").textContent = "Saved in this browser."; }, 400);
+});
+
+// -------------------------------------------------------------------- boot
+load();
+if (state.pass){
+  show($("#gate"), false);
+  show($("#upload"), true);
+  if (state.data) render();
+}
+</script>
+</body>
+</html>

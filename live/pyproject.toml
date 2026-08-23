@@ -1,0 +1,12 @@
+[project]
+name = "synquery-live"
+version = "1.0.0"
+description = "Live extraction back end for the Synquery panel-synthesis prototype"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic==0.108.0",
+    "python-docx>=1.1,<2",
+]
+
+[tool.vercel]
+entrypoint = "api.extract:handler"

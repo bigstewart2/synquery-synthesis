@@ -1,0 +1,67 @@
+# Live extraction (the back end the submission doesn't have)
+
+**Live:** https://synquery-live.vercel.app (passcode-gated)
+**Sibling:** https://synquery-synthesis.vercel.app — the submitted static prototype, unchanged.
+
+## Why this exists
+
+In the 21 Aug round, Bren asked: *"Did you — do you have a backend?"* The honest answer for the submission is no. `build.py` renders `site/index.html` from a hand-verified `facts.json` plus hand-written finding rows, and `pipeline/extract.py` writes `out/extracted.json` that **nothing reads** — it exists to be scored against the answer key. That's a defensible take-home choice, and it is not a system anyone but me can run.
+
+This is that system. Same schema, same prompt, same model. What changes is that a stranger can now use it.
+
+## What the back end actually does
+
+Three things that cannot happen in a browser or in a committed HTML file:
+
+1. **Holds the key.** `ANTHROPIC_API_KEY` is a Vercel environment variable read at request time. It never reaches the client. This is the main reason a back end exists at all.
+2. **Runs the work.** Six extraction groups fire concurrently against the model on upload. About 15 seconds for a 12,000-character transcript.
+3. **Checks the citations before the browser sees them.** Every returned quote is normalised and matched character-for-character against the uploaded source. Deterministic, no model, no answer key.
+
+## The honest part
+
+`score.py` has two halves. Citation integrity needs no ground truth, so it survives here and runs live on any transcript. Value agreement is scored against `facts.json`, which exists only because I read three transcripts by hand — there is no answer key for a transcript nobody has read.
+
+So that half becomes a **review queue**: every atom shows its verbatim quote, timestamp, confidence, and a verified badge, and a human confirms or rejects it. Rollup tables are computed by arithmetic from confirmed atoms only. An unverified or unconfirmed atom never reaches a table.
+
+**Themes are not generated.** Typed facts are extractable; the argument across them is analyst judgment. The Themes tab is a text box, labelled as such. The submission's 20 finding rows were written by me, and this prototype won't pretend a model wrote them.
+
+## What it does not do
+
+| Not built | Why | What it would take |
+|--------------------------|-------------------------------|------------------------------|
+| Multi-user persistence | demo scope | Postgres + auth |
+| Cross-device results | results are in localStorage | the same |
+| Real accounts | one shared passcode | SSO or magic links |
+| Panel view across experts | one transcript at a time | a workstream model |
+
+State lives in the viewer's browser. Clear site data and it's gone. That's a deliberate v1 bound, not an oversight.
+
+## Layout
+
+```
+live/
+  api/extract.py      HTTP function — gate, decode, extract, verify
+  api/_pipeline.py    schema, prompt, citation check
+  public/index.html   the whole front end, no build step
+  pyproject.toml      deps + the Vercel entrypoint declaration
+  dev/check_schema.py asserts this schema still matches pipeline/extract.py
+  dev/local_run.py    runs the real code path locally against a transcript
+```
+
+## Running it
+
+```bash
+python3 dev/check_schema.py                       # contract drift guard
+source ~/.config/secrets.env
+python3 dev/local_run.py "/path/to/transcript.docx"   # real end-to-end, ~$0.30
+vercel deploy --prod
+```
+
+`GET /api/extract` is a health probe: reports the model, the group list, and whether both environment variables are set — without revealing either.
+
+## Notes
+
+- Model is pinned to `claude-sonnet-5`, matching the run that scored 52/52 on ratings and 11/11 on prices. Changing the model invalidates that number.
+- `dev/check_schema.py` exists because the schema is duplicated here so the function can deploy self-contained. Duplication nothing checks is duplication that drifts.
+- The passcode is in `PASSCODE.local.txt`, gitignored. A missing `DEMO_PASSCODE` on the server fails closed with a 500, never open.
+- One extraction group failing returns empty for that group and reports it in the response rather than losing the other five.
