@@ -43,7 +43,9 @@ The grading rules are written to refuse, not to please. A claim about "buyers" o
 
 ## Panel, not one interview at a time
 
-The product is panel synthesis, so the app holds several interviews at once. Transcripts load one after another and stack in a bar across the top; the review queue switches between them; and **every downstream view computes across every confirmed atom from every expert**.
+The product is panel synthesis, so the app holds several interviews at once. Drop in the whole panel at once. Files queue with a label derived from each filename (deduped, editable), and extract **two at a time** — each transcript is already six concurrent model calls, so two in flight is twelve, fast without tripping rate limits. Three real transcripts take about 26 seconds wall clock. A failure on one leaves the others loaded, keeps the failed row for a retry, and holds the upload view open rather than hiding the thing you have to act on.
+
+Loaded interviews stack in a bar across the top; the review queue switches between them; and **every downstream view computes across every confirmed atom from every expert**.
 
 - **Rollups** — the ratings grid is criterion x vendor with each cell carrying every expert who scored it, and a `split` marker where they disagree. Divergence is displayed, never averaged. A "rated by 2 of 3" column shows at a glance what is actually comparable.
 - **Coverage** — who is in the panel, which vendors are rated versus actually run by someone, which criteria are comparable across all experts versus one only, the matrix fill rate, and a derived list of what the panel *cannot* support. All counting, no judgment.

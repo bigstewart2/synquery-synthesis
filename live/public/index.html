@@ -67,6 +67,20 @@
   .pill.neutral{background:var(--chip);color:var(--mute)}
   .pill.acc{background:var(--accent-soft);color:var(--accent)}
 
+  /* Upload queue. Each row keeps its own label because the label becomes the atom
+     id prefix, and a collision would silently merge two experts. */
+  .qrow{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;
+        border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel);
+        padding:var(--s2) var(--s3);margin-top:var(--s2)}
+  .qrow input[type=text]{width:88px;padding:5px var(--s2);font-weight:600;text-align:center}
+  .qrow .fn{flex:1;min-width:180px;font-size:14px;color:var(--ink-2);
+            overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qrow .sz{font-size:12px;color:var(--mute);flex:none}
+  .qrow .x{border:0;background:none;color:var(--mute);font-size:16px;padding:0 var(--s2);line-height:1}
+  .qrow .x:hover{color:var(--sq)}
+  .qrow.done{border-color:#9cc7ac;background:var(--okbg)}
+  .qrow.failed{border-color:#e3bcae;background:var(--sqbg)}
+
   .drop{border:2px dashed var(--rule);border-radius:var(--r);padding:var(--s6) var(--s5);
         text-align:center;color:var(--mute);transition:border-color var(--t),background var(--t)}
   .drop.hot{border-color:var(--accent);background:var(--accent-soft);color:var(--ink-2)}
@@ -245,25 +259,25 @@
       <div id="uploadBox">
         <h2 id="uploadTitle">Add a transcript</h2>
         <p class="mute">
-          <code>.txt</code>, <code>.md</code>, or <code>.docx</code>. Add them one at a
-          time; each stays loaded. Nothing is stored on the server — files are read in
-          memory and discarded. Results live in this browser only.
+          <code>.txt</code>, <code>.md</code>, or <code>.docx</code>. Drop in the whole
+          panel at once — two extract at a time, and each one stays loaded. Nothing is
+          stored on the server; files are read in memory and discarded. Results live in
+          this browser only.
         </p>
         <div id="uploadErr" class="err hide"></div>
 
         <div id="drop" class="drop" style="margin-top:var(--s4)">
-          <div style="font-size:15px;color:var(--ink-2);font-weight:600">Drop a transcript here</div>
-          <div style="margin-top:var(--s2)">or <button id="pick" class="btn-2">choose a file</button></div>
-          <div id="chosen" style="margin-top:var(--s3)"></div>
-          <input id="file" type="file" accept=".txt,.md,.docx,text/plain" class="hide">
+          <div style="font-size:15px;color:var(--ink-2);font-weight:600">Drop transcripts here</div>
+          <div style="margin-top:var(--s2)">or <button id="pick" class="btn-2">choose files</button></div>
+          <div class="mute" style="margin-top:var(--s2);font-size:13px">Select as many as you like — the whole panel at once.</div>
+          <input id="file" type="file" multiple accept=".txt,.md,.docx,text/plain" class="hide">
         </div>
 
-        <div style="display:flex;gap:var(--s4);align-items:flex-end;margin-top:var(--s4);flex-wrap:wrap">
-          <div style="max-width:180px">
-            <label for="expert">Expert label</label>
-            <input id="expert" type="text" value="E1" spellcheck="false">
-          </div>
+        <div id="queueList"></div>
+
+        <div style="display:flex;gap:var(--s3);align-items:center;margin-top:var(--s4);flex-wrap:wrap">
           <button id="run" class="btn" disabled>Extract</button>
+          <button id="clearQ" class="btn-2 hide">Clear list</button>
           <button id="cancelAdd" class="btn-2 hide">Cancel</button>
           <span id="runNote" class="mute" style="font-size:13px"></span>
         </div>
@@ -387,8 +401,8 @@ const KEY = "synq.live.v2";
 
 // experts: { E1: {filename, atoms, labels, stats, failures} }
 // marks:   { "E1:ratings:3": "y" | "n" }
-let state = { pass:"", file:null, experts:{}, order:[], sel:null,
-              marks:{}, themes:"", draft:null, checks:[], themeOff:{} };
+let state = { pass:"", experts:{}, order:[], sel:null,
+              marks:{}, themes:"", draft:null, checks:[], themeOff:{}, queue:[] };
 
 // ------------------------------------------------------------------ storage
 function save(){
@@ -481,30 +495,71 @@ $("#pass").addEventListener("keydown", e => { if (e.key === "Enter") $("#gateGo"
 // ------------------------------------------------------------------ upload
 const drop = $("#drop"), fileInput = $("#file");
 $("#pick").onclick = () => fileInput.click();
-fileInput.onchange = () => pickFile(fileInput.files[0]);
+fileInput.onchange = () => { pickFiles(fileInput.files); fileInput.value = ""; };
 ["dragenter","dragover"].forEach(ev =>
   drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("hot"); }));
 ["dragleave","drop"].forEach(ev =>
   drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("hot"); }));
-drop.addEventListener("drop", e => pickFile(e.dataTransfer.files[0]));
+drop.addEventListener("drop", e => pickFiles(e.dataTransfer.files));
 
-function nextLabel(){
-  for (let i = 1; i < 99; i++) if (!state.experts["E" + i]) return "E" + i;
-  return "E99";
+/** Pick a free label. The label becomes the atom id prefix, so a collision would
+    silently merge two experts into one — dedupe against the queue AND what's loaded. */
+function deriveLabel(name, taken){
+  const m = name.match(/expert\s*_?(\d+)/i);
+  let base = m ? "E" + m[1] : null;
+  if (!base)
+    for (let i = 1; i < 99; i++)
+      if (!taken.has("E" + i) && !state.experts["E" + i]) { base = "E" + i; break; }
+  base = base || "E99";
+  let label = base, n = 2;
+  while (taken.has(label)) label = base + "-" + (n++);
+  return label;
 }
 
-function pickFile(f){
-  if (!f) return;
-  state.file = f;
-  // Derive the label from the filename; fall back to the next free slot.
-  const m = f.name.match(/expert\s*_?(\d+)/i);
-  $("#expert").value = m ? "E" + m[1] : nextLabel();
-  $("#chosen").innerHTML =
-    `<span class="pill neutral">${esc(f.name)}</span> ` +
-    `<span class="mute" style="font-size:13px">${(f.size/1024).toFixed(0)} KB</span>`;
-  $("#run").disabled = false;
+function pickFiles(files){
+  if (!files || !files.length) return;
   err($("#uploadErr"), "");
+  const taken = new Set(state.queue.map(q => q.label));
+  Array.prototype.forEach.call(files, f => {
+    const label = deriveLabel(f.name, taken);
+    taken.add(label);
+    state.queue.push({file: f, label, status: "pending", error: ""});
+  });
+  renderQueueList();
 }
+
+function renderQueueList(){
+  const box = $("#queueList"), q = state.queue;
+  const pending = q.filter(x => x.status !== "done").length;
+  box.innerHTML = q.map((x, i) => {
+    const pill = x.status === "running" ? `<span class="pill acc"><span class="spin" style="width:9px;height:9px;border-width:2px"></span> extracting</span>`
+               : x.status === "done"    ? `<span class="pill ok">${x.atoms} atoms</span>`
+               : x.status === "failed"  ? `<span class="pill bad">${esc(x.error || "failed")}</span>`
+               : `<span class="pill neutral">ready</span>`;
+    return `<div class="qrow ${x.status}">
+      <input type="text" value="${esc(x.label)}" data-lab="${i}" spellcheck="false"
+             ${x.status === "running" ? "disabled" : ""}>
+      <span class="fn">${esc(x.file.name)}</span>
+      <span class="sz">${(x.file.size/1024).toFixed(0)} KB</span>
+      ${pill}
+      <button class="x" data-rm="${i}" title="Remove"${x.status === "running" ? " disabled" : ""}>&times;</button>
+    </div>`;
+  }).join("");
+
+  box.querySelectorAll("[data-lab]").forEach(inp => inp.onchange = () => {
+    state.queue[+inp.dataset.lab].label = inp.value.trim() || "E1";
+    renderQueueList();
+  });
+  box.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => {
+    state.queue.splice(+b.dataset.rm, 1); renderQueueList();
+  });
+
+  $("#run").disabled = !pending;
+  $("#run").textContent = pending > 1 ? `Extract ${pending} transcripts` : "Extract";
+  show($("#clearQ"), q.length > 0);
+}
+
+$("#clearQ").onclick = () => { state.queue = []; renderQueueList(); };
 
 const toB64 = (file) => new Promise((res, rej) => {
   const r = new FileReader();
@@ -513,48 +568,93 @@ const toB64 = (file) => new Promise((res, rej) => {
   r.readAsDataURL(file);
 });
 
+async function extractOne(job){
+  job.status = "running"; renderQueueList();
+  const b64 = await toB64(job.file);
+  const r = await fetch("/api/extract", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({passcode: state.pass, filename: job.file.name, expert: job.label, b64})
+  });
+  const j = await r.json().catch(() => ({ok:false, error:"Server sent a non-JSON response."}));
+  if (!r.ok || !j.ok){
+    const e = new Error(j.error || ("Server returned " + r.status));
+    e.status = r.status;
+    throw e;
+  }
+  // Replacing a label drops its stale marks; ids would otherwise point at new atoms.
+  Object.keys(state.marks).forEach(k => { if (k.indexOf(job.label + ":") === 0) delete state.marks[k]; });
+  state.experts[job.label] = {filename: j.filename, atoms: j.atoms, labels: j.labels,
+                              stats: j.stats, failures: j.failures};
+  if (state.order.indexOf(job.label) === -1) state.order.push(job.label);
+  job.status = "done";
+  job.atoms = j.stats.total;
+  renderQueueList();
+}
+
+/** Run the queue with a small concurrency cap. Each transcript is already six
+    concurrent model calls, so two at a time is twelve in flight — enough to be fast,
+    not enough to trip rate limits. */
+async function runPool(jobs, width){
+  let next = 0, dead = null;
+  const worker = async () => {
+    while (next < jobs.length){
+      const job = jobs[next++];
+      try { await extractOne(job); }
+      catch (e){
+        job.status = "failed";
+        job.error = e.status === 401 ? "bad passcode" : (e.message || "failed");
+        renderQueueList();
+        if (e.status === 401) dead = e;      // stop the whole run on auth failure
+      }
+      if (dead) return;
+    }
+  };
+  await Promise.all(Array.from({length: Math.min(width, jobs.length)}, worker));
+  return dead;
+}
+
 $("#run").onclick = async () => {
-  if (!state.file) return;
-  const label = $("#expert").value.trim() || nextLabel();
-  if (state.experts[label] &&
-      !confirm(label + " is already loaded (" + state.experts[label].filename + "). Replace it?")) return;
+  const jobs = state.queue.filter(q => q.status !== "done");
+  if (!jobs.length) return;
+
+  const clash = jobs.filter(j => state.experts[j.label]).map(j => j.label);
+  if (clash.length && !confirm(`${clash.join(", ")} already loaded. Replace?`)) return;
 
   const btn = $("#run");
   btn.disabled = true;
   err($("#uploadErr"), "");
-  $("#runNote").innerHTML = `<span class="spin"></span> six extraction passes running concurrently — 15 to 60 seconds`;
-  try {
-    const b64 = await toB64(state.file);
-    const r = await fetch("/api/extract", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({passcode: state.pass, filename: state.file.name, expert: label, b64})
-    });
-    const j = await r.json().catch(() => ({ok:false, error:"Server sent a non-JSON response."}));
-    if (!r.ok || !j.ok){
-      if (r.status === 401){
-        state.pass = ""; save();
-        show($("#work"), false); show($("#gate"), true);
-        err($("#gateErr"), "That passcode was rejected. Try again.");
-        return;
-      }
-      throw new Error(j.error || ("Server returned " + r.status));
-    }
-    // Replacing an expert drops its stale marks; ids would otherwise point at new atoms.
-    Object.keys(state.marks).forEach(k => { if (k.indexOf(label + ":") === 0) delete state.marks[k]; });
-    state.experts[label] = {filename: j.filename, atoms: j.atoms, labels: j.labels,
-                            stats: j.stats, failures: j.failures};
-    if (state.order.indexOf(label) === -1) state.order.push(label);
-    state.sel = label;
-    state.file = null;
-    $("#chosen").textContent = ""; $("#run").disabled = true; fileInput.value = "";
-    // A new interview invalidates panel-level output built from the old set.
-    state.draft = null; state.checks = []; state.themeOff = {};
-    save(); renderAll();
-  } catch (e){
-    err($("#uploadErr"), e.message || "Extraction failed.");
-  } finally {
-    btn.disabled = false; $("#runNote").textContent = "";
+  $("#runNote").innerHTML = `<span class="spin"></span> extracting ${jobs.length} transcript${jobs.length===1?"":"s"}, two at a time`;
+
+  const dead = await runPool(jobs, 2);
+
+  $("#runNote").textContent = "";
+  btn.disabled = false;
+
+  if (dead){
+    state.pass = ""; save();
+    show($("#work"), false); show($("#gate"), true);
+    err($("#gateErr"), "That passcode was rejected. Try again.");
+    return;
   }
+
+  const failed = state.queue.filter(q => q.status === "failed");
+  if (failed.length)
+    err($("#uploadErr"), `${failed.length} of ${jobs.length} failed — the rest loaded. ` +
+        `Fix or remove the failed rows and press Extract again.`);
+
+  const loaded = state.queue.filter(q => q.status === "done");
+  if (loaded.length){
+    state.sel = loaded[loaded.length - 1].label;
+    // New interviews invalidate panel-level output built from the old set.
+    state.draft = null; state.checks = []; state.themeOff = {};
+    save();
+    if (!failed.length) state.queue = [];
+    renderAll();
+    renderQueueList();
+  }
+  // Keep the upload view open when something failed — jumping to results hides the
+  // failed row and the error the user has to act on.
+  if (failed.length) showUpload(true);
 };
 
 $("#cancelAdd").onclick = () => showUpload(false);
@@ -563,7 +663,7 @@ function showUpload(on){
   show($("#uploadBox"), on);
   show($("#results"), !on && state.order.length > 0);
   show($("#cancelAdd"), on && state.order.length > 0);
-  $("#uploadTitle").textContent = state.order.length ? "Add another transcript" : "Add a transcript";
+  $("#uploadTitle").textContent = state.order.length ? "Add more transcripts" : "Add transcripts";
 }
 
 // -------------------------------------------------------------- panel bar
@@ -589,8 +689,8 @@ function renderPanelBar(){
   const ra = $("#resetAll");
   if (ra) ra.onclick = () => {
     if (!confirm("Clear every loaded interview and start over?")) return;
-    state = {pass: state.pass, file:null, experts:{}, order:[], sel:null,
-             marks:{}, themes:"", draft:null, checks:[], themeOff:{}};
+    state = {pass: state.pass, experts:{}, order:[], sel:null,
+             marks:{}, themes:"", draft:null, checks:[], themeOff:{}, queue:[]};
     try { localStorage.removeItem(KEY); } catch(e){}
     save(); renderAll();
   };
@@ -599,6 +699,7 @@ function renderPanelBar(){
 // ------------------------------------------------------------------ render
 function renderAll(){
   renderPanelBar();
+  renderQueueList();
   if (!state.order.length){ showUpload(true); return; }
   if (!state.sel || !state.experts[state.sel]) state.sel = state.order[0];
   showUpload(false);
