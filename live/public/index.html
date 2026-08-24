@@ -151,6 +151,55 @@
   .nots h3{color:var(--warn);margin-bottom:var(--s2)}
   .nots ul{margin:0;padding-left:var(--s5);color:var(--ink-2)}
 
+  /* The deliverable reads as a document, not a tool. Different rhythm on purpose:
+     wider leading, serif-scale headings, evidence set as a record rather than a card. */
+  .doc{max-width:76ch;margin-inline:auto;padding:var(--s2) 0 var(--s5)}
+  .doc-head{border-bottom:2px solid var(--ink);padding-bottom:var(--s4);margin-bottom:var(--s6)}
+  .doc-kicker{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--mute);font-weight:600}
+  .doc-title{font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.15;margin:var(--s2) 0 var(--s3)}
+  .doc-meta{font-size:13px;color:var(--mute)}
+  .doc-h{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--mute);
+         font-weight:700;margin:var(--s7) 0 var(--s4);padding-bottom:var(--s2);
+         border-bottom:1px solid var(--line)}
+  .doc-h:first-of-type{margin-top:0}
+  .doc-lede{font-size:18px;line-height:1.6;max-width:70ch}
+  .doc-note{white-space:pre-wrap;color:var(--ink-2)}
+
+  .finding{margin-bottom:var(--s6);break-inside:avoid}
+  .finding-head{display:flex;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
+  .fnum{font-size:13px;font-weight:700;color:var(--accent);min-width:18px}
+  .fname{font-size:13px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+  .finding-take{font-size:16.5px;line-height:1.55;margin:var(--s2) 0 var(--s3);max-width:70ch}
+  .ev{border-left:2px solid var(--line);padding-left:var(--s4);display:flex;
+      flex-direction:column;gap:var(--s2)}
+  .ev-row{display:flex;gap:var(--s3);align-items:baseline;font-size:13.5px;line-height:1.5}
+  .ev-ex{font-weight:700;color:var(--mute);flex:none;min-width:24px}
+  .ev-q{color:var(--ink-2)}
+  .ev-ts{color:var(--mute);font-size:12px;flex:none;margin-left:auto;padding-left:var(--s3)}
+
+  .prov{margin-top:var(--s7);padding-top:var(--s4);border-top:1px solid var(--line);
+        font-size:13px;line-height:1.55;color:var(--mute);max-width:70ch}
+  .prov b{color:var(--ink-2)}
+
+  label.keep{display:inline-flex;align-items:center;gap:6px;margin:0 0 0 var(--s3);
+             font-size:12px;text-transform:none;letter-spacing:0;color:var(--mute);
+             font-weight:500;cursor:pointer}
+  label.keep input{margin:0;cursor:pointer}
+
+  /* Print is a real output format here, not an afterthought: the deliverable is the page. */
+  @media print{
+    .ghostbar,.panelbar,.statbar,.tabs,footer,.no-print,#failures{display:none !important}
+    body{background:#fff;color:#000;font-size:11pt}
+    .wrap{max-width:none;padding:0}
+    .card{border:0;padding:0;margin:0;background:#fff}
+    .doc{max-width:none}
+    .doc-h{break-after:avoid}
+    table{font-size:10pt} .scroll{overflow:visible}
+    .pill{border:1px solid #bbb;background:#fff !important;color:#333 !important}
+    a{color:#000;text-decoration:none}
+    @page{margin:16mm}
+  }
+
   .err{background:var(--sqbg);color:var(--sq);border:1px solid #e8c3b7;border-radius:var(--r-sm);
        padding:var(--s3) var(--s4);margin-bottom:var(--s4);font-size:14px}
   .hide{display:none !important}
@@ -230,6 +279,7 @@
           <button data-tab="coverage">Coverage</button>
           <button data-tab="themes">Synthesis</button>
           <button data-tab="claim">Claim check</button>
+          <button data-tab="deliver">Deliverable</button>
         </div>
 
         <div id="tab-queue">
@@ -304,6 +354,19 @@
           <div id="checkErr" class="err hide"></div>
           <div id="checks"></div>
         </div>
+
+        <div id="tab-deliver" class="hide">
+          <p class="mute no-print">
+            The finished synthesis, assembled from what you confirmed and kept. Print it to
+            PDF or copy it as markdown. Everything below traces to a quote and a timestamp.
+          </p>
+          <div style="display:flex;gap:var(--s3);flex-wrap:wrap;margin:var(--s4) 0" class="no-print">
+            <button id="printDoc" class="btn">Print / save as PDF</button>
+            <button id="copyMd" class="btn-2">Copy as markdown</button>
+            <span id="deliverNote" class="mute" style="font-size:13px"></span>
+          </div>
+          <div id="deliver"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -311,7 +374,7 @@
   <footer>
     Sibling of the static submission at
     <a href="https://synquery-synthesis.vercel.app">synquery-synthesis.vercel.app</a>,
-    which renders a hand-verified panel and does not run at request time.
+    which renders an approved panel and does not run at request time.
     This one has a back end: server-held key, concurrent extraction, live citation check.
   </footer>
 </div>
@@ -325,7 +388,7 @@ const KEY = "synq.live.v2";
 // experts: { E1: {filename, atoms, labels, stats, failures} }
 // marks:   { "E1:ratings:3": "y" | "n" }
 let state = { pass:"", file:null, experts:{}, order:[], sel:null,
-              marks:{}, themes:"", draft:null, checks:[] };
+              marks:{}, themes:"", draft:null, checks:[], themeOff:{} };
 
 // ------------------------------------------------------------------ storage
 function save(){
@@ -333,7 +396,7 @@ function save(){
     sessionStorage.setItem(KEY + ".pass", state.pass);
     localStorage.setItem(KEY, JSON.stringify({
       experts: state.experts, order: state.order, sel: state.sel,
-      marks: state.marks, themes: state.themes, draft: state.draft, checks: state.checks
+      marks: state.marks, themes: state.themes, draft: state.draft, checks: state.checks, themeOff: state.themeOff
     }));
   } catch (e) { /* private window or quota — the app still works, it just forgets */ }
 }
@@ -350,6 +413,7 @@ function load(){
       state.themes  = o.themes  || "";
       state.draft   = o.draft   || null;
       state.checks  = o.checks  || [];
+      state.themeOff= o.themeOff|| {};
     }
   } catch (e) { /* ignore */ }
 }
@@ -484,7 +548,7 @@ $("#run").onclick = async () => {
     state.file = null;
     $("#chosen").textContent = ""; $("#run").disabled = true; fileInput.value = "";
     // A new interview invalidates panel-level output built from the old set.
-    state.draft = null; state.checks = [];
+    state.draft = null; state.checks = []; state.themeOff = {};
     save(); renderAll();
   } catch (e){
     err($("#uploadErr"), e.message || "Extraction failed.");
@@ -526,7 +590,7 @@ function renderPanelBar(){
   if (ra) ra.onclick = () => {
     if (!confirm("Clear every loaded interview and start over?")) return;
     state = {pass: state.pass, file:null, experts:{}, order:[], sel:null,
-             marks:{}, themes:"", draft:null, checks:[]};
+             marks:{}, themes:"", draft:null, checks:[], themeOff:{}};
     try { localStorage.removeItem(KEY); } catch(e){}
     save(); renderAll();
   };
@@ -544,6 +608,7 @@ function renderAll(){
   renderCoverage();
   renderDraft();
   renderChecks();
+  renderDeliverable();
   $("#themes").value = state.themes || "";
 }
 
@@ -659,7 +724,7 @@ function table(head, rows){
     `</tbody></table></div>`;
 }
 
-function renderRollup(){
+function buildRollup(){
   const out = [], experts = panelExperts();
 
   // Ratings: criterion x vendor, each cell carrying every expert who scored it.
@@ -734,16 +799,18 @@ function renderRollup(){
       })])));
   }
 
-  $("#rollup").innerHTML = out.length ? out.join("")
-    : `<p class="mute">No atoms confirmed yet. Confirm some in the review queue and they appear here.</p>`;
+  return out.join("");
+}
+function renderRollup(){
+  const h = buildRollup();
+  $("#rollup").innerHTML = h ||
+    `<p class="mute">No atoms confirmed yet. Confirm some in the review queue and they appear here.</p>`;
 }
 
 // ---------------------------------------------------------------- coverage
-function renderCoverage(){
+function buildCoverage(){
   const map = confirmedMap(), experts = panelExperts();
-  if (!Object.keys(map).length){
-    $("#coverage").innerHTML = `<p class="mute">Nothing confirmed yet.</p>`; return;
-  }
+  if (!Object.keys(map).length) return "";
   const rat = confirmedGroup("ratings"), price = confirmedGroup("pricing");
   const out = [];
 
@@ -803,13 +870,18 @@ function renderCoverage(){
     out.push(`<div class="nots"><h3>What this panel cannot support</h3><ul>` +
              gaps.map(g => `<li>${esc(g)}</li>`).join("") + `</ul></div>`);
 
-  $("#coverage").innerHTML = out.join("");
+  return out.join("");
+}
+function renderCoverage(){
+  const h = buildCoverage();
+  $("#coverage").innerHTML = h || `<p class="mute">Nothing confirmed yet.</p>`;
 }
 
 // ------------------------------------------------------------------- tabs
 document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
   document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
-  ["queue","rollup","coverage","themes","claim"].forEach(t => show($("#tab-"+t), t === b.dataset.tab));
+  ["queue","rollup","coverage","themes","claim","deliver"].forEach(t => show($("#tab-"+t), t === b.dataset.tab));
+  if (b.dataset.tab === "deliver") renderDeliverable();
 });
 
 // --------------------------------------------------------------- synthesis
@@ -851,12 +923,13 @@ function renderDraft(){
         <button id="copySumm" class="btn-2" style="margin-left:var(--s3);font-size:13px">Copy summary</button>
       </div></div>`);
 
-  (j.themes || []).forEach(t => out.push(`
+  (j.themes || []).forEach((t, ti) => out.push(`
     <div class="theme">
       <div class="lbl">${esc(t.theme)}</div>
       <div class="take">${esc(t.takeaway)}</div>
       <span class="pill acc">${esc(t.strength)}</span>
       <span class="pill ${t.citations_resolve ? "ok":"bad"}">${t.citations_resolve ? "citations resolve":"unresolved citation"}</span>
+      <label class="keep"><input type="checkbox" data-keep="${ti}" ${state.themeOff[ti] ? "" : "checked"}> keep in deliverable</label>
       <details style="margin-top:var(--s3)">
         <summary>${t.atom_ids.length} supporting atom${t.atom_ids.length===1?"":"s"}</summary>
         <ul>${t.atom_ids.map(id => `<li>${map[id] ? describeAtom(map[id]) : esc(id)}</li>`).join("")}</ul>
@@ -864,10 +937,15 @@ function renderDraft(){
     </div>`));
 
   if (j.not_supported && j.not_supported.length)
-    out.push(`<div class="nots"><h3>What this panel does not support</h3><ul>` +
+    out.push(`<div class="nots"><h3>Questions this panel cannot answer</h3><ul>` +
              j.not_supported.map(s => `<li>${esc(s)}</li>`).join("") + `</ul></div>`);
 
   $("#draft").innerHTML = out.join("");
+  $("#draft").querySelectorAll("[data-keep]").forEach(cb => cb.onchange = () => {
+    const i = cb.dataset.keep;
+    if (cb.checked) delete state.themeOff[i]; else state.themeOff[i] = true;
+    save();
+  });
   const cs = $("#copySumm");
   if (cs) cs.onclick = async () => {
     try { await navigator.clipboard.writeText(j.summary.text); cs.textContent = "Copied";
@@ -928,6 +1006,145 @@ function renderChecks(){
     catch (e){ b.textContent = "Select the text above to copy"; }
   });
 }
+
+// -------------------------------------------------------------- deliverable
+function keptThemes(){
+  const j = state.draft;
+  if (!j || !j.themes) return [];
+  return j.themes.map((t, i) => ({t, i})).filter(x => !state.themeOff[x.i]).map(x => x.t);
+}
+
+/** Evidence lines for one theme: the confirmed atoms it cites, as quotes. */
+function evidenceFor(t, map){
+  return (t.atom_ids || []).map(id => map[id]).filter(Boolean);
+}
+
+function renderDeliverable(){
+  const map = confirmedMap(), experts = panelExperts(), j = state.draft;
+  const el = $("#deliver");
+
+  if (!experts.length){
+    el.innerHTML = `<p class="mute">Nothing confirmed yet. Confirm atoms in the review queue first.</p>`;
+    return;
+  }
+
+  const themes = keptThemes();
+  const out = [];
+  const today = new Date().toLocaleDateString(undefined,
+    {year:"numeric", month:"long", day:"numeric"});
+  let atoms = 0, verified = 0;
+  experts.forEach(e => { atoms += state.experts[e].stats.total; verified += state.experts[e].stats.verified; });
+
+  out.push(`<div class="doc">
+    <div class="doc-head">
+      <div class="doc-kicker">Expert panel synthesis</div>
+      <h1 class="doc-title">${experts.length} expert interview${experts.length===1?"":"s"}</h1>
+      <div class="doc-meta">${esc(today)} &nbsp;·&nbsp; ${Object.keys(map).length} confirmed facts &nbsp;·&nbsp;
+        ${verified} of ${atoms} quotes verified verbatim against source</div>
+    </div>`);
+
+  // who is in the panel
+  out.push(`<h2 class="doc-h">Panel</h2><div class="scroll"><table><thead><tr>
+      <th>Expert</th><th>Transcript</th><th class="num">Confirmed facts</th></tr></thead><tbody>` +
+    experts.map(e => `<tr><td><b>${esc(e)}</b></td><td>${esc(state.experts[e].filename)}</td>
+      <td class="num">${Object.values(map).filter(a => a.expert === e).length}</td></tr>`).join("") +
+    `</tbody></table></div>`);
+
+  if (j && j.summary && j.summary.text)
+    out.push(`<h2 class="doc-h">Summary</h2><p class="doc-lede">${esc(j.summary.text)}</p>`);
+
+  if (themes.length){
+    out.push(`<h2 class="doc-h">Findings</h2>`);
+    themes.forEach((t, n) => {
+      const ev = evidenceFor(t, map);
+      out.push(`<div class="finding">
+        <div class="finding-head"><span class="fnum">${n+1}</span>
+          <span class="fname">${esc(t.theme)}</span>
+          <span class="pill acc">${esc(t.strength)}</span></div>
+        <p class="finding-take">${esc(t.takeaway)}</p>
+        ${ev.length ? `<div class="ev">` + ev.map(a =>
+          `<div class="ev-row"><span class="ev-ex">${esc(a.expert)}</span>
+             <span class="ev-q">&ldquo;${esc(a.quote)}&rdquo;</span>
+             <span class="ev-ts">${esc(a.timestamp)}</span></div>`).join("") + `</div>` : ""}
+      </div>`);
+    });
+  }
+
+  const roll = buildRollup();
+  if (roll) out.push(`<h2 class="doc-h">Numbers</h2>` + roll);
+
+  const cov = buildCoverage();
+  if (cov) out.push(`<h2 class="doc-h">Coverage and limits</h2>` + cov);
+
+  if (j && j.not_supported && j.not_supported.length)
+    out.push(`<div class="nots"><h3>Questions this panel cannot answer</h3><ul>` +
+      j.not_supported.map(x => `<li>${esc(x)}</li>`).join("") + `</ul></div>`);
+
+  if (state.themes && state.themes.trim())
+    out.push(`<h2 class="doc-h">Analyst notes</h2><p class="doc-note">${esc(state.themes)}</p>`);
+
+  // Provenance, stated rather than implied. Every artifact this system produces says
+  // how it was made -- the same standard the citations are held to.
+  out.push(`<div class="prov"><b>How this was produced.</b> Facts were extracted from the
+    transcripts by ${esc((j && j.model) || "Claude")} against a fixed schema, every quote was
+    checked character-for-character against the source file, and a human confirmed or
+    rejected each one. Findings were drafted from the confirmed facts only and cite the
+    facts they rest on. Nothing here was averaged across experts.</div></div>`);
+
+  el.innerHTML = out.join("");
+}
+
+function deliverableMarkdown(){
+  const map = confirmedMap(), experts = panelExperts(), j = state.draft;
+  const L = [], today = new Date().toLocaleDateString(undefined,
+    {year:"numeric", month:"long", day:"numeric"});
+  let atoms = 0, verified = 0;
+  experts.forEach(e => { atoms += state.experts[e].stats.total; verified += state.experts[e].stats.verified; });
+
+  L.push(`# Expert panel synthesis`, "");
+  L.push(`${experts.length} expert interview${experts.length===1?"":"s"} · ${today} · ` +
+         `${Object.keys(map).length} confirmed facts · ${verified}/${atoms} quotes verified verbatim`, "");
+
+  L.push(`## Panel`, "");
+  experts.forEach(e => L.push(`- **${e}** — ${state.experts[e].filename} — ` +
+    `${Object.values(map).filter(a => a.expert === e).length} confirmed facts`));
+  L.push("");
+
+  if (j && j.summary && j.summary.text) L.push(`## Summary`, "", j.summary.text, "");
+
+  const themes = keptThemes();
+  if (themes.length){
+    L.push(`## Findings`, "");
+    themes.forEach((t, n) => {
+      L.push(`### ${n+1}. ${t.theme} _(${t.strength})_`, "", t.takeaway, "");
+      evidenceFor(t, map).forEach(a => L.push(`> ${a.expert} @ ${a.timestamp} — "${a.quote}"`));
+      L.push("");
+    });
+  }
+
+  if (j && j.not_supported && j.not_supported.length){
+    L.push(`## Questions this panel cannot answer`, "");
+    j.not_supported.forEach(x => L.push(`- ${x}`));
+    L.push("");
+  }
+
+  if (state.themes && state.themes.trim()) L.push(`## Analyst notes`, "", state.themes, "");
+
+  L.push(`---`, "", `Facts extracted by ${(j && j.model) || "Claude"} against a fixed schema; ` +
+    `every quote checked character-for-character against the source; a human confirmed or ` +
+    `rejected each one. Findings drafted from confirmed facts only. Nothing averaged across experts.`);
+  return L.join("\n");
+}
+
+$("#printDoc").onclick = () => window.print();
+$("#copyMd").onclick = async () => {
+  const btn = $("#copyMd");
+  try {
+    await navigator.clipboard.writeText(deliverableMarkdown());
+    btn.textContent = "Copied";
+    setTimeout(() => { btn.textContent = "Copy as markdown"; }, 1800);
+  } catch (e){ $("#deliverNote").textContent = "Clipboard blocked — use Print instead."; }
+};
 
 // ------------------------------------------------------------------ notes
 let themeTimer;
