@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-In the 21 Aug round, Bren asked: *"Did you — do you have a backend?"* The honest answer for the submission is no. `build.py` renders `site/index.html` from a hand-verified `facts.json` plus hand-written finding rows, and `pipeline/extract.py` writes `out/extracted.json` that **nothing reads** — it exists to be scored against the answer key. That's a defensible take-home choice, and it is not a system anyone but me can run.
+In the 21 Aug round, Bren asked: *"Did you — do you have a backend?"* The honest answer for the submission is no. `build.py` renders `site/index.html` from a `facts.json` built during the take-home, plus 20 finding rows hardcoded into `build.py` itself — drafted with Claude from the transcripts and approved before they were pasted in. `pipeline/extract.py` writes `out/extracted.json` that **nothing reads**; it exists to be scored against the answer key. That's a defensible take-home choice, and it is not a system anyone but me can run.
 
 This is that system. Same schema, same prompt, same model. What changes is that a stranger can now use it.
 
@@ -19,7 +19,7 @@ Three things that cannot happen in a browser or in a committed HTML file:
 
 ## The honest part
 
-`score.py` has two halves. Citation integrity needs no ground truth, so it survives here and runs live on any transcript. Value agreement is scored against `facts.json`, which exists only because I read three transcripts by hand — there is no answer key for a transcript nobody has read.
+`score.py` has two halves. Citation integrity needs no ground truth, so it survives here and runs live on any transcript. Value agreement is scored against `facts.json`, which exists only because those three transcripts were gone through and verified during the take-home. There is no answer key for a transcript nobody has read.
 
 So that half becomes a **review queue**: every atom shows its verbatim quote, timestamp, confidence, and a verified badge, and a human confirms or rejects it. Rollup tables are computed by arithmetic from confirmed atoms only. An unverified or unconfirmed atom never reaches a table.
 

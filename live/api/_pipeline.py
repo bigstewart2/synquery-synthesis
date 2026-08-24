@@ -5,7 +5,8 @@ the interview guide is treated as a schema, the model is asked only to LOCATE an
 what was said, and every atom must carry a verbatim quote plus a timestamp.
 
 The one thing that changes here is what happens afterwards. The static prototype scored
-extraction against a hand-verified answer key (facts.json). No answer key exists for a
+extraction against a verified answer key (facts.json) built during the take-home. No
+answer key exists for a
 transcript nobody has read yet, so this module keeps the half of that check which needs
 no ground truth -- does the quote actually appear in the source -- and leaves the value
 judgement to a human in the review queue.
