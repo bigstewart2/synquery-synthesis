@@ -1,0 +1,91 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Synquery Take-Home Writeup</title>
+<style>
+  @page { margin: 20mm 18mm; }
+  body { font: 10.5pt/1.55 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: #191917; }
+  .head { border-bottom: 1px solid #d3d2cc; padding-bottom: 10pt; margin-bottom: 14pt; }
+  .head h1 { font-size: 17pt; font-weight: 650; letter-spacing: -.01em; margin: 0 0 2pt; }
+  .head .meta { font-size: 9pt; color: #66665f; }
+  h2 { font-size: 12.5pt; font-weight: 650; margin: 14pt 0 6pt; page-break-after: avoid; }
+  p, li { margin: 0 0 6pt; }
+  ul { padding-left: 16pt; } li { margin-bottom: 5pt; }
+  li > ul { margin-top: 4pt; } li > ul li { font-size: 9.5pt; color: #3d3d38; }
+  strong { font-weight: 650; }
+  
+  .lanewrap { margin: 6pt 0 10pt; }
+  .lanelabel { font-size: 7.5pt; font-weight: 650; letter-spacing: .1em; color: #66707a; margin-bottom: 4pt; }
+  .lane { display: flex; }
+  .chev { position: relative; flex: 1; padding: 8pt 4pt 7pt 14pt; margin-right: -8pt;
+          clip-path: polygon(0 0, calc(100% - 10pt) 0, 100% 50%, calc(100% - 10pt) 100%, 0 100%, 10pt 50%); }
+  .chev.first { clip-path: polygon(0 0, calc(100% - 10pt) 0, 100% 50%, calc(100% - 10pt) 100%, 0 100%); padding-left: 9pt; }
+  .chev .step { font-size: 7.6pt; font-weight: 650; margin-bottom: 1pt; }
+  .chev .who { font-size: 6.8pt; opacity: .85; }
+  .vlegend { font-size: 7.5pt; color: #66707a; display: flex; gap: 14pt; margin: 2pt 0 6pt; }
+  .dot { display: inline-block; width: 6pt; height: 6pt; border-radius: 1.5pt; margin-right: 3pt; vertical-align: -0.5pt; }
+  .tlheader { display: flex; margin-left: 62pt; margin-bottom: 8pt; }
+  .wchev { position: relative; flex: 1; color: #fff; padding: 5pt 4pt 4pt 16pt; margin-right: -9pt;
+           clip-path: polygon(0 0, calc(100% - 11pt) 0, 100% 50%, calc(100% - 11pt) 100%, 0 100%, 11pt 50%); }
+  .wchev.first { clip-path: polygon(0 0, calc(100% - 11pt) 0, 100% 50%, calc(100% - 11pt) 100%, 0 100%); padding-left: 10pt; }
+  .wchev .wk { font-size: 8pt; font-weight: 700; }
+  .wchev .wname { font-size: 6.8pt; opacity: .9; }
+  .tlrow { display: flex; border-top: 0.5pt dotted #c9ccd0; padding: 6pt 0; page-break-inside: avoid; }
+  .tlrowlabel { width: 62pt; flex: none; font-size: 8pt; font-weight: 650; color: #1f6f6b; }
+  .tlcells { display: flex; flex: 1; }
+  .tlcell { flex: 1; font-size: 7.6pt; line-height: 1.45; color: #333a42; padding-right: 10pt; }
+
+</style></head><body>
+<div class="head">
+  <h1>Synquery Take-Home &middot; Panel Synthesis Prototype</h1>
+  <div class="meta">Stephen Lese &nbsp;&middot;&nbsp; live prototype: synquery-synthesis.vercel.app &nbsp;&middot;&nbsp; code: github.com/bigstewart2/synquery-synthesis</div>
+</div>
+<h2>The goal</h2>
+<p>Today the client gets raw transcripts and has to mine them by hand. The goal here is that after Synquery runs a panel, the client opens one page that already answers their question, with every claim sourced, and pulls what they need straight into their deck. Three hour-long calls become slide-ready data instead of homework.</p>
+<h2>Value added, the key principles</h2>
+<p>This takes four manual steps off the client's plate, pulling themes, pulling quotes, building tables, and comparing across interviews, and sets the output up to drop straight into their deck. And the differentiator holds even if a client built their own agents to do this. They would never have the volume of interview analysis Synquery has, and volume is what makes the themes get smarter.</p>
+<ul>
+<li><strong>Everything is cited.</strong> Every number and quote links to the exact moment it was said, so any claim survives a "says who" in a partner meeting.</li>
+<li><strong>Everything is structured.</strong> Ratings, prices, rankings, and quotes become data, ready to drop into tables and slides instead of prose to mine.</li>
+<li><strong>Everything is comparable.</strong> The same question across all the interviews lands in one view instead of three documents.</li>
+</ul>
+<h2>Assumptions</h2>
+<ul>
+<li>The interview guide already comes from the client's question. That's how Synquery works today.</li>
+<li>The interviews keep asking typed questions, rankings, 1 to 10 ratings, prices. That's what makes the Ratings and Numbers tab buildable.</li>
+<li>The client gives their question and a starting set of themes at kickoff.</li>
+<li>This can stay light. They share their key questions, we propose a theme set back, they sign off. Some back and forth here is worth it. Early alignment on themes beats building the wrong structure, and the final structure stays subject to their confirmation.</li>
+<li>A human looks things over before anything goes out.</li>
+</ul>
+<h2>What the prototype includes, by tab</h2>
+<ul>
+<li><strong>Themes and Quotes.</strong> Every finding is a row, who said it, the theme, the takeaway, the verbatim quote. Filter by theme or expert and you have the raw material for a slide in seconds, with the client's themes kept visually separate from the ones we added.</li>
+<li><strong>Ratings and Numbers.</strong> All the typed answers laid out as tables, the vendor ratings matrix, prices, commercial terms, loyalty and switching. This is where three separate conversations become one comparison.</li>
+<li><strong>Transcripts.</strong> The full calls, cleaned and redacted. Every number and quote in the product clicks through to the exact moment here, which is what makes the rest of it defensible.</li>
+<li><strong>Coverage.</strong> What this panel can and can't support, stated plainly. It keeps a claim the data can't back off the client's slide, and it points at which interviews to run next.</li>
+<li><strong>Summary.</strong> Five claims a client might actually put on a slide, each with a verdict, supported, supported with caveat, or not supported by this panel, and a footnote written to paste under the slide.</li>
+</ul>
+<h2>The workflow it takes over</h2>
+<p>The middle of the client's workflow disappears. They go from mining transcripts to reviewing findings and building their deck.</p>
+<div class="lanewrap"><div class="lanelabel">TODAY</div><div class="lane"><div class="chev first" style="background:#5b6670;color:#fff;z-index:20"><div class="step">Interviews</div><div class="who">Synquery</div></div><div class="chev" style="background:#2b3440;color:#fff;z-index:19"><div class="step">Themes</div><div class="who">Client</div></div><div class="chev" style="background:#2b3440;color:#fff;z-index:18"><div class="step">Quotes + citations</div><div class="who">Client</div></div><div class="chev" style="background:#2b3440;color:#fff;z-index:17"><div class="step">Tables</div><div class="who">Client</div></div><div class="chev" style="background:#2b3440;color:#fff;z-index:16"><div class="step">Comparison</div><div class="who">Client</div></div><div class="chev" style="background:#2b3440;color:#fff;z-index:15"><div class="step">Review</div><div class="who">Client</div></div><div class="chev" style="background:#2b3440;color:#fff;z-index:14"><div class="step">Deck</div><div class="who">Client</div></div></div></div><div class="lanewrap"><div class="lanelabel">WITH THIS PRODUCT</div><div class="lane"><div class="chev first" style="background:#5b6670;color:#fff;z-index:20"><div class="step">Interviews</div><div class="who">Synquery</div></div><div class="chev" style="background:#2f8f8a;color:#fff;z-index:19"><div class="step">Themes</div><div class="who">The product</div></div><div class="chev" style="background:#2f8f8a;color:#fff;z-index:18"><div class="step">Quotes + citations</div><div class="who">The product</div></div><div class="chev" style="background:#2f8f8a;color:#fff;z-index:17"><div class="step">Tables</div><div class="who">The product</div></div><div class="chev" style="background:#2f8f8a;color:#fff;z-index:16"><div class="step">Comparison</div><div class="who">The product</div></div><div class="chev" style="background:#9fc6c4;color:#1d2430;z-index:15"><div class="step">Review</div><div class="who">Quick human pass</div></div><div class="chev" style="background:#2b3440;color:#fff;z-index:14"><div class="step">Deck</div><div class="who">Client, faster</div></div></div></div><div class="vlegend"><span><span class="dot" style="background:#2b3440"></span>Client</span><span><span class="dot" style="background:#2f8f8a"></span>The product</span><span><span class="dot" style="background:#9fc6c4"></span>Human review</span><span><span class="dot" style="background:#5b6670"></span>Synquery interviews</span></div>
+<h2>Where AI does the work, and where it's plain software</h2>
+<ul>
+<li>AI handles the parts that need reading. Finding a rating or a price inside a conversational answer, matching a quote to a theme, wording a takeaway. Judgment work.</li>
+<li>Plain software handles the parts that have to be exactly right. Averages, counts, checking that a quote matches the transcript word for word, swapping employer names for placeholders. Ordinary code, same answer every run, nothing invented.</li>
+<li>The split exists because a language model can occasionally make things up and ordinary code can't. So nothing a model wrote ever becomes a number. Models find and phrase. Code counts and checks.</li>
+<li>Extracted data points are stored with their quote and timestamp, and every table is computed from them. Interview four updates every view without touching interviews one through three.</li>
+</ul>
+<h2>Additional callouts</h2>
+<ul>
+<li>It flags data problems instead of papering over them. A rating given as 9 out of 10 on a question asked 1 to 7 gets held out of the averages, not blended in.</li>
+<li>Every build re-checks every citation against the transcripts before anything renders. A broken link fails the build instead of reaching a client.</li>
+</ul>
+<h2>The rollout, week by week</h2>
+<div class="tlheader"><div class="wchev first" style="background:#8f979e;z-index:9"><div class="wk">Week 1</div><div class="wname">React</div></div><div class="wchev" style="background:#5fa3a0;z-index:8"><div class="wk">Week 2</div><div class="wname">Train on history</div></div><div class="wchev" style="background:#2f8f8a;z-index:7"><div class="wk">Weeks 3-4</div><div class="wname">Sandbox</div></div><div class="wchev" style="background:#2b3440;z-index:6"><div class="wk">Week 5+</div><div class="wname">Live + learning</div></div></div><div class="tlrow"><div class="tlrowlabel">Product</div><div class="tlcells"><div class="tlcell">Demo to the team and one design partner. Collect the blunt yes or no.</div><div class="tlcell">Tune themes on the past interviews we already have. Set the review bar.</div><div class="tlcell">Sign off every delivery before it reaches the partner. Log every correction.</div><div class="tlcell">Own the quality bar. Expand to more accounts.</div></div></div><div class="tlrow"><div class="tlrowlabel">Engineering</div><div class="tlcells"><div class="tlcell">Start the ingestion and export plumbing in parallel.</div><div class="tlcell">Review workspace, plus stable IDs on every data point so re-runs never break a citation.</div><div class="tlcell">Wall each client's data off from the others, before a second client's data enters.</div><div class="tlcell">Accuracy tooling at scale. Logged corrections become the running test set.</div></div></div><div class="tlrow"><div class="tlrowlabel">Design partner</div><div class="tlcells"><div class="tlcell">React. Useful on a live project or not, and what's missing.</div><div class="tlcell">N/A</div><div class="tlcell">Use it on a real project. Every correction gets logged.</div><div class="tlcell">First reference customer.</div></div></div>
+<p><strong>What those builds actually are, concretely.</strong></p>
+<ul>
+<li><strong>Ingestion.</strong> In the prototype I placed transcript files in a folder by hand. The real build is a connector to the interview platform. A call ends, the transcript lands in the right project on its own, gets a cleanup pass, speaker labels, timestamps, name redaction, runs through extraction, and appears in the review queue. Nobody moves files.</li>
+<li><strong>Export.</strong> Today you can copy a claim with its citation. The real build is one click out, a slide-ready table or chart with the footnote attached, and a spreadsheet of the underlying data points, so numbers move into the client's deck without anyone retyping them.</li>
+<li><strong>Review workspace.</strong> A screen where the reviewer walks every takeaway and verdict with approve, edit, and reject, and only signed-off content ever publishes. It also keeps the record of who approved what and when, which matters the moment a client questions a claim.</li>
+<li><strong>Stable IDs.</strong> Every extracted data point gets a permanent ID. When we re-run extraction with a better model, existing citations keep pointing at the right moment in the right call instead of breaking in a deck the client already shipped.</li>
+<li><strong>Client separation.</strong> Each client's projects live in their own walled space, enforced at the data layer rather than hidden behind a setting. This has to exist before the second client's data arrives, not after.</li>
+<li><strong>The accuracy loop.</strong> Every reviewer correction gets saved as a test case. Before any change to extraction or theme-pulling ships, it runs against that growing set, so the product provably gets better instead of just different.</li>
+</ul>
+</body></html>
