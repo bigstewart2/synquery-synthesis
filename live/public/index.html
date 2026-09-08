@@ -236,18 +236,19 @@
 
   <!-- ---------------------------------------------------------------- gate -->
   <section id="gate" class="card">
-    <h1>Synquery panel synthesis</h1>
+    <h1>Interview Extraction</h1>
     <p class="mute" style="margin-top:var(--s2)">
-      Load expert-interview transcripts and get back typed, quote-cited atoms you confirm
-      or reject, then synthesis across the whole panel. Passcode-gated because extraction
-      spends real model credits.
+      Enter the shared demo passcode to turn interviews into source-linked findings,
+      review the evidence and check your conclusions.
     </p>
     <div id="gateErr" class="err hide"></div>
     <div style="max-width:320px;margin-top:var(--s5)">
-      <label for="pass">Passcode</label>
+      <label for="pass">Demo passcode</label>
       <input id="pass" type="password" autocomplete="off" spellcheck="false">
-      <button id="gateGo" class="btn" style="margin-top:var(--s3)">Enter</button>
+      <button id="gateGo" class="btn" style="margin-top:var(--s3)">Enter demo</button>
     </div>
+    <p class="mute" style="margin-top:var(--s4)">The same passcode opens the Credit Waiver Agent demo. Kept only for this browser session.</p>
+    <a href="https://stephenlese.vercel.app/">Back to portfolio</a>
   </section>
 
   <!-- ----------------------------------------------------------- workspace -->
@@ -482,14 +483,27 @@ const panelExperts = () => {
 };
 
 // -------------------------------------------------------------------- gate
-$("#gateGo").onclick = () => {
-  const v = $("#pass").value.trim();
+async function enterDemo(v){
+  const btn = $("#gateGo");
+  if (btn.disabled) return;
   if (!v){ err($("#gateErr"), "Enter the passcode."); return; }
-  state.pass = v; save();
+  btn.disabled = true; btn.textContent = "Checking…";
   err($("#gateErr"), "");
-  show($("#gate"), false); show($("#work"), true);
-  renderAll();
-};
+  try {
+    const r = await fetch("/api/extract", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"authenticate", passcode:v})
+    });
+    const j = await r.json();
+    if (!r.ok || !j.ok) throw new Error(r.status === 401 ? "That passcode was rejected. Try again." : "Could not check access. Try again shortly.");
+    state.pass = v; save(); $("#pass").value = "";
+    show($("#gate"), false); show($("#work"), true); renderAll();
+  } catch (e) {
+    state.pass = ""; save();
+    err($("#gateErr"), e instanceof TypeError ? "Could not check access. Try again shortly." : e.message);
+  } finally { btn.disabled = false; btn.textContent = "Enter demo"; }
+}
+$("#gateGo").onclick = () => enterDemo($("#pass").value.trim());
 $("#pass").addEventListener("keydown", e => { if (e.key === "Enter") $("#gateGo").click(); });
 
 // ------------------------------------------------------------------ upload
@@ -1257,7 +1271,7 @@ $("#themes").addEventListener("input", () => {
 
 // -------------------------------------------------------------------- boot
 load();
-if (state.pass){ show($("#gate"), false); show($("#work"), true); renderAll(); }
+if (state.pass) enterDemo(state.pass);
 </script>
 </body>
 </html>

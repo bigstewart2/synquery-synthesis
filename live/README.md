@@ -101,3 +101,7 @@ vercel deploy --prod
 - `dev/check_schema.py` exists because the schema is duplicated here so the function can deploy self-contained. Duplication nothing checks is duplication that drifts.
 - The passcode is in `PASSCODE.local.txt`, gitignored. A missing `DEMO_PASSCODE` on the server fails closed with a 500, never open.
 - One extraction group failing returns empty for that group and reports it in the response rather than losing the other five.
+
+## Demo entry
+
+The browser validates the shared `DEMO_PASSCODE` on entry and refresh by posting `{action: "authenticate", passcode}` to `api/extract.py`, the server entry point. This check makes no model call. A rejected or stale passcode returns to the entry screen without deleting the saved interview workspace. Run `python3 dev/check_entry.py` for the no-model HTTP check.

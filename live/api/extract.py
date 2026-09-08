@@ -245,7 +245,13 @@ class handler(BaseHTTPRequestHandler):
             except json.JSONDecodeError:
                 raise Bad(400, "Request body was not valid JSON.")
 
+            if not isinstance(payload, dict):
+                raise Bad(400, "A JSON object is required.")
             check_passcode(payload.get("passcode"))
+            if payload.get("action") == "authenticate":
+                # Entry check only. No transcript processing or paid model call.
+                self._send(200, {"ok": True})
+                return
 
             # One entrypoint serves both routes; branch on the path.
             route = self.path.rstrip("/")

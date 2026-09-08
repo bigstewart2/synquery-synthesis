@@ -1,3 +1,5 @@
 dev/
 README.md
 docs/
+PASSCODE.local.txt
+.env*
