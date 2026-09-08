@@ -105,3 +105,7 @@ vercel deploy --prod
 ## Demo entry
 
 The browser validates the shared `DEMO_PASSCODE` on entry and refresh by posting `{action: "authenticate", passcode}` to `api/extract.py`, the server entry point. This check makes no model call. A rejected or stale passcode returns to the entry screen without deleting the saved interview workspace. Run `python3 dev/check_entry.py` for the no-model HTTP check.
+
+The Vercel project has `rootDirectory` set to `live`. For CLI deployment, package `live/public/index.html`, `live/api/extract.py`, `live/api/_pipeline.py`, `live/pyproject.toml` and `live/vercel.json` under a clean package root, copy `live/.vercel/project.json` to the package root’s `.vercel/project.json`, and run `vercel deploy --prod --yes --cwd <package-root>`. Do not deploy directly from the `live` directory because the configured root is applied again. This runtime-only package excludes transcripts, local access files and environment files.
+
+Entry update verified on 8 September 2026. Live deployment `dpl_E6zRiHBjU83PZK49mdS6AY1F4G7v` accepted the current passcode, rejected the old passcode, and preserved the existing browser workspace. No new model execution was used for verification.
