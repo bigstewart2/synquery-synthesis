@@ -45,7 +45,7 @@ So that half becomes a **review queue**: every atom shows its source quote, mode
 
 **Themes are drafted, under the same discipline.** Extraction cites the transcript and the server checks every quote verbatim. Drafting cites *atoms* and the server checks every atom id against the confirmed set. Only confirmed atoms are ever sent, so an atom the analyst rejected cannot appear in an argument — the human's confirm/reject decisions bound what the model is allowed to say. Each theme carries its supporting atoms, a strength label (one expert / several / whole panel), and a citations-resolve badge. A draft also returns **what this panel does not support**, which is the half analysts skip.
 
-Drafting runs on `claude-opus-5` rather than `claude-sonnet-5`. Brief-mode synthesis uses the regular model call within an 8,000-token output budget; the original questionnaire retains adaptive thinking. Cut-off or incomplete structured synthesis/claim responses return a retryable error instead of a success badge.
+All model stages now use `claude-sonnet-5`: extraction, semantic review, synthesis and claim checking. Brief-mode synthesis uses the regular model call within an 8,000-token output budget; the original questionnaire retains adaptive thinking. Cut-off or incomplete structured synthesis/claim responses return a retryable error instead of a success badge.
 
 A draft leads with a **Summary** — the connected paragraph a client reads before any bullet. Same discipline: every figure in it must appear in a cited atom, the server checks those ids, and the schema requires the last sentence to name the sample size plainly. The prompt forbids opening with background, restating the theme list, or ending on a flourish.
 

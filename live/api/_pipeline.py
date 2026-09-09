@@ -171,11 +171,10 @@ GROUP_LABELS = {
 # A theme resting on an atom the analyst rejected cannot survive that check. So the
 # human's confirm/reject decisions bound what the model is allowed to argue.
 #
-# Model differs from extraction deliberately. Extraction is pinned to sonnet-5 because
-# the 52/52 and 11/11 figures were measured on it. Drafting has no such parity to keep
-# and is judgment-heavy, so it runs on the stronger model.
+# All model stages share Sonnet. The original extraction evaluation does not
+# establish accuracy for synthesis or claim checking.
 
-THEME_MODEL = "claude-opus-5"
+THEME_MODEL = MODEL  # Use Sonnet for synthesis and claim checking as well.
 
 THEME_TOOL = {
     "name": "emit_themes",
