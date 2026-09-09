@@ -3,18 +3,18 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const script = fs.readFileSync(require('node:path').join(__dirname,'../public/index.html'),'utf8').split('<script>')[1].split('</script>')[0];
-function workspace(seed={}) {
+function workspace(seed={}, failWrite=()=>false) {
   const data = new Map(Object.entries(seed)), nodes = new Map();
   const node = id => {
     if (!nodes.has(id)) nodes.set(id,{value:'',textContent:'',innerHTML:'',disabled:false,
-      classList:{toggle(){}}, style:{}, addEventListener(){}, querySelectorAll(){return []}, click(){}});
+      classList:{values:new Set(), toggle(name,on){if(on)this.values.add(name);else this.values.delete(name)},contains(name){return this.values.has(name)}}, style:{}, addEventListener(){}, querySelectorAll(){return []}, click(){}});
     return nodes.get(id);
   };
   const context = vm.createContext({
     structuredClone, console, crypto:require('node:crypto').webcrypto, setTimeout,clearTimeout,
     document:{querySelector:node,querySelectorAll:()=>[]},
     window:{addEventListener(){}},location:{reload(){}}, navigator:{},
-    localStorage:{getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)},
+    localStorage:{getItem:k=>data.get(k)??null,setItem:(k,v)=>{if(failWrite(k,v))throw new Error("quota");data.set(k,v)}},
     sessionStorage:{getItem:()=>null,setItem(){}},
   });
   vm.runInContext(script,context);
@@ -29,9 +29,8 @@ assert.equal(w.run('state.briefDraft.project'),'Research draft');
 
 const old={experts:{E1:{atoms:{pricing:[]},stats:{total:0,verified:0,elapsed_s:0,usage:{input_tokens:0,output_tokens:0}},labels:{},failures:[]}},order:['E1'],marks:{'E1:pricing:0':'y'},themes:'Keep these notes'};
 w=workspace({'synq.live.v2':JSON.stringify(old)});
-assert.equal(w.run('state.mode'),'questionnaire');
-assert.equal(w.run('state.briefReady'),true);
-w.run('save(); $("#newProject").onclick()');
+assert.equal(w.run('state.mode'),'brief');
+assert.equal(w.run('state.briefReady'),false);
 assert.equal(w.run('state.order.length'),0);
 const archived=JSON.parse(w.data.get('synq.live.v3.projects'));
 const id=Object.keys(archived)[0];
@@ -85,8 +84,6 @@ w.run('busy=false;state.demoId=null;addSample("harbor-david")');assert.equal(w.r
 
 // A v3 general workspace is historical, never silently relabeled as a guided run.
 w=workspace({'synq.live.v3':JSON.stringify({...old, projectId:'prior', mode:'brief',briefReady:true,brief:{project:'Custom',decision:'Keep',questions:['Why?']},briefDraft:{project:'Custom'}})});
-assert.equal(w.run('isHarbor()'),false);
-w.run('$("#newProject").onclick()');
 assert.equal(w.run('isHarbor()'),true);
 assert.equal(JSON.parse(w.data.get('synq.live.v3.projects')).prior.brief.project,'Custom');
 assert.equal(w.run('state.briefReady'),false);
@@ -118,3 +115,38 @@ console.log('PASS: explicit sample choice, immutable canonical brief, stable sam
   assert.equal(restored.run('state.order.length'),2,'Completed guided results survive refresh');
   console.log('PASS: no automatic calls, partial failure recovery, sample-only request bodies and retry without repeating successful extraction.');
 })().catch(error=>{ console.error(error);process.exitCode=1; });
+
+// Regression: an old saved Harbor brief with no interviews must not open a dead panel.
+const stranded={projectId:'old-brief',mode:'brief',briefReady:true,
+ brief:{project:'Harbor payments diligence',decision:'Saved decision',questions:['Why?']},
+ briefDraft:{project:'Harbor payments diligence',decision:'Saved decision',questionsText:'Why?'},
+ order:[],experts:{},marks:{},themes:'Keep these notes'};
+const entry=workspace({'synq.live.v3':JSON.stringify(stranded)});
+assert.equal(entry.run('isHarbor()'),true,'An older active workspace should be archived before opening the guided demo');
+assert.equal(entry.run('state.briefReady'),false,'The visitor must choose Use the Harbor example');
+assert.equal(JSON.parse(entry.data.get('synq.live.v3.projects'))['old-brief'].themes,'Keep these notes');
+
+const refreshed=workspace(Object.fromEntries(entry.data));
+assert.equal(Object.keys(JSON.parse(refreshed.data.get('synq.live.v3.projects'))).length,1,'Refresh must not create duplicate archives');
+entry.run('renderAll()');
+assert.equal(entry.nodes.get('#analysisWorkspace').classList.contains('hide'),true);
+assert.equal(entry.nodes.get('#briefIntake').classList.contains('hide'),false);
+assert.equal(!!entry.nodes.get('#savedHistory').open,false,'History stays collapsed on entry');
+entry.run('$("#savedProjects").value="old-brief";$("#openProject").onclick()');
+assert.equal(entry.run('isHarbor()'),false);
+assert.equal(entry.nodes.get('#earlierDraft').classList.contains('hide'),false,'Opening an empty historical run must explain its state');
+assert.equal(entry.nodes.get('#analysisWorkspace').classList.contains('hide'),true,'Do not show a dead Add interview control');
+assert.equal(entry.nodes.get('#earlierDraftNotes').textContent,'Keep these notes');
+entry.run('$("#startFromDraft").onclick()');
+assert.equal(entry.run('isHarbor()'),true);
+assert.equal(entry.run('state.briefReady'),false);
+assert.notEqual(entry.run('savedRunLabel({order:[],experts:{}},1)'),entry.run('savedRunLabel({order:[],experts:{}},2)'),'Even identical saved runs need distinct labels');
+
+const blockedArchive=workspace({'synq.live.v3':JSON.stringify(stranded)},key=>key.endsWith('.projects'));
+assert.equal(blockedArchive.run('state.projectId'),'old-brief','An archive failure must keep the earlier active workspace');
+assert.equal(JSON.parse(blockedArchive.data.get('synq.live.v3')).themes,'Keep these notes');
+assert.match(blockedArchive.nodes.get('#storageNotice').textContent,/could not save/);
+const blockedSwitch=workspace({'synq.live.v3':JSON.stringify(stranded)},(key,value)=>key==='synq.live.v3' && JSON.parse(value).demoId==='harbor-v1');
+assert.equal(blockedSwitch.run('state.projectId'),'old-brief','An active-record failure must not hide the older workspace');
+assert.equal(JSON.parse(blockedSwitch.data.get('synq.live.v3.projects'))['old-brief'].themes,'Keep these notes');
+console.log('PASS: old empty brief opens guided intake, archives persist without duplication, historical drafts have a way out, distinct history labels and archive-write failure recovery.');
