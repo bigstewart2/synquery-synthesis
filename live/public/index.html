@@ -42,9 +42,6 @@
   .demo-steps{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s6);margin:0;padding-left:20px;font-size:13px;font-weight:600;color:var(--ink-2)}
   .demo-steps li{padding-left:2px}
   #workControls{border:0;margin:0;padding:0;min-width:0}
-  .project-tools{display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap;margin-bottom:var(--s4)}
-  .project-tools select{max-width:100%;font:inherit;padding:8px;border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--panel)}
-  .project-tools label{margin:0;text-transform:none;letter-spacing:0}
   .brief-form{max-width:760px}
   .brief-form label{font-size:14px;text-transform:none;letter-spacing:0;color:var(--ink);margin-top:var(--s5)}
   .brief-form .help{font-size:13px;color:var(--mute);margin-top:var(--s2)}
@@ -86,6 +83,7 @@
      font-weight:600;border-bottom:1px solid var(--rule);padding:0 var(--s3) var(--s2)}
   tbody tr:last-child td{border-bottom:0}
   td.num,th.num{text-align:center}
+  .coverage-grid th.num{min-width:135px;max-width:200px;text-transform:none;letter-spacing:0}
   .scroll{overflow-x:auto}
   .ex{font-size:11px;color:var(--mute);font-weight:600}
 
@@ -232,7 +230,7 @@
 
   /* Print is a real output format here, not an afterthought: the deliverable is the page. */
   @media print{
-    .demo-intro,.project-tools,.brief-summary,#projectNotice,#briefIntake,.panelbar,.statbar,#savedHistory,#earlierDraft,.tabs,footer,.no-print,#failures{display:none !important}
+    .demo-intro,.brief-summary,#projectNotice,#briefIntake,.panelbar,.statbar,#earlierDraft,.tabs,footer,.no-print,#failures{display:none !important}
     body{background:#fff;color:#000;font-size:11pt}
     .wrap{max-width:none;padding:0}
     .card{border:0;padding:0;margin:0;background:#fff}
@@ -253,9 +251,6 @@
   @keyframes s{to{transform:rotate(360deg)}}
   footer{border-top:1px solid var(--line);margin-top:var(--s6);padding-top:var(--s4);
          font-size:13px;color:var(--mute)}
-  .saved-history{margin-bottom:var(--s4);padding:var(--s3) 0;border-bottom:1px solid var(--line)}
-  .saved-history summary{cursor:pointer;color:var(--mute);padding:var(--s2) 0}
-  .saved-history select{max-width:100%;min-width:0}
   .saved-notes{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}
   .sample-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s4);margin-top:var(--s4)}
   .sample-card{border:1px solid var(--line);border-radius:10px;padding:var(--s4)}
@@ -304,18 +299,6 @@
     <div id="syncNotice" class="err hide" role="status">This project changed in another tab. Reload to use the latest saved work. <button id="reloadProject" class="btn-2">Reload saved work</button></div>
     <div id="storageNotice" class="err hide" role="status"></div>
     <fieldset id="workControls">
-    <div class="project-tools" id="projectActions">
-      <button id="newProject" class="btn-2">Start a new Harbor demo</button>
-    </div>
-    <details id="savedHistory" class="saved-history hide">
-      <summary id="savedHistoryTitle">Previous runs</summary>
-      <p class="help">Saved only in this browser. Opening a run does not analyze anything.</p>
-      <div class="project-tools">
-        <label for="savedProjects">Choose a saved run</label>
-        <select id="savedProjects"><option value="">Choose a run</option></select>
-        <button id="openProject" class="btn-2">Open saved run</button>
-      </div>
-    </details>
     <p id="projectNotice" class="mute" role="status"></p>
     <section id="briefIntake" class="card">
       <h2>Start with the Harbor brief</h2>
@@ -340,7 +323,7 @@
     <section id="briefSummary" class="brief-summary hide" aria-label="Current project brief"></section>
     <section id="earlierDraft" class="card hide">
       <h2>This saved run has no interviews</h2>
-      <p class="mute">Your saved brief and notes are preserved. To try the sample interviews, start a new Harbor demo.</p>
+      <p class="mute">Your saved brief and notes are preserved. Continue with the Harbor example to try the sample interviews.</p>
       <pre id="earlierDraftNotes" class="saved-notes hide"></pre>
       <button id="startFromDraft" class="btn">Start the Harbor example</button>
     </section>
@@ -408,10 +391,6 @@
         </div>
 
         <div id="tab-coverage" class="hide">
-          <p class="mute">
-            See which research questions have confirmed evidence from each interview.
-            Counts show coverage, not agreement or proof of a conclusion.
-          </p>
           <div id="coverage"></div>
         </div>
 
@@ -492,7 +471,7 @@ let projectMessage = "";
 // Save completed work, never File objects or the passcode, in the project record.
 function snapshot(){ const {pass, queue, ...project} = state; return project; }
 function storageError(){
-  err($("#storageNotice"), "This browser could not save your work. Keep this tab open and export any results before leaving. New project and project switching will wait until saving works.");
+  err($("#storageNotice"), "This browser could not save your work. Keep this tab open and export any results before leaving.");
 }
 function conflict(){
   externalChange = true; show($("#syncNotice"), true); $("#workControls").disabled = true;
@@ -528,7 +507,7 @@ function load(){
         if (!archiveCurrent()) return;
         state = freshProject(pass);
         if (!save()) { state = earlier; return; }
-        projectMessage = "Start with the Harbor example below. Your earlier work is preserved in Previous runs.";
+        projectMessage = "Start with the Harbor example below.";
       }
     } else state.pass = pass;
   } catch(e){ storageError(); conflict(); }
@@ -657,7 +636,6 @@ window.addEventListener("resize", fitBriefFields);
 function renderProject(){
   const intake = isHarbor() && !state.briefReady;
   const earlierDraft = !isHarbor() && !state.order.length;
-  show($("#projectActions"), !isHarbor() || state.harborSelected || state.briefReady || state.order.length > 0);
   show($("#briefIntake"), intake); show($("#analysisWorkspace"), !intake && !earlierDraft);
   show($("#earlierDraft"), earlierDraft);
   $("#earlierDraftNotes").textContent = state.themes || "";
@@ -667,16 +645,6 @@ function renderProject(){
   $("#projectNotice").textContent = !isHarbor()
     ? "You’re viewing a saved workspace from the earlier demo. You can review your work here; new AI runs use the Harbor example."
     : projectMessage;
-  try {
-    const entries = Object.entries(projects()).map(([id,p],i) => ({id,p,number:i+1})).filter(x => x.id !== state.projectId);
-    $("#savedProjects").innerHTML = '<option value="">Choose a run</option>' + [
-      ["Harbor demo runs", entries.filter(x => x.p.demoId === HARBOR.id)],
-      ["Earlier workspaces", entries.filter(x => x.p.demoId !== HARBOR.id)]
-    ].filter(([,runs]) => runs.length).map(([label,runs]) => `<optgroup label="${label}">${runs.map(({id,p,number}) => `<option value="${esc(id)}">${esc(savedRunLabel(p,number))}</option>`).join("")}</optgroup>`).join("");
-    $("#savedHistoryTitle").textContent = `Previous runs (${entries.length})`;
-    show($("#savedHistory"), entries.length > 0);
-    $("#openProject").disabled = true;
-  } catch(e){ storageError(); }
   const b = state.brief;
   $("#briefSummary").innerHTML = state.mode === "brief" && b
     ? `<h2>${esc(b.project)}</h2><p>${esc(b.decision)}</p><details><summary>${b.questions.length} research questions · Read only</summary><ol>${b.questions.map(q => `<li>${esc(q)}</li>`).join("")}</ol></details>`
@@ -688,12 +656,6 @@ function renderProject(){
   $("#checkBtn").disabled = !isHarbor();
   $("#claim").placeholder = "e.g. ERP integrations are the main reason customers stay with Harbor";
 }
-function savedRunLabel(p,number){
-  const title = p.mode === "questionnaire" ? "IT software questionnaire" : p.brief?.project || p.briefDraft?.project || "Research draft";
-  const count = Object.values(p.experts || {}).reduce((n,ex) => n + Object.values(ex.atoms || {}).reduce((total,items) => total + items.length,0),0);
-  return `Run ${number} · ${title} · ${p.order.length} interviews · ${count} findings`;
-}
-$("#savedProjects").onchange = () => { $("#openProject").disabled = !$("#savedProjects").value; };
 $("#harborExample").onclick = () => {
   if (!isHarbor() || busy || externalChange) return;
   state.harborSelected = true;
@@ -709,25 +671,15 @@ $("#briefForm").onsubmit = e => {
   projectMessage = "Harbor brief loaded. Select one or both interviews, then press Extract to run the AI.";
   save(); renderAll();
 };
-$("#newProject").onclick = () => {
-  if (busy || !archiveCurrent()) return;
+// Recovery for an earlier empty draft whose migration could not be saved.
+$("#startFromDraft").onclick = () => {
+  if (isHarbor() || state.order.length || busy || !archiveCurrent()) return;
+  const earlier = state;
   state = freshProject(state.pass);
-  projectMessage = "New Harbor demo. Your previous work is available under Previous runs.";
-  $("#savedHistory").open = false;
-  save(); resetView(); renderAll();
+  if (!save()) { state = earlier; return; }
+  projectMessage = "Start with the Harbor example below.";
+  resetView(); renderAll();
 };
-$("#openProject").onclick = () => {
-  const id = $("#savedProjects").value;
-  if (!id || busy || !archiveCurrent()) return;
-  try {
-    const chosen = projects()[id]; if (!chosen) return;
-    state = {...freshProject(state.pass), ...chosen, demoId:chosen.demoId || null, pass:state.pass, queue:[]};
-    projectMessage = "Saved run opened. Nothing has been re-analyzed.";
-    $("#savedHistory").open = false;
-    save(); resetView(); renderAll();
-  } catch(e){ storageError(); }
-};
-$("#startFromDraft").onclick = () => $("#newProject").onclick();
 function resetView(){
   clearTimeout(themeTimer);
   ["uploadErr","briefErr","draftErr","checkErr"].forEach(id => err($("#"+id), ""));
@@ -823,7 +775,7 @@ $("#run").onclick = async () => {
   const jobs = state.queue.filter(q => q.status !== "done");
   if (!jobs.length || busy || externalChange || !isHarbor() || !state.briefReady) return;
   if (jobs.some(j => !HARBOR.samples.some(s => s.id === j.sampleId && s.label === j.label) || state.experts[j.label])) {
-    err($("#uploadErr"), "This interview is already extracted. Start a new Harbor demo to run it again."); return;
+    err($("#uploadErr"), "This interview is already extracted. Select its interview tab to review the findings."); return;
   }
 
   const btn = $("#run");
@@ -1127,9 +1079,16 @@ function renderRollup(){
 function buildCoverage(){
   if (state.mode === "brief"){
     const findings = confirmedGroup("findings");
-    return table([{t:"Research question"}, ...state.order.map(ex => ({t:ex, n:true}))],
+    if (!state.order.length) return "";
+    const interviewName = ex => {
+      const sample = isHarbor() && HARBOR.samples.find(s => s.label === ex);
+      return sample ? `${sample.name} · ${sample.role} (${ex})` : ex;
+    };
+    return '<h2>Confirmed findings by research question</h2>' +
+      '<p class="mute"><b>Each number counts findings you have confirmed.</b> For example, 5 means five confirmed findings from that interview for that question. These are counts, not quality or confidence scores.</p>' +
+      '<div class="coverage-grid">' + table([{t:"Research question"}, ...state.order.map(ex => ({t:interviewName(ex), n:true}))],
       state.brief.questions.map((q,i) => [esc(q), ...state.order.map(ex => findings.filter(a => a.question_index === i && a.expert === ex).length)])) +
-      '<p class="help">Counts are confirmed findings. Zero means no confirmed evidence for that question. Interviews describe these speakers’ experience and views; they do not establish market-wide facts.</p>';
+      '</div><p class="help">0 means no findings have been confirmed for that question yet. A higher count means more confirmed findings, not stronger evidence or agreement between interviews. Use Compare evidence to read what each person said.</p>';
   }
   const map = confirmedMap(), experts = panelExperts();
   if (!Object.keys(map).length) return "";

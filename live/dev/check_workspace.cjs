@@ -37,13 +37,10 @@ const id=Object.keys(archived)[0];
 assert.equal(archived[id].themes,old.themes);
 assert.equal(archived[id].marks['E1:pricing:0'],'y');
 assert.equal(w.data.get('synq.live.v2'),JSON.stringify(old));
-w.run(`$("#savedProjects").value=${JSON.stringify(id)}; $("#openProject").onclick()`);
-assert.equal(w.run('state.themes'),old.themes);
-assert.equal(w.run('state.order[0]'),'E1');
 assert.equal(w.nodes.get('#storageNotice').textContent,'');
 
 w=workspace();
-w.run('save(); state.briefDraft.project="Unsaved work"; localStorage.setItem=()=>{throw new Error("quota")}; $("#newProject").onclick()');
+w.run('save(); state.briefDraft.project="Unsaved work"; localStorage.setItem=()=>{throw new Error("quota")}; archiveCurrent()');
 assert.equal(w.run('state.briefDraft.project'),'Unsaved work');
 
 w=workspace();w.run('save()');
@@ -60,7 +57,7 @@ for (const expression of [
  'eligible({verified:true,review_status:"supported",brief_id:"b"})']) assert.equal(w.run(expression),false);
 w.run('state.draft={summary:"stale"};state.checks=[{claim:"stale"}];invalidateOutput()');
 assert.equal(w.run('state.draft'),null);assert.equal(w.run('state.checks.length'),0);
-console.log('PASS: draft restoration, legacy migration, archive/open, quota recovery, cross-tab guard, evidence eligibility and output invalidation.');
+console.log('PASS: draft restoration, legacy migration, archive preservation, quota recovery, cross-tab guard, evidence eligibility and output invalidation.');
 
 // The first visit requires an explicit choice. Displayed fields never set the brief.
 w=workspace();
@@ -131,8 +128,7 @@ assert.equal(Object.keys(JSON.parse(refreshed.data.get('synq.live.v3.projects'))
 entry.run('renderAll()');
 assert.equal(entry.nodes.get('#analysisWorkspace').classList.contains('hide'),true);
 assert.equal(entry.nodes.get('#briefIntake').classList.contains('hide'),false);
-assert.equal(!!entry.nodes.get('#savedHistory').open,false,'History stays collapsed on entry');
-entry.run('$("#savedProjects").value="old-brief";$("#openProject").onclick()');
+entry.run('state={...freshProject(),...projects()["old-brief"],demoId:null};save();renderAll()');
 assert.equal(entry.run('isHarbor()'),false);
 assert.equal(entry.nodes.get('#earlierDraft').classList.contains('hide'),false,'Opening an empty historical run must explain its state');
 assert.equal(entry.nodes.get('#analysisWorkspace').classList.contains('hide'),true,'Do not show a dead Add interview control');
@@ -140,7 +136,6 @@ assert.equal(entry.nodes.get('#earlierDraftNotes').textContent,'Keep these notes
 entry.run('$("#startFromDraft").onclick()');
 assert.equal(entry.run('isHarbor()'),true);
 assert.equal(entry.run('state.briefReady'),false);
-assert.notEqual(entry.run('savedRunLabel({order:[],experts:{}},1)'),entry.run('savedRunLabel({order:[],experts:{}},2)'),'Even identical saved runs need distinct labels');
 
 const blockedArchive=workspace({'synq.live.v3':JSON.stringify(stranded)},key=>key.endsWith('.projects'));
 assert.equal(blockedArchive.run('state.projectId'),'old-brief','An archive failure must keep the earlier active workspace');
@@ -149,4 +144,19 @@ assert.match(blockedArchive.nodes.get('#storageNotice').textContent,/could not s
 const blockedSwitch=workspace({'synq.live.v3':JSON.stringify(stranded)},(key,value)=>key==='synq.live.v3' && JSON.parse(value).demoId==='harbor-v1');
 assert.equal(blockedSwitch.run('state.projectId'),'old-brief','An active-record failure must not hide the older workspace');
 assert.equal(JSON.parse(blockedSwitch.data.get('synq.live.v3.projects'))['old-brief'].themes,'Keep these notes');
-console.log('PASS: old empty brief opens guided intake, archives persist without duplication, historical drafts have a way out, distinct history labels and archive-write failure recovery.');
+console.log('PASS: old empty brief opens guided intake, archives persist without duplication, historical drafts have a way out and archive-write failure recovery.');
+
+// Coverage counts only eligible, confirmed findings and keeps names tied to labels.
+const coverage=workspace();
+coverage.run(`
+  state.brief=structuredClone(HARBOR.brief);state.briefId='harbor';state.order=['E2','E1'];
+  const supported={question_index:0,verified:true,review_status:'supported',brief_id:'harbor'};
+  state.experts={E2:{atoms:{findings:[supported,supported,{...supported,review_status:'flagged'}]}},E1:{atoms:{findings:[supported]}}};
+  state.marks={'E2:findings:0':'y','E2:findings:2':'y','E1:findings:0':'n'};
+`);
+const coverageHtml=coverage.run('buildCoverage()');
+assert.match(coverageHtml,/Maria Castellanos · Sales \(E2\)/);
+assert.match(coverageHtml,/David Okafor · Operations \(E1\)/);
+assert.match(coverageHtml,/<td class="num">1<\/td><td class="num">0<\/td>/,'Unconfirmed, rejected and flagged findings must not contribute to counts');
+assert.match(coverageHtml,/counts, not quality or confidence scores/);
+console.log('PASS: coverage names follow interview identity and counts include only eligible confirmed findings.');
