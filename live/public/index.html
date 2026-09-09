@@ -461,6 +461,7 @@ const $ = (s) => document.querySelector(s);
 const HARBOR = {"id": "harbor-v1", "brief": {"project": "Harbor payments diligence", "decision": "We’re evaluating a payments platform serving mid-market distributors. Understand the drivers of growth, retention and margins, and the risks to investigate with management.", "questions": ["What drives customer acquisition, retention and switching?", "How do ERP integrations and partners affect growth and retention?", "What drives margins and recurring software revenue?", "What risks or assumptions need validation?", "What should we ask management or verify in company data?"]}, "samples": [{"id": "harbor-david", "label": "E1", "name": "David Okafor", "role": "Operations", "filename": "harbor-call-1-david-okafor-ops.txt"}, {"id": "harbor-maria", "label": "E2", "name": "Maria Castellanos", "role": "Sales", "filename": "harbor-call-2-maria-castellanos-sales.txt"}]};
 // END HARBOR MANIFEST
 const KEY = "synq.live.v3", LEGACY_KEY = "synq.live.v2";
+const START_FRESH = new URLSearchParams(location.search).get("start") === "harbor";
 const emptyDraft = () => ({project:"", decision:"", questionsText:""});
 const freshProject = (pass="") => ({pass, projectId:crypto.randomUUID(), mode:"brief",
   demoId:HARBOR.id, harborSelected:false, brief:null, briefDraft:emptyDraft(), briefReady:false, briefId:null,
@@ -500,6 +501,17 @@ function load(){
       } else projectMessage = state.order.length
         ? "Saved results restored from this browser. Nothing has been re-analyzed."
         : state.harborSelected ? "Your Harbor brief is restored. No interviews have been analyzed in this run." : "";
+      // Portfolio demo links intentionally start at the guided intake. Preserve
+      // completed browser work in the archive, then replace the active workspace.
+      if (START_FRESH){
+        const earlier = state;
+        if (!archiveCurrent()) return;
+        state = freshProject(pass);
+        if (!save()) { state = earlier; return; }
+        projectMessage = "Start with the Harbor example below.";
+        history.replaceState(null, "", location.pathname + location.hash);
+        return;
+      }
       // A pre-guided workspace is history, not the starting point for this demo.
       // Archive successfully before changing the active record; never clear storage.
       if (!isHarbor()){
@@ -509,7 +521,10 @@ function load(){
         if (!save()) { state = earlier; return; }
         projectMessage = "Start with the Harbor example below.";
       }
-    } else state.pass = pass;
+    } else {
+      state.pass = pass;
+      if (START_FRESH) history.replaceState(null, "", location.pathname + location.hash);
+    }
   } catch(e){ storageError(); conflict(); }
 }
 function projects(){

@@ -3,22 +3,25 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const script = fs.readFileSync(require('node:path').join(__dirname,'../public/index.html'),'utf8').split('<script>')[1].split('</script>')[0];
-function workspace(seed={}, failWrite=()=>false) {
+function workspace(seed={}, failWrite=()=>false, search="") {
   const data = new Map(Object.entries(seed)), nodes = new Map();
   const node = id => {
     if (!nodes.has(id)) nodes.set(id,{value:'',textContent:'',innerHTML:'',disabled:false,
       classList:{values:new Set(), toggle(name,on){if(on)this.values.add(name);else this.values.delete(name)},contains(name){return this.values.has(name)}}, style:{}, addEventListener(){}, querySelectorAll(){return []}, click(){}});
     return nodes.get(id);
   };
+  const location = {search, pathname:"/", hash:"", reload(){}};
+  const history = {replaceState(_state,_title,url){ location.search=""; location.replaced=url; }};
   const context = vm.createContext({
     structuredClone, console, crypto:require('node:crypto').webcrypto, setTimeout,clearTimeout,
+    URLSearchParams,
     document:{querySelector:node,querySelectorAll:()=>[]},
-    window:{addEventListener(){}},location:{reload(){}}, navigator:{},
+    window:{addEventListener(){}},location,history,navigator:{},
     localStorage:{getItem:k=>data.get(k)??null,setItem:(k,v)=>{if(failWrite(k,v))throw new Error("quota");data.set(k,v)}},
     sessionStorage:{getItem:()=>null,setItem(){}},
   });
   vm.runInContext(script,context);
-  return {data,nodes,context,run:s=>vm.runInContext(s,context)};
+  return {data,nodes,context,location,run:s=>vm.runInContext(s,context)};
 }
 let w=workspace();
 assert.equal(w.run('state.mode'),'brief');
@@ -145,6 +148,20 @@ const blockedSwitch=workspace({'synq.live.v3':JSON.stringify(stranded)},(key,val
 assert.equal(blockedSwitch.run('state.projectId'),'old-brief','An active-record failure must not hide the older workspace');
 assert.equal(JSON.parse(blockedSwitch.data.get('synq.live.v3.projects'))['old-brief'].themes,'Keep these notes');
 console.log('PASS: old empty brief opens guided intake, archives persist without duplication, historical drafts have a way out and archive-write failure recovery.');
+
+// A portfolio entry always starts at the guided Harbor intake, while preserving
+// a completed active workspace in the browser archive.
+const completedHarbor={...freshProjectFixture(),projectId:'completed-harbor',demoId:'harbor-v1',mode:'brief',briefReady:true,
+ brief:{project:'Harbor payments diligence',decision:'Saved decision',questions:['Why?']},
+ order:['E1'],experts:{E1:{atoms:{findings:[]},stats:{total:0,verified:0,elapsed_s:0,usage:{input_tokens:0,output_tokens:0}},labels:{},failures:[]}}};
+function freshProjectFixture(){ return {harborSelected:true,briefDraft:{project:'Harbor payments diligence',decision:'Saved decision',questionsText:'Why?'},marks:{},themes:'Saved notes',draft:null,checks:[],themeOff:{},queue:[]}; }
+const portfolioEntry=workspace({'synq.live.v3':JSON.stringify(completedHarbor)},()=>false,'?start=harbor');
+assert.equal(portfolioEntry.run('state.briefReady'),false,'Portfolio entry must open the brief-selection screen');
+assert.equal(portfolioEntry.run('state.order.length'),0,'Portfolio entry must not restore completed results as the active workspace');
+assert.equal(JSON.parse(portfolioEntry.data.get('synq.live.v3.projects'))['completed-harbor'].themes,'Saved notes');
+assert.equal(portfolioEntry.location.search,'','Fresh-start query must be consumed so refresh preserves new work');
+assert.equal(portfolioEntry.location.replaced,'/');
+console.log('PASS: portfolio entry starts fresh, preserves completed work and consumes the one-time reset URL.');
 
 // Coverage counts only eligible, confirmed findings and keeps names tied to labels.
 const coverage=workspace();
