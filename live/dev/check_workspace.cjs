@@ -70,6 +70,7 @@ w.run('$("#harborExample").onclick(); $("#briefProject").value="Injected custom 
 assert.equal(w.run('state.briefReady'),true);
 assert.equal(w.run('researchPayload().brief.project'),'Harbor payments diligence');
 assert.equal(w.run('researchPayload().brief.questions.length'),5);
+assert.equal(w.nodes.get('#setupStatus').textContent,'Brief loaded','Analysis panel explains the next available step');
 w=workspace(Object.fromEntries(w.data));
 assert.equal(w.run('state.briefReady'),true,'Refresh restores explicit selection');
 
@@ -77,6 +78,8 @@ assert.equal(w.run('state.briefReady'),true,'Refresh restores explicit selection
 w.run('addSample("custom"); addSample("harbor-maria"); addSample("harbor-maria"); $("#addBoth").onclick()');
 assert.equal(w.run('state.queue.length'),2);
 assert.equal(w.run('state.queue[0].label'),'E2','Maria keeps her identity even when selected first');
+assert.equal(w.nodes.get('#setupStatus').textContent,'Ready','Selecting interviews advances the analysis preview');
+assert.equal(w.nodes.get('#run').disabled,false,'Extraction becomes available only after interview selection');
 w.run('state.queue=[]; state.experts.E2={}; addSample("harbor-maria")');
 assert.equal(w.run('state.queue.length'),0,'Loaded interviews cannot be added again');
 w.run('busy=true;addSample("harbor-david")');assert.equal(w.run('state.queue.length'),0);

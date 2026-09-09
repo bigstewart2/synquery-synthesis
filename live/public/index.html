@@ -10,7 +10,7 @@
   :root{
     --bg:#fafaf9; --panel:#fff; --ink:#191917; --ink-2:#3d3d38;
     --mute:#66665f; --line:#e6e5e1; --rule:#d3d2cc; --chip:#f2f1ed;
-    --accent:#0066cc; --accent-soft:#eaf2fc; --accent-strong:#0071e3;
+    --accent:#145c46; --accent-soft:#edf6f2; --accent-strong:#0e4938;
     --sq:#9c3f27; --sqbg:#fbeee9;
     --warn:#7d5216; --warnbg:#fdf6e8;
     --ok:#2a6440; --okbg:#e8f1eb;
@@ -31,17 +31,32 @@
   p{margin:0 0 var(--s2);max-width:74ch;text-wrap:pretty}
   .mute{color:var(--mute)}
 
-  .wrap{max-width:1180px;margin-inline:auto;padding:var(--s6) var(--s5) var(--s7)}
-  .demo-intro{margin-bottom:var(--s5)}
-  .demo-kicker{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);margin-bottom:var(--s2)}
-  .demo-intro h1{font-size:clamp(25px,3.5vw,34px);line-height:1.2;max-width:30ch;margin-bottom:var(--s3)}
-  .demo-purpose{font-size:17px;color:var(--ink-2);max-width:70ch;margin-bottom:var(--s5)}
-  .demo-context{background:var(--accent-soft);border:1px solid #cfe0f5;border-radius:var(--r);padding:var(--s4) var(--s5)}
-  .demo-context h2{font-size:15px;margin-bottom:var(--s2)}
-  .demo-context p{font-size:14px;color:var(--ink-2);max-width:90ch;margin-bottom:var(--s3)}
-  .demo-steps{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s6);margin:0;padding-left:20px;font-size:13px;font-weight:600;color:var(--ink-2)}
-  .demo-steps li{padding-left:2px}
-  #workControls{border:0;margin:0;padding:0;min-width:0}
+  .wrap{max-width:1380px;margin-inline:auto;padding:0 var(--s5) var(--s7)}
+  .demo-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s5);margin:0 calc(-1 * var(--s5)) var(--s5);padding:var(--s3) var(--s5);border-bottom:1px solid var(--line);background:var(--panel)}
+  .demo-intro h1{font-size:23px;line-height:1.2;margin-bottom:2px}
+  .demo-purpose{font-size:15px;color:var(--ink-2);margin:0}
+  .built-by{font-size:13px;color:var(--mute);white-space:nowrap;padding-top:4px}
+  #workControls{border:0;margin:0;padding:0;min-width:0;display:grid;grid-template-columns:minmax(420px,.88fr) minmax(520px,1.25fr);gap:var(--s4);align-items:start}
+  #projectNotice{grid-column:1/-1;margin:0}
+  #briefIntake,#briefSummary,#earlierDraft,#analysisWorkspace{grid-column:1}
+  #briefIntake,#analysisWorkspace{margin-bottom:0}
+  #briefSummary{margin-bottom:0}
+  .analysis-preview{grid-column:2;grid-row:2 / span 4;min-height:640px;margin:0;display:flex;flex-direction:column}
+  .analysis-preview-head{display:flex;align-items:center;gap:var(--s3);margin-bottom:2px}
+  .analysis-preview-head h2{margin:0}
+  .analysis-status{display:inline-flex;align-items:center;border-radius:var(--r-sm);padding:4px 10px;background:#fce8b2;color:#594000;font-size:12px;font-weight:700}
+  .analysis-status.ready{background:var(--accent-soft);color:var(--accent)}
+  .analysis-empty{margin:auto;max-width:540px;width:100%;padding:var(--s7)}
+  .analysis-empty h3{font-size:22px;text-transform:none;letter-spacing:0;color:var(--ink);margin-bottom:var(--s5)}
+  .analysis-empty > p{font-size:16px;color:var(--mute);margin-bottom:var(--s6)}
+  .analysis-checklist{list-style:none;margin:0;padding:0;display:grid;gap:var(--s3);color:var(--mute)}
+  .analysis-checklist li{display:flex;align-items:center;gap:var(--s3)}
+  .analysis-checklist li::before{content:"";width:18px;height:18px;flex:none;border:1px solid var(--rule);border-radius:50%;background:var(--panel)}
+  .analysis-checklist li.done::before{content:"✓";display:grid;place-items:center;background:var(--accent);border-color:var(--accent);color:#fff;font-size:11px;font-weight:700}
+  .analysis-preview-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:var(--s4);font-size:12px;color:var(--mute)}
+  #workControls.results-ready{display:block}
+  #workControls.results-ready .analysis-preview{display:none}
+  #workControls.results-ready #analysisWorkspace{width:100%}
   .brief-form{max-width:760px}
   .brief-form label{font-size:14px;text-transform:none;letter-spacing:0;color:var(--ink);margin-top:var(--s5)}
   .brief-form .help{font-size:13px;color:var(--mute);margin-top:var(--s2)}
@@ -56,6 +71,8 @@
     border-radius:50%;background:var(--accent);color:#fff;font-size:14px;font-weight:700}
   .setup-step{border-top:1px solid var(--line);margin-top:var(--s5);padding-top:var(--s5)}
   .setup-step:first-child{border-top:0;margin-top:0;padding-top:0}
+  .setup-locked{opacity:.56}
+  .setup-locked p{margin-bottom:var(--s3)}
   .setup-action{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s4);flex-wrap:wrap}
   .setup-action .mute{margin:0;max-width:62ch}
   .evidence-grid table{min-width:740px;table-layout:fixed}
@@ -63,9 +80,13 @@
   .mobile-note{display:none}
   .finding-title{font-size:16px;font-weight:600;margin-bottom:var(--s2)}
   @media(max-width:600px){
-    .wrap{padding:var(--s5) var(--s4) var(--s6)}
-    .demo-context{padding:var(--s4)}
-    .demo-steps{display:grid;gap:var(--s2)}
+    .wrap{padding:0 var(--s4) var(--s6)}
+    .demo-intro{margin:0 calc(-1 * var(--s4)) var(--s4);padding:var(--s3) var(--s4)}
+    .built-by{display:none}
+    #workControls{display:block}
+    #briefIntake,#briefSummary,#earlierDraft,#analysisWorkspace{margin-bottom:var(--s4)}
+    .analysis-preview{min-height:430px;margin-bottom:var(--s4)}
+    .analysis-empty{padding:var(--s5) 0}
     .setup-action .btn{width:100%}
     .mobile-note{display:block}
     .card{padding:var(--s5) var(--s4)}
@@ -273,18 +294,11 @@
 <div class="wrap">
 
   <header class="demo-intro">
-    <p class="demo-kicker">AI research prototype &middot; Built by Stephen Lese</p>
-    <h1>Interview Extraction and Claim Checking</h1>
-    <p class="demo-purpose">Turn long interviews into findings you can trace to a source, compare across people and use to test a conclusion.</p>
-    <aside class="demo-context" aria-labelledby="demo-context-title">
-      <h2 id="demo-context-title">What is this for?</h2>
-      <p>In this fictional diligence project, you’re evaluating Harbor, a payments platform. Use the sample brief and two expert interviews to investigate growth, retention and margins. Review the AI’s findings, compare the evidence and test a conclusion.</p>
-      <ol class="demo-steps" aria-label="How to use the demo">
-        <li>Load the Harbor brief and select interviews</li>
-        <li>Confirm findings against their source quotes</li>
-        <li>Compare the evidence and check a claim</li>
-      </ol>
-    </aside>
+    <div>
+      <h1>Interview Extraction and Claim Checking</h1>
+      <p class="demo-purpose">See how expert interviews become findings you can trace to their sources.</p>
+    </div>
+    <span class="built-by">Built by Stephen Lese</span>
   </header>
 
   <!-- ---------------------------------------------------------------- gate -->
@@ -328,6 +342,16 @@
         <button class="btn hide" id="continueBrief" type="submit" style="margin-top:var(--s5)">Use this brief and continue</button>
         <p class="help">Nothing is analyzed until you select interviews and press Extract. This demo uses only the supplied Harbor materials.</p>
       </form>
+      <div class="setup-step setup-locked" aria-label="Step 2, available after the brief is loaded">
+        <div class="setup-heading"><span class="setup-number">2</span><h2>Select the Harbor interviews</h2></div>
+        <p class="mute">Choose David, Maria or both fictional interviews.</p>
+        <button class="btn" type="button" disabled>Select interviews</button>
+      </div>
+      <div class="setup-step setup-locked" aria-label="Step 3, available after interviews are selected">
+        <div class="setup-heading"><span class="setup-number">3</span><h2>Run the extraction</h2></div>
+        <p class="mute">Extract findings, locate source quotes and run the meaning check.</p>
+        <button class="btn" type="button" disabled>Extract interviews</button>
+      </div>
     </section>
     <section id="briefSummary" class="brief-summary hide" aria-label="Current project brief"></section>
     <section id="earlierDraft" class="card hide">
@@ -347,7 +371,7 @@
           <p class="mute">Choose one or both fictional Harbor interviews. You can read or download them before selecting them.</p>
           <div id="uploadErr" class="err hide" role="alert"></div>
           <div id="sampleChoices" class="sample-choices"></div>
-          <button id="addBoth" class="btn-2" style="margin-top:var(--s3)">Select both interviews</button>
+          <button id="addBoth" class="btn" style="margin-top:var(--s3)">Select both interviews</button>
 
           <div id="queueList"></div>
         </div>
@@ -461,6 +485,24 @@
         </div>
       </div>
     </div>
+    <aside id="analysisPreview" class="analysis-preview card" aria-labelledby="analysisPreviewHeading">
+      <div class="analysis-preview-head">
+        <h2 id="analysisPreviewHeading">Analysis</h2>
+        <span id="setupStatus" class="analysis-status">Not started</span>
+      </div>
+      <p id="setupStatusHelp" class="mute">Load the brief and select interviews to begin.</p>
+      <div class="analysis-empty">
+        <h3 id="setupEmptyTitle">No analysis yet</h3>
+        <p id="setupEmptyCopy">The extraction steps and review workspace will appear here after you start the analysis.</p>
+        <ol class="analysis-checklist">
+          <li id="previewBrief">Research brief loaded</li>
+          <li id="previewInterviews">Interviews selected</li>
+          <li id="previewExtract">Findings and source quotes extracted</li>
+          <li id="previewReview">Second-model meaning check</li>
+        </ol>
+      </div>
+      <p class="analysis-preview-foot">AI proposes findings. A person decides which ones to use.</p>
+    </aside>
     </fieldset>
   </section>
 
@@ -558,7 +600,7 @@ function archiveCurrent(){
     return true;
   } catch(e){ storageError(); return false; }
 }
-function setBusy(on){ busy = on; $("#workControls").disabled = on || externalChange; }
+function setBusy(on){ busy = on; $("#workControls").disabled = on || externalChange; renderSetupPreview(); }
 function invalidateOutput(){
   if (state.draft || state.checks.length) projectMessage = "Evidence changed. Draft the synthesis and check any claims again to use your current confirmed findings.";
   state.draft = null; state.checks = []; state.themeOff = {};
@@ -684,6 +726,7 @@ function renderProject(){
       ? `<h2>Original IT software questionnaire</h2><p class="mute">Saved work from an earlier version of the demo.</p>`
       : `<h2>${esc(state.briefDraft.project || "Saved research draft")}</h2><p>${esc(state.briefDraft.decision)}</p><p class="saved-notes">${esc(state.briefDraft.questionsText)}</p>`;
   if (isHarbor()) $("#briefSummary").innerHTML += '<p class="help">Fictional demo project · <a href="/samples/harbor-project-brief.txt" target="_blank" rel="noopener">Read the sample brief</a></p>';
+  renderSetupPreview();
   $("#draftBtn").disabled = !isHarbor();
   $("#checkBtn").disabled = !isHarbor();
   $("#claim").placeholder = "e.g. ERP integrations are the main reason customers stay with Harbor";
@@ -756,6 +799,7 @@ function renderQueueList(){
   $("#run").disabled = !pending || !isHarbor();
   $("#run").textContent = pending > 1 ? `Extract ${pending} interviews` : "Extract interview";
   show($("#clearQ"), q.length > 0);
+  renderSetupPreview();
 }
 $("#clearQ").onclick = () => { if (!busy) { state.queue = []; renderQueueList(); } };
 
@@ -858,6 +902,41 @@ function showUpload(on){
   $("#uploadTitle").textContent = "Select the Harbor interviews";
   $("#uploadApproach").textContent = "Using the fixed Harbor brief and its five research questions.";
   if (!isHarbor()) show($("#uploadBox"), false);
+}
+
+function renderSetupPreview(){
+  const controls = $("#workControls");
+  if (!controls || !$("#setupStatus")) return;
+  const selected = state.queue.some(q => q.status !== "done");
+  controls.classList.toggle("results-ready", state.order.length > 0);
+  $("#previewBrief").classList.toggle("done", !!state.briefReady);
+  $("#previewInterviews").classList.toggle("done", selected || state.order.length > 0);
+  $("#previewExtract").classList.toggle("done", state.order.length > 0);
+  $("#previewReview").classList.toggle("done", state.order.length > 0);
+  const status = $("#setupStatus");
+  status.classList.toggle("ready", !!state.briefReady);
+  if (busy){
+    status.textContent = "Analyzing";
+    $("#setupStatusHelp").textContent = "Extracting findings and checking them against the source interviews.";
+    $("#setupEmptyTitle").textContent = "Analysis in progress";
+    $("#setupEmptyCopy").textContent = "This can take a minute or two. The selected interviews remain visible on the left.";
+  } else if (selected){
+    status.textContent = "Ready";
+    $("#setupStatusHelp").textContent = "The brief and selected interviews are ready.";
+    $("#setupEmptyTitle").textContent = "Ready to analyze";
+    $("#setupEmptyCopy").textContent = "Press Extract interviews to locate findings, source quotes and evidence gaps.";
+  } else if (state.briefReady){
+    status.textContent = "Brief loaded";
+    $("#setupStatusHelp").textContent = "Select one or both interviews to continue.";
+    $("#setupEmptyTitle").textContent = "Add the source interviews";
+    $("#setupEmptyCopy").textContent = "Nothing is analyzed until you select interviews and start extraction.";
+  } else {
+    status.textContent = "Not started";
+    status.classList.toggle("ready", false);
+    $("#setupStatusHelp").textContent = "Load the brief and select interviews to begin.";
+    $("#setupEmptyTitle").textContent = "No analysis yet";
+    $("#setupEmptyCopy").textContent = "The extraction steps and review workspace will appear here after you start the analysis.";
+  }
 }
 
 // -------------------------------------------------------------- panel bar
