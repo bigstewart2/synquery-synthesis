@@ -1,6 +1,8 @@
 # Live extraction (the back end the submission doesn't have)
 
-**Live:** https://synquery-live.vercel.app (passcode-gated)
+**Live:** https://interview-extraction-demo.vercel.app (passcode-gated)
+
+Vercel project: `interview-extraction-demo` (same project ID and environment variables). The old `synquery-live.vercel.app` address remains attached for existing links and browser-local saved runs. Browser storage is scoped to each hostname, so earlier runs remain at the old address.
 **Sibling:** https://synquery-synthesis.vercel.app — the submitted static prototype, unchanged.
 
 ## Current public workflow: guided Harbor example

@@ -1,7 +1,7 @@
 [project]
-name = "synquery-live"
+name = "interview-extraction-demo"
 version = "1.0.0"
-description = "Live extraction back end for the Synquery panel-synthesis prototype"
+description = "Brief-guided interview extraction and evidence review demo"
 requires-python = ">=3.12"
 dependencies = [
     "anthropic==0.108.0",
