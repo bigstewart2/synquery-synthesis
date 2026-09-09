@@ -261,14 +261,23 @@ Rules, in priority order:
 """
 
 
-def draft_themes(client, atoms_by_id, expert_note):
+def judgement_payload(message, tool_name):
+    if getattr(message, "stop_reason", None) == "max_tokens":
+        raise ValueError("The model response was cut off. Please retry with fewer confirmed findings.")
+    for block in message.content:
+        if block.type == "tool_use" and block.name == tool_name and isinstance(block.input, dict):
+            return block.input
+    raise ValueError("The model did not return a complete structured response. Please retry.")
+
+
+def draft_themes(client, atoms_by_id, expert_note, brief_mode=False):
     """Draft themes from confirmed atoms, then drop any citation that does not resolve.
 
     Returns (summary, themes, not_supported, dropped_ids). A theme left with no valid citation is
     kept and flagged rather than silently deleted -- a disappearing theme hides a bug.
     """
     listing = "\n".join(
-        f"[{aid}] {json.dumps({k: v for k, v in a.items() if k != 'verified'}, ensure_ascii=False)}"
+        f"[{aid}] {json.dumps({k: v for k, v in a.items() if k not in ('verified', 'review_note', 'review_status', 'brief_id')}, ensure_ascii=False)}"
         for aid, a in atoms_by_id.items()
     )
     msg = client.messages.create(
@@ -277,18 +286,23 @@ def draft_themes(client, atoms_by_id, expert_note):
         system=THEME_SYSTEM,
         tools=[THEME_TOOL],
         tool_choice={"type": "tool", "name": "emit_themes"},
-        thinking={"type": "adaptive"},
+        **({} if brief_mode else {"thinking": {"type": "adaptive"}}),
         messages=[{
             "role": "user",
             "content": f"{expert_note}\n\nConfirmed atoms:\n{listing}\n\n"
                        f"Draft the themes these atoms support.",
         }],
     )
-    payload = {}
-    for block in msg.content:
-        if block.type == "tool_use":
-            payload = block.input
-            break
+    payload = judgement_payload(msg, "emit_themes")
+    summary = payload.get("summary")
+    if (not isinstance(summary, dict) or not isinstance(summary.get("text"), str) or
+        not isinstance(summary.get("atom_ids"), list) or
+        not isinstance(payload.get("themes"), list) or not isinstance(payload.get("not_supported"), list)):
+        raise ValueError("The synthesis response was incomplete. Please retry.")
+    for theme in payload["themes"]:
+        if (not isinstance(theme, dict) or not all(isinstance(theme.get(k), str) for k in ("theme", "takeaway", "strength")) or
+            not isinstance(theme.get("atom_ids"), list)):
+            raise ValueError("A synthesis finding was incomplete. Please retry.")
 
     known, dropped = set(atoms_by_id), []
 
@@ -385,7 +399,7 @@ Rules, in priority order:
 def check_claim(client, claim, atoms_by_id, expert_note):
     """Grade one claim. Same citation discipline as drafting -- ids must resolve."""
     listing = "\n".join(
-        f"[{aid}] {json.dumps({k: v for k, v in a.items() if k != 'verified'}, ensure_ascii=False)}"
+        f"[{aid}] {json.dumps({k: v for k, v in a.items() if k not in ('verified', 'review_note', 'review_status', 'brief_id')}, ensure_ascii=False)}"
         for aid, a in atoms_by_id.items()
     )
     msg = client.messages.create(
@@ -401,11 +415,11 @@ def check_claim(client, claim, atoms_by_id, expert_note):
                        f"Claim to grade:\n\"{claim}\"",
         }],
     )
-    out = {}
-    for block in msg.content:
-        if block.type == "tool_use":
-            out = block.input
-            break
+    out = judgement_payload(msg, "emit_verdict")
+    if (out.get("verdict") not in ("supported", "partially supported", "not supported", "contradicted") or
+        not all(isinstance(out.get(k), str) for k in ("reasoning", "footnote")) or
+        not isinstance(out.get("atom_ids"), list) or not isinstance(out.get("caveats"), list)):
+        raise ValueError("The claim-check response was incomplete. Please retry.")
 
     known = set(atoms_by_id)
     if not isinstance(out, dict):
@@ -439,7 +453,8 @@ def verify_citations(atoms, transcript_text):
     for items in atoms.values():
         for it in items:
             total += 1
-            ok = norm(it.get("quote", "")) in haystack
+            quote = norm(it.get("quote", ""))
+            ok = bool(quote) and quote in haystack
             it["verified"] = ok
             verified += ok
     return {"total": total, "verified": verified}

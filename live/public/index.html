@@ -41,10 +41,28 @@
   .demo-context p{font-size:14px;color:var(--ink-2);max-width:90ch;margin-bottom:var(--s3)}
   .demo-steps{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s6);margin:0;padding-left:20px;font-size:13px;font-weight:600;color:var(--ink-2)}
   .demo-steps li{padding-left:2px}
+  #workControls{border:0;margin:0;padding:0;min-width:0}
+  .project-tools{display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap;margin-bottom:var(--s4)}
+  .project-tools select{max-width:100%;font:inherit;padding:8px;border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--panel)}
+  .project-tools label{margin:0;text-transform:none;letter-spacing:0}
+  .brief-form{max-width:760px}
+  .brief-form label{font-size:14px;text-transform:none;letter-spacing:0;color:var(--ink);margin-top:var(--s5)}
+  .brief-form .help{font-size:13px;color:var(--mute);margin-top:var(--s2)}
+  .brief-form select{font:inherit;padding:9px;max-width:100%;border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--panel)}
+  .brief-summary{padding:var(--s4) var(--s5);border:1px solid var(--line);border-radius:var(--r);margin-bottom:var(--s5);background:var(--panel)}
+  .brief-summary h2{font-size:17px;margin-bottom:var(--s2)}
+  .brief-summary summary{cursor:pointer;font-size:13px;color:var(--mute)}
+  .brief-summary ol{padding-left:20px;font-size:14px}
+  .evidence-grid table{min-width:740px;table-layout:fixed}
+  .evidence-grid th:first-child{width:24%}
+  .mobile-note{display:none}
+  .finding-title{font-size:16px;font-weight:600;margin-bottom:var(--s2)}
   @media(max-width:600px){
     .wrap{padding:var(--s5) var(--s4) var(--s6)}
     .demo-context{padding:var(--s4)}
     .demo-steps{display:grid;gap:var(--s2)}
+    .mobile-note{display:block}
+    .card{padding:var(--s5) var(--s4)}
   }
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
         padding:var(--s5) var(--s6) var(--s6);margin-bottom:var(--s5)}
@@ -214,13 +232,14 @@
 
   /* Print is a real output format here, not an afterthought: the deliverable is the page. */
   @media print{
-    .demo-intro,.panelbar,.statbar,.tabs,footer,.no-print,#failures{display:none !important}
+    .demo-intro,.project-tools,.brief-summary,#projectNotice,#briefIntake,.panelbar,.statbar,.tabs,footer,.no-print,#failures{display:none !important}
     body{background:#fff;color:#000;font-size:11pt}
     .wrap{max-width:none;padding:0}
     .card{border:0;padding:0;margin:0;background:#fff}
     .doc{max-width:none}
     .doc-h{break-after:avoid}
     table{font-size:10pt} .scroll{overflow:visible}
+    .evidence-grid table{min-width:0}
     .pill{border:1px solid #bbb;background:#fff !important;color:#333 !important}
     a{color:#000;text-decoration:none}
     @page{margin:16mm}
@@ -246,9 +265,9 @@
     <p class="demo-purpose">Turn long interviews into findings you can trace to a source, compare across people and use to test a conclusion.</p>
     <aside class="demo-context" aria-labelledby="demo-context-title">
       <h2 id="demo-context-title">What is this for?</h2>
-      <p>You’ve interviewed several software buyers. What do they agree on, where do they differ, and what does the evidence actually support? This demo helps you answer those questions using interviews about IT service management software.</p>
+      <p>You have interviews to review and a decision to make. Start with a project brief so the AI looks for evidence relevant to your questions. Review its findings, compare the interviews and test which conclusions the evidence supports.</p>
       <ol class="demo-steps" aria-label="How to use the demo">
-        <li>Upload interview transcripts</li>
+        <li>Set a brief and upload interviews</li>
         <li>Confirm findings against their source quotes</li>
         <li>Compare the evidence and check a claim</li>
       </ol>
@@ -273,7 +292,43 @@
 
   <!-- ----------------------------------------------------------- workspace -->
   <section id="work" class="hide">
-    <div class="card">
+    <div id="syncNotice" class="err hide" role="status">This project changed in another tab. Reload to use the latest saved work. <button id="reloadProject" class="btn-2">Reload saved work</button></div>
+    <div id="storageNotice" class="err hide" role="status"></div>
+    <fieldset id="workControls">
+    <div class="project-tools">
+      <button id="newProject" class="btn-2">New project</button>
+      <label for="savedProjects">Saved in this browser</label>
+      <select id="savedProjects"><option value="">Choose a project</option></select>
+      <button id="openProject" class="btn-2">Open saved project</button>
+    </div>
+    <p id="projectNotice" class="mute" role="status"></p>
+    <section id="briefIntake" class="card">
+      <h2>Start with a project brief</h2>
+      <p class="mute">Tell the AI what you’re researching and which questions matter. The brief guides extraction, comparison and claim checking.</p>
+      <form id="briefForm" class="brief-form">
+        <label for="researchMode">Research approach</label>
+        <select id="researchMode"><option value="brief">Project brief</option><option value="questionnaire">Original IT software questionnaire</option></select>
+        <div id="briefFields">
+          <button type="button" id="harborExample" class="btn-2" style="margin-top:var(--s4)">Use the Harbor example</button>
+          <label for="briefProject">Project name</label>
+          <input id="briefProject" type="text" maxlength="120" required placeholder="e.g. Harbor payments diligence">
+          <label for="briefDecision">What decision are you trying to make?</label>
+          <textarea id="briefDecision" maxlength="1500" required placeholder="Describe the company or topic, the decision and any useful context."></textarea>
+          <label for="briefQuestions">What do you need to learn?</label>
+          <textarea id="briefQuestions" maxlength="2406" required aria-describedby="questionHelp" placeholder="What drives retention?&#10;Where does the company make money?&#10;What should we ask management?"></textarea>
+          <p id="questionHelp" class="help">One question per line, up to six. Include risks or assumptions you want challenged.</p>
+        </div>
+        <p id="questionnaireHelp" class="help hide">For the original IT service management buying questionnaire only. Looks for vendor ratings, per-user prices, ranked purchase criteria and switching scores.</p>
+        <div id="briefErr" class="err hide" role="alert" style="margin-top:var(--s4)"></div>
+        <div style="display:flex;gap:var(--s3);margin-top:var(--s5)">
+          <button class="btn" type="submit">Save brief and add interviews</button>
+          <button class="btn-2 hide" type="button" id="cancelBrief">Cancel edits</button>
+        </div>
+        <p class="help">Your draft is saved in this browser. Saving a brief does not run the AI.</p>
+      </form>
+    </section>
+    <section id="briefSummary" class="brief-summary hide" aria-label="Current project brief"></section>
+    <div class="card hide" id="analysisWorkspace">
 
       <div class="panelbar" id="panelbar"></div>
 
@@ -281,9 +336,9 @@
         <h2 id="uploadTitle">Add a transcript</h2>
         <p class="mute">
           <code>.txt</code>, <code>.md</code>, or <code>.docx</code>. Drop in the whole
-          panel at once — two extract at a time, and each one stays loaded. Nothing is
-          stored on the server; files are read in memory and discarded. Results live in
-          this browser only.
+          panel at once. Files are sent to the AI service for analysis; the app keeps
+          your results and brief in this browser. Choose your files again if you leave
+          before extraction finishes.
         </p>
         <div id="uploadErr" class="err hide"></div>
 
@@ -310,7 +365,7 @@
 
         <div class="tabs">
           <button data-tab="queue" class="on">Review queue</button>
-          <button data-tab="rollup">Rollups</button>
+          <button data-tab="rollup">Compare evidence</button>
           <button data-tab="coverage">Coverage</button>
           <button data-tab="themes">Synthesis</button>
           <button data-tab="claim">Claim check</button>
@@ -319,13 +374,13 @@
 
         <div id="tab-queue">
           <p class="mute">
-            Reviewing <b id="queueWho">—</b>. Every atom was located by the model and
-            carries the verbatim span it came from. <b>Verified</b> means that span was
-            found character-for-character in the file you uploaded — deterministic, no
-            model involved. It says nothing about whether the reading is right.
+            Reviewing <b id="queueWho">—</b>. Each finding was proposed by the model and
+            carries its source quotation. <b>Quote located</b> means the quoted words
+            were found in the file. A separate model review checks the interpretation
+            for brief-guided findings. Both checks can miss errors, so read the quote before confirming.
           </p>
           <div style="margin:var(--s4) 0">
-            <button id="allYes" class="btn-2">Confirm all verified in this interview</button>
+            <button id="allYes" class="btn-2">Confirm all that passed checks</button>
             <button id="allClear" class="btn-2">Clear this interview</button>
           </div>
           <div class="tally">
@@ -339,24 +394,24 @@
 
         <div id="tab-rollup" class="hide">
           <p class="mute">
-            Computed from <b>confirmed</b> atoms across every loaded interview, by
-            arithmetic, not by the model. Each cell names the expert it came from.
+            Compare <b>confirmed findings</b> across interviews. Each entry names its
+            source. A gap means no finding has been confirmed for that question.
           </p>
           <div id="rollup"></div>
         </div>
 
         <div id="tab-coverage" class="hide">
           <p class="mute">
-            What this panel can and cannot answer. All of it derived from confirmed atoms —
-            no judgment, just counting.
+            See which research questions have confirmed evidence from each interview.
+            Counts show coverage, not agreement or proof of a conclusion.
           </p>
           <div id="coverage"></div>
         </div>
 
         <div id="tab-themes" class="hide">
           <p class="mute">
-            Drafted from <b>confirmed atoms only</b>, across the whole panel. Every claim
-            cites the atoms it rests on and each atom carries its expert. A claim covering
+            Drafted from <b>confirmed findings only</b>, across the whole panel. Each drafted claim
+            cites the findings it rests on and each finding carries its expert. A claim covering
             all experts needs support from all of them.
           </p>
           <div style="display:flex;gap:var(--s4);align-items:center;flex-wrap:wrap;margin:var(--s4) 0">
@@ -373,9 +428,8 @@
 
         <div id="tab-claim" class="hide">
           <p class="mute">
-            Write the claim you want on the slide. It is graded against every confirmed
-            atom in the panel and comes back with a verdict, the atoms bearing on it, what
-            a reader would wrongly assume, and a footnote you can paste under the number.
+            Write a conclusion you want to test. The AI checks it against confirmed findings
+            and returns a verdict, supporting evidence, caveats and a source note you can reuse.
           </p>
           <div style="margin:var(--s4) 0">
             <textarea id="claim" style="min-height:80px"
@@ -393,7 +447,7 @@
         <div id="tab-deliver" class="hide">
           <p class="mute no-print">
             The finished synthesis, assembled from what you confirmed and kept. Print it to
-            PDF or copy it as markdown. Everything below traces to a quote and a timestamp.
+            PDF or copy it as markdown. Evidence includes source quotes and their locations.
           </p>
           <div style="display:flex;gap:var(--s3);flex-wrap:wrap;margin:var(--s4) 0" class="no-print">
             <button id="printDoc" class="btn">Print / save as PDF</button>
@@ -404,6 +458,7 @@
         </div>
       </div>
     </div>
+    </fieldset>
   </section>
 
   <footer>
@@ -416,40 +471,71 @@
 "use strict";
 
 const $ = (s) => document.querySelector(s);
-const KEY = "synq.live.v2";
+const KEY = "synq.live.v3", LEGACY_KEY = "synq.live.v2";
+const emptyDraft = () => ({project:"", decision:"", questionsText:""});
+const freshProject = (pass="") => ({pass, projectId:crypto.randomUUID(), mode:"brief",
+  brief:null, briefDraft:emptyDraft(), briefReady:false, briefId:null,
+  experts:{}, order:[], sel:null, marks:{}, themes:"", draft:null, checks:[], themeOff:{}, queue:[]});
+let state = freshProject(), lastSaved = null, externalChange = false, busy = false, editingBrief = false;
+let projectMessage = "";
 
-// experts: { E1: {filename, atoms, labels, stats, failures} }
-// marks:   { "E1:ratings:3": "y" | "n" }
-let state = { pass:"", experts:{}, order:[], sel:null,
-              marks:{}, themes:"", draft:null, checks:[], themeOff:{}, queue:[] };
-
-// ------------------------------------------------------------------ storage
+// Save completed work, never File objects or the passcode, in the project record.
+function snapshot(){ const {pass, queue, ...project} = state; return project; }
+function storageError(){
+  err($("#storageNotice"), "This browser could not save your work. Keep this tab open and export any results before leaving. New project and project switching will wait until saving works.");
+}
+function conflict(){
+  externalChange = true; show($("#syncNotice"), true); $("#workControls").disabled = true;
+}
 function save(){
+  if (externalChange) return false;
   try {
+    if (localStorage.getItem(KEY) !== lastSaved){ conflict(); return false; }
+    const next = JSON.stringify(snapshot());
+    localStorage.setItem(KEY, next); lastSaved = next;
     sessionStorage.setItem(KEY + ".pass", state.pass);
-    localStorage.setItem(KEY, JSON.stringify({
-      experts: state.experts, order: state.order, sel: state.sel,
-      marks: state.marks, themes: state.themes, draft: state.draft, checks: state.checks, themeOff: state.themeOff
-    }));
-  } catch (e) { /* private window or quota — the app still works, it just forgets */ }
+    err($("#storageNotice"), ""); return true;
+  } catch(e){ storageError(); return false; }
 }
 function load(){
   try {
-    state.pass = sessionStorage.getItem(KEY + ".pass") || "";
-    const raw = localStorage.getItem(KEY);
+    const pass = sessionStorage.getItem(KEY + ".pass") || sessionStorage.getItem(LEGACY_KEY + ".pass") || "";
+    lastSaved = localStorage.getItem(KEY);
+    const legacy = !lastSaved && localStorage.getItem(LEGACY_KEY);
+    const raw = lastSaved || legacy;
     if (raw){
-      const o = JSON.parse(raw);
-      state.experts = o.experts || {};
-      state.order   = o.order   || Object.keys(state.experts);
-      state.sel     = o.sel     || state.order[0] || null;
-      state.marks   = o.marks   || {};
-      state.themes  = o.themes  || "";
-      state.draft   = o.draft   || null;
-      state.checks  = o.checks  || [];
-      state.themeOff= o.themeOff|| {};
-    }
-  } catch (e) { /* ignore */ }
+      const saved = JSON.parse(raw);
+      state = {...freshProject(pass), ...saved, pass, queue:[]};
+      if (legacy){
+        state.mode = state.order.length ? "questionnaire" : "brief"; state.briefReady = !!state.order.length;
+        projectMessage = "Your earlier run is restored below. It used the original IT software questionnaire. Choose New project to analyze interviews with a research brief; the earlier run will stay saved.";
+      } else projectMessage = state.order.length ? "Saved results restored from this browser. Nothing has been re-analyzed." : "Your draft brief has been restored.";
+    } else state.pass = pass;
+  } catch(e){ storageError(); conflict(); }
 }
+function projects(){
+  const raw = localStorage.getItem(KEY + ".projects");
+  return raw ? JSON.parse(raw) : {};
+}
+function archiveCurrent(){
+  if (!save()) return false;
+  try {
+    if (state.order.length || state.briefReady || state.briefDraft.project || state.briefDraft.decision || state.briefDraft.questionsText){
+      const saved = projects(); saved[state.projectId] = snapshot();
+      localStorage.setItem(KEY + ".projects", JSON.stringify(saved));
+    }
+    return true;
+  } catch(e){ storageError(); return false; }
+}
+function setBusy(on){ busy = on; $("#workControls").disabled = on || externalChange; }
+function invalidateOutput(){
+  if (state.draft || state.checks.length) projectMessage = "Evidence changed. Draft the synthesis and check any claims again to use your current confirmed findings.";
+  state.draft = null; state.checks = []; state.themeOff = {};
+}
+function researchPayload(){ return {mode:state.mode, ...(state.mode === "brief" ? {brief:state.brief} : {})}; }
+window.addEventListener("storage", e => { if (e.key === KEY || e.key === null) conflict(); });
+$("#reloadProject").onclick = () => location.reload();
+window.addEventListener("beforeunload", e => { if (busy){ e.preventDefault(); e.returnValue = ""; } });
 
 // ------------------------------------------------------------------- helpers
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => (
@@ -458,9 +544,17 @@ const show = (el, on) => el.classList.toggle("hide", !on);
 const err  = (el, msg) => { el.textContent = msg; show(el, !!msg); };
 
 const atomId = (ex, group, i) => `${ex}:${group}:${i}`;
-const CITE = new Set(["quote","timestamp","confidence","verified","expert"]);
+const CITE = new Set(["quote","timestamp","confidence","verified","expert","brief_id",
+  "question_index","source_start_line","source_end_line","review_status","review_note"]);
+const sourceLocation = a => a.source_start_line
+  ? `line${a.source_end_line !== a.source_start_line ? "s" : ""} ${a.source_start_line}${a.source_end_line !== a.source_start_line ? "–"+a.source_end_line : ""}`
+  : (a.timestamp || "source quote");
+const eligible = a => a.verified === true && (state.mode !== "brief" ||
+  (a.review_status === "supported" && a.brief_id === state.briefId));
+
 
 function describe(a){
+  if (a.finding) return `<span class="finding-title">${esc(a.finding)}</span><br><span class="mute">${esc(state.brief?.questions[a.question_index] || "")} · ${esc(a.kind)}</span>`;
   return Object.keys(a).filter(k => !CITE.has(k))
     .map(k => `${k.replace(/_/g," ")}: <span class="val">${esc(a[k])}</span>`)
     .join(" &nbsp;·&nbsp; ");
@@ -468,10 +562,10 @@ function describe(a){
 function describeAtom(a){
   const f = Object.keys(a).filter(k => !CITE.has(k))
     .map(k => `${k.replace(/_/g," ")} ${a[k]}`).join(", ");
-  return `<b>${esc(a.expert)}</b> — ${esc(f)} — &ldquo;${esc(a.quote)}&rdquo; @ ${esc(a.timestamp)}`;
+  return `<b>${esc(a.expert)}</b> — ${esc(f)} — &ldquo;${esc(a.quote)}&rdquo; · ${esc(sourceLocation(a))}`;
 }
 
-/** Every confirmed atom in the panel, keyed by its panel-wide id. */
+/** Every confirmed finding in the panel, keyed by its panel-wide id. */
 function confirmedMap(){
   const out = {};
   for (const ex of state.order){
@@ -479,7 +573,7 @@ function confirmedMap(){
     for (const g of Object.keys(d.atoms))
       (d.atoms[g] || []).forEach((a, i) => {
         const id = atomId(ex, g, i);
-        if (state.marks[id] === "y") out[id] = Object.assign({}, a, {expert: ex});
+        if (state.marks[id] === "y" && eligible(a)) out[id] = Object.assign({}, a, {expert: ex});
       });
   }
   return out;
@@ -490,7 +584,7 @@ function confirmedGroup(group){
   for (const ex of state.order){
     const d = state.experts[ex]; if (!d) continue;
     (d.atoms[group] || []).forEach((a, i) => {
-      if (state.marks[atomId(ex, group, i)] === "y") out.push(Object.assign({}, a, {expert: ex}));
+      if (state.marks[atomId(ex, group, i)] === "y" && eligible(a)) out.push(Object.assign({}, a, {expert: ex}));
     });
   }
   return out;
@@ -524,6 +618,98 @@ async function enterDemo(v){
 $("#gateGo").onclick = () => enterDemo($("#pass").value.trim());
 $("#pass").addEventListener("keydown", e => { if (e.key === "Enter") $("#gateGo").click(); });
 
+// ------------------------------------------------------------- project brief
+function draftFromForm(){
+  return {project:$("#briefProject").value, decision:$("#briefDecision").value, questionsText:$("#briefQuestions").value};
+}
+function fillBriefForm(){
+  const d = state.briefDraft;
+  $("#researchMode").value = state.mode;
+  $("#briefProject").value = d.project;
+  $("#briefDecision").value = d.decision;
+  $("#briefQuestions").value = d.questionsText;
+  toggleBriefFields();
+}
+function toggleBriefFields(){
+  const on = $("#researchMode").value === "brief";
+  show($("#briefFields"), on); show($("#questionnaireHelp"), !on);
+  ["#briefProject", "#briefDecision", "#briefQuestions"].forEach(id => $(id).required = on);
+  $("#briefForm button[type=submit]").textContent = on ? "Save brief and add interviews" : "Use questionnaire and add interviews";
+}
+function renderProject(){
+  const intake = !state.briefReady || editingBrief;
+  show($("#briefIntake"), intake); show($("#analysisWorkspace"), !intake);
+  show($("#briefSummary"), !intake); show($("#cancelBrief"), editingBrief);
+  if (intake) fillBriefForm();
+  $("#projectNotice").textContent = projectMessage;
+  try {
+    const saved = projects();
+    $("#savedProjects").innerHTML = '<option value="">Choose a project</option>' + Object.entries(saved)
+      .filter(([id]) => id !== state.projectId)
+      .map(([id,p]) => `<option value="${esc(id)}">${esc(p.mode === "questionnaire" ? "Original IT software questionnaire" : p.brief?.project || p.briefDraft?.project || "Untitled research")} (${p.order.length} interviews)</option>`).join("");
+    $("#openProject").disabled = Object.keys(saved).filter(id => id !== state.projectId).length === 0;
+  } catch(e){ storageError(); }
+  const b = state.brief;
+  $("#briefSummary").innerHTML = state.mode === "brief" && b
+    ? `<h2>${esc(b.project)}</h2><p>${esc(b.decision)}</p><details><summary>${b.questions.length} research questions</summary><ol>${b.questions.map(q => `<li>${esc(q)}</li>`).join("")}</ol></details>`
+    : `<h2>Original IT software questionnaire</h2><p class="mute">This run uses the fixed IT service management schema. For another topic, start a new project with a research brief.</p>`;
+  $("#briefSummary").innerHTML += state.order.length
+    ? '<p class="help">This research approach stays attached to these results. Start a new project to ask different questions.</p>'
+    : '<button id="editBrief" class="btn-2" style="margin-top:var(--s3)">Edit brief</button>';
+  const edit = $("#editBrief");
+  if (edit) edit.onclick = () => { editingBrief = true; renderAll(); };
+  $("#claim").placeholder = state.mode === "brief" ? "e.g. ERP integrations are the main reason customers stay with Harbor" : "e.g. ServiceNow is quoted at roughly 2.7x what mid-market buyers actually pay";
+}
+$("#briefForm").addEventListener("input", () => { state.briefDraft = draftFromForm(); if (!state.briefReady) state.mode = $("#researchMode").value; save(); });
+$("#researchMode").onchange = () => { toggleBriefFields(); if (!state.briefReady) { state.mode = $("#researchMode").value; save(); } };
+$("#harborExample").onclick = () => {
+  state.briefDraft = {
+    project:"Harbor payments diligence",
+    decision:"We’re evaluating a payments platform serving mid-market distributors. Understand the drivers of growth, retention and margins, and the risks to investigate with management.",
+    questionsText:["What drives customer acquisition, retention and switching?", "How do ERP integrations and partners affect growth and retention?", "What drives margins and recurring software revenue?", "What risks or assumptions need validation?", "What should we ask management or verify in company data?"].join("\n")
+  };
+  fillBriefForm(); save();
+};
+$("#briefForm").onsubmit = e => {
+  e.preventDefault(); err($("#briefErr"), "");
+  const mode = $("#researchMode").value, d = draftFromForm();
+  const questions = d.questionsText.split(/\n/).map(q => q.trim()).filter(Boolean);
+  if (mode === "brief" && (!d.project.trim() || !d.decision.trim() || !questions.length || questions.length > 6 || questions.some(q => q.length > 400))){
+    err($("#briefErr"), "Add a project name, decision and one to six questions. Keep each question under 400 characters."); return;
+  }
+  state.mode = mode; state.briefDraft = d;
+  state.brief = mode === "brief" ? {project:d.project.trim(), decision:d.decision.trim(), questions} : null;
+  state.briefId = null; state.briefReady = true; editingBrief = false;
+  projectMessage = "Research approach saved. Choose your interviews below, then press Extract to run the AI.";
+  save(); renderAll();
+};
+$("#cancelBrief").onclick = () => {
+  if (state.brief) state.briefDraft = {...state.brief, questionsText:state.brief.questions.join("\n")};
+  editingBrief = false; save(); renderAll();
+};
+$("#newProject").onclick = () => {
+  if (busy || !archiveCurrent()) return;
+  state = freshProject(state.pass); editingBrief = false;
+  projectMessage = "New project. Your previous work is available under Saved in this browser.";
+  save(); resetView(); renderAll();
+};
+$("#openProject").onclick = () => {
+  const id = $("#savedProjects").value;
+  if (!id || busy || !archiveCurrent()) return;
+  try {
+    const chosen = projects()[id]; if (!chosen) return;
+    state = {...freshProject(state.pass), ...chosen, pass:state.pass, queue:[]};
+    editingBrief = false; projectMessage = "Saved project opened. Nothing has been re-analyzed.";
+    save(); resetView(); renderAll();
+  } catch(e){ storageError(); }
+};
+function resetView(){
+  clearTimeout(themeTimer);
+  ["uploadErr","briefErr","draftErr","checkErr"].forEach(id => err($("#"+id), ""));
+  $("#claim").value = "";
+  document.querySelector('.tabs [data-tab="queue"]').click();
+}
+
 // ------------------------------------------------------------------ upload
 const drop = $("#drop"), fileInput = $("#file");
 $("#pick").onclick = () => fileInput.click();
@@ -549,7 +735,7 @@ function deriveLabel(name, taken){
 }
 
 function pickFiles(files){
-  if (!files || !files.length) return;
+  if (!files || !files.length || busy || !state.briefReady) return;
   err($("#uploadErr"), "");
   const taken = new Set(state.queue.map(q => q.label));
   Array.prototype.forEach.call(files, f => {
@@ -565,11 +751,11 @@ function renderQueueList(){
   const pending = q.filter(x => x.status !== "done").length;
   box.innerHTML = q.map((x, i) => {
     const pill = x.status === "running" ? `<span class="pill acc"><span class="spin" style="width:9px;height:9px;border-width:2px"></span> extracting</span>`
-               : x.status === "done"    ? `<span class="pill ok">${x.atoms} atoms</span>`
+               : x.status === "done"    ? `<span class="pill ok">${x.atoms} findings</span>`
                : x.status === "failed"  ? `<span class="pill bad">${esc(x.error || "failed")}</span>`
                : `<span class="pill neutral">ready</span>`;
     return `<div class="qrow ${x.status}">
-      <input type="text" value="${esc(x.label)}" data-lab="${i}" spellcheck="false"
+      <input type="text" value="${esc(x.label)}" data-lab="${i}" spellcheck="false" aria-label="Expert label for ${esc(x.file.name)}"
              ${x.status === "running" ? "disabled" : ""}>
       <span class="fn">${esc(x.file.name)}</span>
       <span class="sz">${(x.file.size/1024).toFixed(0)} KB</span>
@@ -605,7 +791,7 @@ async function extractOne(job){
   const b64 = await toB64(job.file);
   const r = await fetch("/api/extract", {
     method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({passcode: state.pass, filename: job.file.name, expert: job.label, b64})
+    body: JSON.stringify({passcode: state.pass, filename: job.file.name, expert: job.label, b64, ...researchPayload()})
   });
   const j = await r.json().catch(() => ({ok:false, error:"Server sent a non-JSON response."}));
   if (!r.ok || !j.ok){
@@ -617,15 +803,15 @@ async function extractOne(job){
   Object.keys(state.marks).forEach(k => { if (k.indexOf(job.label + ":") === 0) delete state.marks[k]; });
   state.experts[job.label] = {filename: j.filename, atoms: j.atoms, labels: j.labels,
                               stats: j.stats, failures: j.failures};
+  if (state.mode === "brief") state.briefId = j.brief_id;
+  invalidateOutput();
   if (state.order.indexOf(job.label) === -1) state.order.push(job.label);
   job.status = "done";
   job.atoms = j.stats.total;
-  renderQueueList();
+  state.sel = job.label; save(); renderQueueList();
 }
 
-/** Run the queue with a small concurrency cap. Each transcript is already six
-    concurrent model calls, so two at a time is twelve in flight — enough to be fast,
-    not enough to trip rate limits. */
+/** At most two interviews in flight. Brief mode extracts, then reviews each one. */
 async function runPool(jobs, width){
   let next = 0, dead = null;
   const worker = async () => {
@@ -647,17 +833,19 @@ async function runPool(jobs, width){
 
 $("#run").onclick = async () => {
   const jobs = state.queue.filter(q => q.status !== "done");
-  if (!jobs.length) return;
+  if (!jobs.length || busy || !state.briefReady) return;
+  if (new Set(jobs.map(j => j.label)).size !== jobs.length){ err($("#uploadErr"), "Give every interview a different label before extracting."); return; }
 
   const clash = jobs.filter(j => state.experts[j.label]).map(j => j.label);
   if (clash.length && !confirm(`${clash.join(", ")} already loaded. Replace?`)) return;
 
   const btn = $("#run");
-  btn.disabled = true;
+  btn.disabled = true; setBusy(true);
   err($("#uploadErr"), "");
-  $("#runNote").innerHTML = `<span class="spin"></span> extracting ${jobs.length} transcript${jobs.length===1?"":"s"}, two at a time`;
+  $("#runNote").innerHTML = `<span class="spin"></span> extracting ${jobs.length} transcript${jobs.length===1?"":"s"}, two at a time. This can take a minute or two.`;
 
-  const dead = await runPool(jobs, 2);
+  let dead;
+  try { dead = await runPool(jobs, 2); } finally { setBusy(false); }
 
   $("#runNote").textContent = "";
   btn.disabled = false;
@@ -676,6 +864,7 @@ $("#run").onclick = async () => {
 
   const loaded = state.queue.filter(q => q.status === "done");
   if (loaded.length){
+    projectMessage = "Extraction finished. Review the findings against their source quotes before confirming.";
     state.sel = loaded[loaded.length - 1].label;
     // New interviews invalidate panel-level output built from the old set.
     state.draft = null; state.checks = []; state.themeOff = {};
@@ -704,32 +893,25 @@ function renderPanelBar(){
   const chips = state.order.map(ex => {
     const d = state.experts[ex];
     const total = Object.values(d.atoms).reduce((n, a) => n + a.length, 0);
-    const conf = Object.keys(state.marks).filter(k => k.indexOf(ex + ":") === 0 && state.marks[k] === "y").length;
+    const conf = Object.values(confirmedMap()).filter(a => a.expert === ex).length;
     return `<button class="exchip ${ex === state.sel ? "on" : ""}" data-ex="${esc(ex)}">
               <span class="id">${esc(ex)}</span>
               <span class="meta">${conf}/${total} confirmed</span>
             </button>`;
   }).join("");
   bar.innerHTML = chips +
-    `<button id="addMore" class="btn-2" style="align-self:stretch">+ Add transcript</button>` +
-    (state.order.length ? `<button id="resetAll" class="btn-2" style="margin-left:auto">Start over</button>` : "");
+    `<button id="addMore" class="btn-2" style="align-self:stretch">+ Add transcript</button>`;
 
   bar.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => {
     state.sel = b.dataset.ex; save(); renderAll();
   });
   $("#addMore").onclick = () => showUpload(true);
-  const ra = $("#resetAll");
-  if (ra) ra.onclick = () => {
-    if (!confirm("Clear every loaded interview and start over?")) return;
-    state = {pass: state.pass, experts:{}, order:[], sel:null,
-             marks:{}, themes:"", draft:null, checks:[], themeOff:{}, queue:[]};
-    try { localStorage.removeItem(KEY); } catch(e){}
-    save(); renderAll();
-  };
 }
 
 // ------------------------------------------------------------------ render
 function renderAll(){
+  renderProject();
+  if (!state.briefReady || editingBrief) return;
   renderPanelBar();
   renderQueueList();
   if (!state.order.length){ showUpload(true); return; }
@@ -752,12 +934,12 @@ function renderStats(){
     atoms += s.total; verified += s.verified; secs += s.elapsed_s;
     tin += s.usage.input_tokens; tout += s.usage.output_tokens;
   });
-  const conf = Object.values(state.marks).filter(v => v === "y").length;
+  const conf = Object.keys(confirmedMap()).length;
   const pct = atoms ? Math.round(100 * verified / atoms) : 0;
   $("#statbar").innerHTML = [
     ["Interviews", state.order.length],
-    ["Atoms extracted", atoms],
-    ["Quotes verified verbatim", `${verified} / ${atoms} <span class="pill ${pct===100?"ok":"warn"}">${pct}%</span>`],
+    ["Findings extracted", atoms],
+    ["Quotes located in source", `${verified} / ${atoms} <span class="pill ${pct===100?"ok":"warn"}">${pct}%</span>`],
     ["Confirmed", conf],
     ["Extraction time", secs.toFixed(1) + "s"],
     ["Tokens", `${(tin/1000).toFixed(1)}k in / ${(tout/1000).toFixed(1)}k out`],
@@ -767,7 +949,7 @@ function renderStats(){
   state.order.forEach(ex => (state.experts[ex].failures || []).forEach(f =>
     fails.push(`<b>${esc(ex)}/${esc(f.group)}</b> (${esc(f.error)})`)));
   $("#failures").innerHTML = fails.length
-    ? `<div class="err">${fails.length} extraction group(s) failed and returned empty: ${fails.join(", ")}. Re-extract that interview to retry.</div>` : "";
+    ? `<div class="err">${fails.length} extraction or review step(s) need attention: ${fails.join(", ")}. Re-extract that interview to retry.</div>` : "";
 }
 
 // ------------------------------------------------------------------- queue
@@ -780,31 +962,34 @@ function renderQueue(){
   for (const group of Object.keys(d.atoms)){
     const items = d.atoms[group] || [];
     const label = (d.labels && d.labels[group]) || group;
-    const conf = items.filter((_, i) => state.marks[atomId(ex,group,i)] === "y").length;
+    const conf = items.filter((a, i) => eligible(a) && state.marks[atomId(ex,group,i)] === "y").length;
     out.push(`<div class="grouphead"><h3>${esc(label)}</h3>` +
-      `<span class="mute" style="font-size:13px">${items.length} atom${items.length===1?"":"s"}` +
+      `<span class="mute" style="font-size:13px">${items.length} finding${items.length===1?"":"s"}` +
       (items.length ? ` · ${conf} confirmed` : "") + `</span></div>`);
     if (!items.length){
-      out.push(`<p class="mute" style="font-size:14px">Nothing extracted — an empty group is a valid answer when the expert was not asked.</p>`);
+      out.push(`<p class="mute" style="font-size:14px">No findings returned for this group. Check any errors above. Otherwise, review the transcript against your research questions; you can re-extract or start a new project with a different brief.</p>`);
       continue;
     }
     items.forEach((a, i) => {
-      const id = atomId(ex, group, i), mark = state.marks[id] || "";
+      const id = atomId(ex, group, i), mark = state.marks[id] === "y" && !eligible(a) ? "" : state.marks[id] || "";
       const cls = mark === "y" ? "confirmed" : mark === "n" ? "rejected" : "";
       const lab = mark === "y" ? `<span class="state">&#10003; confirmed</span>`
                 : mark === "n" ? `<span class="state">&#10005; rejected</span>` : "";
       out.push(`
-        <div class="atom ${cls}" data-id="${id}">
+        <div class="atom ${cls}" data-id="${esc(id)}">
           <div class="top">
             <span>${describe(a)}</span>
-            <span class="pill ${a.verified ? "ok" : "bad"}">${a.verified ? "verified" : "quote not found"}</span>
+            <span class="pill ${a.verified ? "ok" : "bad"}">${a.verified ? "quote located" : "quote not found"}</span>
             <span class="pill neutral">${esc(a.confidence)} confidence</span>
-            <span class="mute" style="font-size:13px">@ ${esc(a.timestamp)}</span>
+            <span class="mute" style="font-size:13px">${esc(sourceLocation(a))}</span>
+            ${a.review_status ? `<span class="pill ${a.review_status === "supported" ? "ok" : "warn"}">${a.review_status === "supported" ? "model review passed" : "needs another review"}</span>` : ""}
             ${lab}
           </div>
           <blockquote>${esc(a.quote)}</blockquote>
+          ${a.review_note && a.review_status !== "supported" ? `<p class="help">${esc(a.review_note)}</p>` : ""}
+          ${!eligible(a) ? '<p class="help">This finding cannot be confirmed. Reject it, or add the transcript again with this expert label to re-extract it.</p>' : ""}
           <div class="acts">
-            <button data-m="y" class="${mark==="y"?"on-y":""}">${mark==="y"?"&#10003; Confirmed":"Confirm"}</button>
+            <button data-m="y" ${eligible(a) ? "" : "disabled"} class="${mark==="y"?"on-y":""}">${mark==="y"?"&#10003; Confirmed":"Confirm"}</button>
             <button data-m="n" class="${mark==="n"?"on-n":""}">${mark==="n"?"&#10005; Rejected":"Reject"}</button>
           </div>
         </div>`);
@@ -815,17 +1000,17 @@ function renderQueue(){
     el.querySelectorAll(".acts button").forEach(b => b.onclick = () => {
       const id = el.dataset.id, m = b.dataset.m;
       state.marks[id] = (state.marks[id] === m) ? "" : m;
-      save(); renderQueue(); renderPanelBar(); renderStats(); renderRollup(); renderCoverage();
+      invalidateOutput(); save(); renderAll();
     }));
 
   // Panel-wide tally: the review gate is about the whole panel, not one interview.
   let total = 0, conf = 0, rej = 0;
   state.order.forEach(e2 => {
     const dd = state.experts[e2];
-    for (const g of Object.keys(dd.atoms)) dd.atoms[g].forEach((_, i) => {
+    for (const g of Object.keys(dd.atoms)) dd.atoms[g].forEach((a, i) => {
       total++;
       const m = state.marks[atomId(e2,g,i)];
-      if (m === "y") conf++; else if (m === "n") rej++;
+      if (m === "y" && eligible(a)) conf++; else if (m === "n") rej++;
     });
   });
   const pending = total - conf - rej;
@@ -838,13 +1023,13 @@ function renderQueue(){
 $("#allYes").onclick = () => {
   const ex = state.sel, d = state.experts[ex]; if (!d) return;
   for (const g of Object.keys(d.atoms))
-    d.atoms[g].forEach((a, i) => { if (a.verified) state.marks[atomId(ex,g,i)] = "y"; });
-  save(); renderAll();
+    d.atoms[g].forEach((a, i) => { if (eligible(a)) state.marks[atomId(ex,g,i)] = "y"; });
+  invalidateOutput(); save(); renderAll();
 };
 $("#allClear").onclick = () => {
   const ex = state.sel;
   Object.keys(state.marks).forEach(k => { if (k.indexOf(ex + ":") === 0) delete state.marks[k]; });
-  save(); renderAll();
+  invalidateOutput(); save(); renderAll();
 };
 
 // ----------------------------------------------------------------- rollups
@@ -858,6 +1043,15 @@ function table(head, rows){
 }
 
 function buildRollup(){
+  if (state.mode === "brief"){
+    const findings = confirmedGroup("findings");
+    if (!state.order.length) return "";
+    return '<p class="help mobile-note no-print">Swipe the table sideways to compare interviews.</p><div class="evidence-grid">' + table([{t:"Research question"}, ...state.order.map(ex => ({t:ex}))],
+      state.brief.questions.map((q,i) => [esc(q), ...state.order.map(ex => {
+        const hits = findings.filter(a => a.question_index === i && a.expert === ex);
+        return hits.length ? hits.map(a => `<p><b>${esc(a.finding)}</b><br><span class="mute">${esc(a.kind)} · ${esc(sourceLocation(a))}</span><br>&ldquo;${esc(a.quote)}&rdquo;</p>`).join("") : '<span class="mute">No confirmed evidence</span>';
+      })])) + '</div>';
+  }
   const out = [], experts = panelExperts();
 
   // Ratings: criterion x vendor, each cell carrying every expert who scored it.
@@ -937,18 +1131,24 @@ function buildRollup(){
 function renderRollup(){
   const h = buildRollup();
   $("#rollup").innerHTML = h ||
-    `<p class="mute">No atoms confirmed yet. Confirm some in the review queue and they appear here.</p>`;
+    `<p class="mute">No findings confirmed yet. Confirm some in the review queue and they appear here.</p>`;
 }
 
 // ---------------------------------------------------------------- coverage
 function buildCoverage(){
+  if (state.mode === "brief"){
+    const findings = confirmedGroup("findings");
+    return table([{t:"Research question"}, ...state.order.map(ex => ({t:ex, n:true}))],
+      state.brief.questions.map((q,i) => [esc(q), ...state.order.map(ex => findings.filter(a => a.question_index === i && a.expert === ex).length)])) +
+      '<p class="help">Counts are confirmed findings. Zero means no confirmed evidence for that question. Interviews describe these speakers’ experience and views; they do not establish market-wide facts.</p>';
+  }
   const map = confirmedMap(), experts = panelExperts();
   if (!Object.keys(map).length) return "";
   const rat = confirmedGroup("ratings"), price = confirmedGroup("pricing");
   const out = [];
 
   out.push(`<h3>Panel</h3>` + table(
-    [{t:"Expert"},{t:"Transcript"},{t:"Confirmed atoms", n:true}],
+    [{t:"Expert"},{t:"Transcript"},{t:"Confirmed findings", n:true}],
     experts.map(e => [`<b>${esc(e)}</b>`, esc(state.experts[e].filename),
       Object.values(map).filter(a => a.expert === e).length])));
 
@@ -1021,19 +1221,19 @@ document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
 $("#draftBtn").onclick = async () => {
   const map = confirmedMap(), n = Object.keys(map).length, experts = panelExperts();
   err($("#draftErr"), "");
-  if (!n){ err($("#draftErr"), "Nothing confirmed yet. Confirm atoms in the review queue first — the draft is built only from what you approved."); return; }
-  const btn = $("#draftBtn"); btn.disabled = true;
-  $("#draftNote").innerHTML = `<span class="spin"></span> drafting from ${n} confirmed atom${n===1?"":"s"} across ${experts.length} interview${experts.length===1?"":"s"}`;
+  if (!n){ err($("#draftErr"), "Nothing confirmed yet. Confirm findings in the review queue first — the draft is built only from what you approved."); return; }
+  const btn = $("#draftBtn"); btn.disabled = true; setBusy(true);
+  $("#draftNote").innerHTML = `<span class="spin"></span> drafting from ${n} confirmed finding${n===1?"":"s"} across ${experts.length} interview${experts.length===1?"":"s"}`;
   try {
     const r = await fetch("/api/themes", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({passcode: state.pass, experts, n_experts: experts.length, confirmed: map})
+      body: JSON.stringify({passcode: state.pass, experts, n_experts: experts.length, confirmed: map, ...researchPayload()})
     });
     const j = await r.json().catch(() => ({ok:false, error:"Server sent a non-JSON response."}));
     if (!r.ok || !j.ok) throw new Error(j.error || ("Server returned " + r.status));
     state.draft = j; save(); renderDraft();
   } catch (e){ err($("#draftErr"), e.message || "Drafting failed."); }
-  finally { btn.disabled = false; $("#draftNote").textContent = ""; }
+  finally { setBusy(false); btn.disabled = false; $("#draftNote").textContent = ""; }
 };
 
 function renderDraft(){
@@ -1041,7 +1241,7 @@ function renderDraft(){
   if (!j){ $("#draft").innerHTML = ""; return; }
   const map = confirmedMap(), out = [];
   out.push(`<p class="mute" style="font-size:13px">Drafted by ${esc(j.model)} from ` +
-           `${j.atoms_used} confirmed atom(s) in ${j.elapsed_s}s. Every citation below was ` +
+           `${j.atoms_used} confirmed finding(s) in ${j.elapsed_s}s. Every citation below was ` +
            `checked against that set server-side.</p>`);
 
   const sm = j.summary;
@@ -1098,13 +1298,13 @@ $("#checkBtn").onclick = async () => {
   const map = confirmedMap(), n = Object.keys(map).length, experts = panelExperts();
   err($("#checkErr"), "");
   if (claim.length < 10){ err($("#checkErr"), "Write the claim you want graded."); return; }
-  if (!n){ err($("#checkErr"), "Nothing confirmed yet. A claim can only be graded against atoms you approved."); return; }
-  const btn = $("#checkBtn"); btn.disabled = true;
-  $("#checkNote").innerHTML = `<span class="spin"></span> grading against ${n} confirmed atom${n===1?"":"s"} from ${experts.length} interview${experts.length===1?"":"s"}`;
+  if (!n){ err($("#checkErr"), "Nothing confirmed yet. A claim can only be graded against findings you approved."); return; }
+  const btn = $("#checkBtn"); btn.disabled = true; setBusy(true);
+  $("#checkNote").innerHTML = `<span class="spin"></span> grading against ${n} confirmed finding${n===1?"":"s"} from ${experts.length} interview${experts.length===1?"":"s"}`;
   try {
     const r = await fetch("/api/check", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({passcode: state.pass, experts, n_experts: experts.length, claim, confirmed: map})
+      body: JSON.stringify({passcode: state.pass, experts, n_experts: experts.length, claim, confirmed: map, ...researchPayload()})
     });
     const j = await r.json().catch(() => ({ok:false, error:"Server sent a non-JSON response."}));
     if (!r.ok || !j.ok) throw new Error(j.error || ("Server returned " + r.status));
@@ -1112,7 +1312,7 @@ $("#checkBtn").onclick = async () => {
     $("#claim").value = "";
     save(); renderChecks();
   } catch (e){ err($("#checkErr"), e.message || "Check failed."); }
-  finally { btn.disabled = false; $("#checkNote").textContent = ""; }
+  finally { setBusy(false); btn.disabled = false; $("#checkNote").textContent = ""; }
 };
 $("#checkClear").onclick = () => { state.checks = []; save(); renderChecks(); };
 
@@ -1147,7 +1347,7 @@ function keptThemes(){
   return j.themes.map((t, i) => ({t, i})).filter(x => !state.themeOff[x.i]).map(x => x.t);
 }
 
-/** Evidence lines for one theme: the confirmed atoms it cites, as quotes. */
+/** Evidence lines for one theme: the confirmed findings it cites, as quotes. */
 function evidenceFor(t, map){
   return (t.atom_ids || []).map(id => map[id]).filter(Boolean);
 }
@@ -1157,7 +1357,7 @@ function renderDeliverable(){
   const el = $("#deliver");
 
   if (!experts.length){
-    el.innerHTML = `<p class="mute">Nothing confirmed yet. Confirm atoms in the review queue first.</p>`;
+    el.innerHTML = `<p class="mute">Nothing confirmed yet. Confirm findings in the review queue first.</p>`;
     return;
   }
 
@@ -1171,14 +1371,16 @@ function renderDeliverable(){
   out.push(`<div class="doc">
     <div class="doc-head">
       <div class="doc-kicker">Expert panel synthesis</div>
-      <h1 class="doc-title">${experts.length} expert interview${experts.length===1?"":"s"}</h1>
-      <div class="doc-meta">${esc(today)} &nbsp;·&nbsp; ${Object.keys(map).length} confirmed facts &nbsp;·&nbsp;
-        ${verified} of ${atoms} quotes verified verbatim against source</div>
+      <h2 class="doc-title">${esc(state.brief?.project || `${experts.length} expert interviews`)}</h2>
+      <div class="doc-meta">${esc(today)} &nbsp;·&nbsp; ${Object.keys(map).length} confirmed findings &nbsp;·&nbsp;
+        ${verified} of ${atoms} quotes located in the source</div>
     </div>`);
+
+  if (state.brief) out.push(`<h2 class="doc-h">Project brief</h2><p>${esc(state.brief.decision)}</p><ol>${state.brief.questions.map(q => `<li>${esc(q)}</li>`).join("")}</ol>`);
 
   // who is in the panel
   out.push(`<h2 class="doc-h">Panel</h2><div class="scroll"><table><thead><tr>
-      <th>Expert</th><th>Transcript</th><th class="num">Confirmed facts</th></tr></thead><tbody>` +
+      <th>Expert</th><th>Transcript</th><th class="num">Confirmed findings</th></tr></thead><tbody>` +
     experts.map(e => `<tr><td><b>${esc(e)}</b></td><td>${esc(state.experts[e].filename)}</td>
       <td class="num">${Object.values(map).filter(a => a.expert === e).length}</td></tr>`).join("") +
     `</tbody></table></div>`);
@@ -1198,13 +1400,13 @@ function renderDeliverable(){
         ${ev.length ? `<div class="ev">` + ev.map(a =>
           `<div class="ev-row"><span class="ev-ex">${esc(a.expert)}</span>
              <span class="ev-q">&ldquo;${esc(a.quote)}&rdquo;</span>
-             <span class="ev-ts">${esc(a.timestamp)}</span></div>`).join("") + `</div>` : ""}
+             <span class="ev-ts">${esc(sourceLocation(a))}</span></div>`).join("") + `</div>` : ""}
       </div>`);
     });
   }
 
   const roll = buildRollup();
-  if (roll) out.push(`<h2 class="doc-h">Numbers</h2>` + roll);
+  if (roll) out.push(`<h2 class="doc-h">${state.mode === "brief" ? "Evidence by question" : "Numbers"}</h2>` + roll);
 
   const cov = buildCoverage();
   if (cov) out.push(`<h2 class="doc-h">Coverage and limits</h2>` + cov);
@@ -1218,15 +1420,14 @@ function renderDeliverable(){
 
   // Provenance, stated rather than implied. Every artifact this system produces says
   // how it was made -- the same standard the citations are held to.
-  out.push(`<div class="prov"><b>How this was produced.</b> Facts were extracted from the
-    transcripts by ${esc((j && j.model) || "Claude")} against a fixed schema, every quote was
-    checked character-for-character against the source file, and a human confirmed or
-    rejected each one. Findings were drafted from the confirmed facts only and cite the
-    facts they rest on. Nothing here was averaged across experts.</div></div>`);
+  out.push(`<div class="prov"><b>How this was produced.</b> ${esc(provenance())}</div></div>`);
 
   el.innerHTML = out.join("");
 }
 
+function provenance(){
+  return `AI extracted findings ${state.mode === "brief" ? "using the project brief and a separate model review of their meaning" : "against the original IT software questionnaire"}. Quotes were located in the source after normalizing whitespace, case and typography. A human confirmed the findings used here. Both model checks and human review can miss errors. Synthesis uses confirmed findings; interview results are not averaged across experts.`;
+}
 function deliverableMarkdown(){
   const map = confirmedMap(), experts = panelExperts(), j = state.draft;
   const L = [], today = new Date().toLocaleDateString(undefined,
@@ -1236,11 +1437,21 @@ function deliverableMarkdown(){
 
   L.push(`# Expert panel synthesis`, "");
   L.push(`${experts.length} expert interview${experts.length===1?"":"s"} · ${today} · ` +
-         `${Object.keys(map).length} confirmed facts · ${verified}/${atoms} quotes verified verbatim`, "");
+         `${Object.keys(map).length} confirmed findings · ${verified}/${atoms} quotes located in source`, "");
 
+  if (state.brief){
+    L.push(`## ${state.brief.project}`, "", state.brief.decision, "", ...state.brief.questions.map(q => `- ${q}`), "");
+    L.push("## Evidence by question", "");
+    state.brief.questions.forEach((q,i) => {
+      L.push(`### ${q}`, "");
+      const hits = confirmedGroup("findings").filter(a => a.question_index === i);
+      if (!hits.length) L.push("No confirmed evidence.", "");
+      hits.forEach(a => L.push(`- ${a.expert}: ${a.finding} (${a.kind})`, `> ${sourceLocation(a)} — ${a.quote}`, ""));
+    });
+  }
   L.push(`## Panel`, "");
   experts.forEach(e => L.push(`- **${e}** — ${state.experts[e].filename} — ` +
-    `${Object.values(map).filter(a => a.expert === e).length} confirmed facts`));
+    `${Object.values(map).filter(a => a.expert === e).length} confirmed findings`));
   L.push("");
 
   if (j && j.summary && j.summary.text) L.push(`## Summary`, "", j.summary.text, "");
@@ -1250,7 +1461,7 @@ function deliverableMarkdown(){
     L.push(`## Findings`, "");
     themes.forEach((t, n) => {
       L.push(`### ${n+1}. ${t.theme} _(${t.strength})_`, "", t.takeaway, "");
-      evidenceFor(t, map).forEach(a => L.push(`> ${a.expert} @ ${a.timestamp} — "${a.quote}"`));
+      evidenceFor(t, map).forEach(a => L.push(`> ${a.expert} · ${sourceLocation(a)} — "${a.quote}"`));
       L.push("");
     });
   }
@@ -1263,9 +1474,7 @@ function deliverableMarkdown(){
 
   if (state.themes && state.themes.trim()) L.push(`## Analyst notes`, "", state.themes, "");
 
-  L.push(`---`, "", `Facts extracted by ${(j && j.model) || "Claude"} against a fixed schema; ` +
-    `every quote checked character-for-character against the source; a human confirmed or ` +
-    `rejected each one. Findings drafted from confirmed facts only. Nothing averaged across experts.`);
+  L.push(`---`, "", provenance());
   return L.join("\n");
 }
 
@@ -1284,7 +1493,7 @@ let themeTimer;
 $("#themes").addEventListener("input", () => {
   state.themes = $("#themes").value;
   clearTimeout(themeTimer);
-  themeTimer = setTimeout(() => { save(); $("#themeSaved").textContent = "Saved in this browser."; }, 400);
+  themeTimer = setTimeout(() => { $("#themeSaved").textContent = save() ? "Saved in this browser." : "Could not save. Keep this tab open."; }, 400);
 });
 
 // -------------------------------------------------------------------- boot

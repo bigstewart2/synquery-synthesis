@@ -1,16 +1,9 @@
-"""POST /api/extract -- turn one uploaded transcript into typed, cited atoms.
+"""Live interview API: authenticate, decode, extract, synthesize and check claims.
 
-This is the back end the static prototype does not have. Three things happen here that
-cannot happen in a browser or in a committed HTML file:
-
-  1. The Anthropic key lives server-side. It is read from the environment at request
-     time and never leaves this process.
-  2. The six extraction groups run concurrently against the model.
-  3. Every returned quote is checked verbatim against the uploaded source before the
-     browser ever sees it.
-
-Request  JSON {passcode, filename, b64}
-Response JSON {ok, expert, atoms{group: [atom]}, stats, labels}
+Brief projects use general extraction plus a separate semantic review. The original
+ITSM questionnaire still uses six fixed extraction groups. Source matching happens
+server-side; only browser-confirmed, eligible findings enter downstream analysis.
+The API key remains server-side. No transcripts are stored by this application.
 """
 
 import base64
@@ -30,6 +23,7 @@ from _pipeline import (  # noqa: E402
     GROUPS, GROUP_LABELS, MODEL, THEME_MODEL, check_claim, draft_themes,
     extract_group, verify_citations,
 )
+from _brief import MAX_BRIEF_TRANSCRIPT, brief_id, context_note, extract_brief, validate_brief
 
 MAX_BYTES = 4 * 1024 * 1024        # a long transcript is ~100KB; this is generous
 MAX_CHARS = 400_000                # guard the token bill on a pasted book
@@ -75,8 +69,7 @@ def decode_upload(filename, b64):
         except UnicodeDecodeError:
             raise Bad(400, "File is not UTF-8 text. Upload .txt, .md, or .docx.")
 
-    text = text.strip()
-    if len(text) < 200:
+    if len(text.strip()) < 200:
         raise Bad(400, "That file has almost no text in it.")
     if len(text) > MAX_CHARS:
         raise Bad(413, f"Transcript is longer than {MAX_CHARS:,} characters.")
@@ -129,6 +122,20 @@ def run_extraction(text, expert_label):
 MAX_ATOMS = 400
 
 
+def brief_from(payload):
+    mode = payload.get("mode")
+    if mode not in (None, "brief", "questionnaire"):
+        raise Bad(400, "Choose a supported research approach.")
+    if mode == "questionnaire" and payload.get("brief") is not None:
+        raise Bad(400, "A questionnaire run cannot include a project brief.")
+    if mode == "brief" or payload.get("brief") is not None:
+        try:
+            return validate_brief(payload.get("brief"))
+        except ValueError as exc:
+            raise Bad(400, str(exc))
+    return None
+
+
 def confirmed_from(payload):
     """Pull and validate the confirmed-atom set both judgement routes depend on."""
     confirmed = payload.get("confirmed") or {}
@@ -136,9 +143,13 @@ def confirmed_from(payload):
         raise Bad(400, "No confirmed atoms were sent. Confirm some atoms first.")
     if len(confirmed) > MAX_ATOMS:
         raise Bad(413, f"More than {MAX_ATOMS} atoms sent.")
+    brief = brief_from(payload)
     for aid, a in confirmed.items():
         if not isinstance(a, dict) or "quote" not in a:
             raise Bad(400, f"Atom {aid} is malformed.")
+        if brief and (a.get("brief_id") != brief_id(brief) or a.get("verified") is not True or
+                      a.get("review_status") != "supported"):
+            raise Bad(400, "Use confirmed, source-checked findings from this project brief only.")
     return confirmed
 
 
@@ -152,16 +163,18 @@ def expert_note_from(payload):
     labels = payload.get("experts") or [payload.get("expert") or "E1"]
     n = len(labels)
     ids = ", ".join(str(x) for x in labels)
+    brief = brief_from(payload)
+    research = context_note(brief) if brief else ""
     if n == 1:
         return (f"These atoms come from 1 expert interview (label: {ids}). "
                 "Because this is a single expert, nothing here may be written or graded "
-                "as if a panel agreed.")
+                "as if a panel agreed." + research)
     return (f"These atoms come from a panel of {n} expert interviews ({ids}). "
             f"Every atom id is prefixed with its expert label. "
             f"Attribute every figure to the expert it came from. A claim covering all {n} "
             f"needs support from all {n}; two out of three is 'several experts', never the "
             f"whole panel. Where experts disagree, the disagreement is the finding -- "
-            f"never average them.")
+            f"never average them." + research)
 
 
 def run_check(payload):
@@ -196,7 +209,7 @@ def run_themes(payload):
 
     import anthropic
     summary, themes, not_supported, dropped = draft_themes(
-        anthropic.Anthropic(), confirmed, expert_note_from(payload))
+        anthropic.Anthropic(), confirmed, expert_note_from(payload), brief_mode=brief_from(payload) is not None)
     return {
         "ok": True,
         "summary": summary,
@@ -226,6 +239,7 @@ class handler(BaseHTTPRequestHandler):
             "ok": True,
             "model": MODEL,
             "groups": list(GROUPS),
+            "research_modes": ["brief", "questionnaire"],
             "configured": {
                 "ANTHROPIC_API_KEY": bool(os.environ.get("ANTHROPIC_API_KEY")),
                 "DEMO_PASSCODE": bool(os.environ.get("DEMO_PASSCODE")),
@@ -256,8 +270,11 @@ class handler(BaseHTTPRequestHandler):
             # One entrypoint serves both routes; branch on the path.
             route = self.path.rstrip("/")
             if route.endswith("/themes") or route.endswith("/check"):
-                result = run_themes(payload) if route.endswith("/themes") \
-                    else run_check(payload)
+                try:
+                    result = run_themes(payload) if route.endswith("/themes") \
+                        else run_check(payload)
+                except ValueError as exc:
+                    raise Bad(502, str(exc))
                 result["elapsed_s"] = round(time.time() - started, 1)
                 self._send(200, result)
                 return
@@ -265,9 +282,24 @@ class handler(BaseHTTPRequestHandler):
             filename = payload.get("filename") or "transcript.txt"
             text = decode_upload(filename, payload.get("b64"))
             expert_label = payload.get("expert") or "E1"
-
-            atoms, usage, failures = run_extraction(text, expert_label)
-            stats = verify_citations(atoms, text)
+            brief = brief_from(payload)
+            if brief:
+                if len(text) > MAX_BRIEF_TRANSCRIPT:
+                    raise Bad(413, f"For this demo, keep each interview under {MAX_BRIEF_TRANSCRIPT:,} characters.")
+                if not os.environ.get("ANTHROPIC_API_KEY"):
+                    raise Bad(500, "Server is missing ANTHROPIC_API_KEY.")
+                import anthropic
+                try:
+                    atoms, usage, failures = extract_brief(anthropic.Anthropic(), expert_label, text, brief)
+                except ValueError as exc:
+                    raise Bad(502, str(exc))
+                stats = {"total": len(atoms["findings"]),
+                         "verified": sum(a["verified"] for a in atoms["findings"])}
+                labels = {"findings": "Findings for your research questions"}
+            else:
+                atoms, usage, failures = run_extraction(text, expert_label)
+                stats = verify_citations(atoms, text)
+                labels = GROUP_LABELS
             stats.update(
                 elapsed_s=round(time.time() - started, 1),
                 model=MODEL,
@@ -280,7 +312,9 @@ class handler(BaseHTTPRequestHandler):
                 "expert": expert_label,
                 "filename": filename,
                 "atoms": atoms,
-                "labels": GROUP_LABELS,
+                "labels": labels,
+                "brief": brief,
+                "brief_id": brief_id(brief) if brief else None,
                 "stats": stats,
                 "failures": failures,
             })
