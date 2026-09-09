@@ -62,3 +62,21 @@ for (const expression of [
 w.run('state.draft={summary:"stale"};state.checks=[{claim:"stale"}];invalidateOutput()');
 assert.equal(w.run('state.draft'),null);assert.equal(w.run('state.checks.length'),0);
 console.log('PASS: draft restoration, legacy migration, archive/open, quota recovery, cross-tab guard, evidence eligibility and output invalidation.');
+
+// Editing a saved questionnaire must not switch back after applying the Harbor brief.
+w=workspace();
+w.run('state.mode="questionnaire";state.briefReady=true;editingBrief=true;fillBriefForm();$("#researchMode").value="brief";$("#researchMode").onchange();$("#harborExample").onclick()');
+assert.equal(w.run('$("#researchMode").value'),'brief','Harbor example must select project-brief extraction');
+assert.equal(w.run('state.mode'),'questionnaire','The active project changes only when the edited brief is saved');
+w.run('$("#briefForm").onsubmit({preventDefault(){}})');
+assert.equal(w.run('researchPayload().mode'),'brief');
+assert.equal(w.run('researchPayload().brief.project'),'Harbor payments diligence');
+assert.equal(w.run('researchPayload().brief.questions.length'),5);
+
+// Add transcript should open a picker even if the upload panel is already visible.
+w=workspace();
+w.run('state.briefReady=true;state.brief={project:"Test",questions:["Why?"]};renderPanelBar();let pickerClicks=0;fileInput.click=()=>pickerClicks++;$("#addMore").onclick()');
+assert.equal(w.run('pickerClicks'),1);
+w.run('busy=true;$("#addMore").onclick()');
+assert.equal(w.run('pickerClicks'),1,'Do not add files in the middle of an extraction');
+console.log('PASS: changing questionnaire to Harbor preserves the brief and Add transcript opens the picker.');

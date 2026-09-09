@@ -334,6 +334,7 @@
 
       <div id="uploadBox">
         <h2 id="uploadTitle">Add a transcript</h2>
+        <p id="uploadApproach" class="help" role="status"></p>
         <p class="mute">
           <code>.txt</code>, <code>.md</code>, or <code>.docx</code>. Drop in the whole
           panel at once. Files are sent to the AI service for analysis; the app keeps
@@ -622,9 +623,9 @@ $("#pass").addEventListener("keydown", e => { if (e.key === "Enter") $("#gateGo"
 function draftFromForm(){
   return {project:$("#briefProject").value, decision:$("#briefDecision").value, questionsText:$("#briefQuestions").value};
 }
-function fillBriefForm(){
+function fillBriefForm(mode = state.mode){
   const d = state.briefDraft;
-  $("#researchMode").value = state.mode;
+  $("#researchMode").value = mode;
   $("#briefProject").value = d.project;
   $("#briefDecision").value = d.decision;
   $("#briefQuestions").value = d.questionsText;
@@ -668,7 +669,9 @@ $("#harborExample").onclick = () => {
     decision:"We’re evaluating a payments platform serving mid-market distributors. Understand the drivers of growth, retention and margins, and the risks to investigate with management.",
     questionsText:["What drives customer acquisition, retention and switching?", "How do ERP integrations and partners affect growth and retention?", "What drives margins and recurring software revenue?", "What risks or assumptions need validation?", "What should we ask management or verify in company data?"].join("\n")
   };
-  fillBriefForm(); save();
+  fillBriefForm("brief");
+  if (!state.briefReady) state.mode = "brief";
+  save();
 };
 $("#briefForm").onsubmit = e => {
   e.preventDefault(); err($("#briefErr"), "");
@@ -712,7 +715,12 @@ function resetView(){
 
 // ------------------------------------------------------------------ upload
 const drop = $("#drop"), fileInput = $("#file");
-$("#pick").onclick = () => fileInput.click();
+function openTranscriptPicker(){
+  if (busy || externalChange || !state.briefReady) return;
+  showUpload(true);
+  fileInput.click();
+}
+$("#pick").onclick = openTranscriptPicker;
 fileInput.onchange = () => { pickFiles(fileInput.files); fileInput.value = ""; };
 ["dragenter","dragover"].forEach(ev =>
   drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("hot"); }));
@@ -885,6 +893,9 @@ function showUpload(on){
   show($("#results"), !on && state.order.length > 0);
   show($("#cancelAdd"), on && state.order.length > 0);
   $("#uploadTitle").textContent = state.order.length ? "Add more transcripts" : "Add transcripts";
+  $("#uploadApproach").textContent = state.mode === "brief"
+    ? `Using your project brief: ${state.brief.project} (${state.brief.questions.length} questions).`
+    : "Using the original IT software questionnaire. No project brief is applied to this run.";
 }
 
 // -------------------------------------------------------------- panel bar
@@ -905,7 +916,7 @@ function renderPanelBar(){
   bar.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => {
     state.sel = b.dataset.ex; save(); renderAll();
   });
-  $("#addMore").onclick = () => showUpload(true);
+  $("#addMore").onclick = openTranscriptPicker;
 }
 
 // ------------------------------------------------------------------ render
