@@ -253,6 +253,11 @@
   @keyframes s{to{transform:rotate(360deg)}}
   footer{border-top:1px solid var(--line);margin-top:var(--s6);padding-top:var(--s4);
          font-size:13px;color:var(--mute)}
+  .sample-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s4);margin-top:var(--s4)}
+  .sample-card{border:1px solid var(--line);border-radius:10px;padding:var(--s4)}
+  .sample-card h3{margin:0}.sample-card p{margin:var(--s2) 0 var(--s3)}
+  .brief-form [readonly]{background:var(--paper);cursor:default;resize:none}
+  @media(max-width:600px){.sample-choices{grid-template-columns:1fr}.qrow{display:flex;flex-wrap:wrap}}
 </style>
 </head>
 <body>
@@ -265,9 +270,9 @@
     <p class="demo-purpose">Turn long interviews into findings you can trace to a source, compare across people and use to test a conclusion.</p>
     <aside class="demo-context" aria-labelledby="demo-context-title">
       <h2 id="demo-context-title">What is this for?</h2>
-      <p>You have interviews to review and a decision to make. Start with a project brief so the AI looks for evidence relevant to your questions. Review its findings, compare the interviews and test which conclusions the evidence supports.</p>
+      <p>In this fictional diligence project, you’re evaluating Harbor, a payments platform. Use the sample brief and two expert interviews to investigate growth, retention and margins. Review the AI’s findings, compare the evidence and test a conclusion.</p>
       <ol class="demo-steps" aria-label="How to use the demo">
-        <li>Set a brief and upload interviews</li>
+        <li>Load the Harbor brief and select interviews</li>
         <li>Confirm findings against their source quotes</li>
         <li>Compare the evidence and check a claim</li>
       </ol>
@@ -296,35 +301,30 @@
     <div id="storageNotice" class="err hide" role="status"></div>
     <fieldset id="workControls">
     <div class="project-tools">
-      <button id="newProject" class="btn-2">New project</button>
+      <button id="newProject" class="btn-2">Start a new Harbor demo</button>
       <label for="savedProjects">Saved in this browser</label>
       <select id="savedProjects"><option value="">Choose a project</option></select>
       <button id="openProject" class="btn-2">Open saved project</button>
     </div>
     <p id="projectNotice" class="mute" role="status"></p>
     <section id="briefIntake" class="card">
-      <h2>Start with a project brief</h2>
-      <p class="mute">Tell the AI what you’re researching and which questions matter. The brief guides extraction, comparison and claim checking.</p>
+      <h2>Start with the Harbor brief</h2>
+      <p class="mute">Explore a fictional payments diligence project using a sample brief and two expert interviews. Load the brief to see the decision and questions that will guide the AI.</p>
       <form id="briefForm" class="brief-form">
-        <label for="researchMode">Research approach</label>
-        <select id="researchMode"><option value="brief">Project brief</option><option value="questionnaire">Original IT software questionnaire</option></select>
-        <div id="briefFields">
-          <button type="button" id="harborExample" class="btn-2" style="margin-top:var(--s4)">Use the Harbor example</button>
+        <button type="button" id="harborExample" class="btn" style="margin-top:var(--s4)">Use the Harbor example</button>
+        <div id="briefFields" class="hide">
+          <p class="help">Sample brief · Read only</p>
           <label for="briefProject">Project name</label>
-          <input id="briefProject" type="text" maxlength="120" required placeholder="e.g. Harbor payments diligence">
+          <input id="briefProject" type="text" readonly>
           <label for="briefDecision">What decision are you trying to make?</label>
-          <textarea id="briefDecision" maxlength="1500" required placeholder="Describe the company or topic, the decision and any useful context."></textarea>
+          <textarea id="briefDecision" readonly></textarea>
           <label for="briefQuestions">What do you need to learn?</label>
-          <textarea id="briefQuestions" maxlength="2406" required aria-describedby="questionHelp" placeholder="What drives retention?&#10;Where does the company make money?&#10;What should we ask management?"></textarea>
-          <p id="questionHelp" class="help">One question per line, up to six. Include risks or assumptions you want challenged.</p>
+          <textarea id="briefQuestions" readonly></textarea>
+          <p class="help"><a href="/samples/harbor-project-brief.txt" target="_blank" rel="noopener">Read the brief</a> · <a href="/samples/harbor-project-brief.txt" download>Download brief</a></p>
         </div>
-        <p id="questionnaireHelp" class="help hide">For the original IT service management buying questionnaire only. Looks for vendor ratings, per-user prices, ranked purchase criteria and switching scores.</p>
         <div id="briefErr" class="err hide" role="alert" style="margin-top:var(--s4)"></div>
-        <div style="display:flex;gap:var(--s3);margin-top:var(--s5)">
-          <button class="btn" type="submit">Save brief and add interviews</button>
-          <button class="btn-2 hide" type="button" id="cancelBrief">Cancel edits</button>
-        </div>
-        <p class="help">Your draft is saved in this browser. Saving a brief does not run the AI.</p>
+        <button class="btn hide" id="continueBrief" type="submit" style="margin-top:var(--s5)">Continue to interviews</button>
+        <p class="help">Nothing is analyzed until you select interviews and press Extract. This demo uses only the supplied Harbor materials.</p>
       </form>
     </section>
     <section id="briefSummary" class="brief-summary hide" aria-label="Current project brief"></section>
@@ -335,20 +335,10 @@
       <div id="uploadBox">
         <h2 id="uploadTitle">Add a transcript</h2>
         <p id="uploadApproach" class="help" role="status"></p>
-        <p class="mute">
-          <code>.txt</code>, <code>.md</code>, or <code>.docx</code>. Drop in the whole
-          panel at once. Files are sent to the AI service for analysis; the app keeps
-          your results and brief in this browser. Choose your files again if you leave
-          before extraction finishes.
-        </p>
-        <div id="uploadErr" class="err hide"></div>
-
-        <div id="drop" class="drop" style="margin-top:var(--s4)">
-          <div style="font-size:15px;color:var(--ink-2);font-weight:600">Drop transcripts here</div>
-          <div style="margin-top:var(--s2)">or <button id="pick" class="btn-2">choose files</button></div>
-          <div class="mute" style="margin-top:var(--s2);font-size:13px">Select as many as you like — the whole panel at once.</div>
-          <input id="file" type="file" multiple accept=".txt,.md,.docx,text/plain" class="hide">
-        </div>
+        <p class="mute">Choose one or both fictional Harbor interviews. You can read or download them first. Extract sends the selected samples to the AI; results are saved in this browser.</p>
+        <div id="uploadErr" class="err hide" role="alert"></div>
+        <div id="sampleChoices" class="sample-choices"></div>
+        <button id="addBoth" class="btn-2" style="margin-top:var(--s3)">Add both interviews</button>
 
         <div id="queueList"></div>
 
@@ -472,12 +462,15 @@
 "use strict";
 
 const $ = (s) => document.querySelector(s);
+// BEGIN HARBOR MANIFEST
+const HARBOR = {"id": "harbor-v1", "brief": {"project": "Harbor payments diligence", "decision": "We’re evaluating a payments platform serving mid-market distributors. Understand the drivers of growth, retention and margins, and the risks to investigate with management.", "questions": ["What drives customer acquisition, retention and switching?", "How do ERP integrations and partners affect growth and retention?", "What drives margins and recurring software revenue?", "What risks or assumptions need validation?", "What should we ask management or verify in company data?"]}, "samples": [{"id": "harbor-david", "label": "E1", "name": "David Okafor", "role": "Operations", "filename": "harbor-call-1-david-okafor-ops.txt"}, {"id": "harbor-maria", "label": "E2", "name": "Maria Castellanos", "role": "Sales", "filename": "harbor-call-2-maria-castellanos-sales.txt"}]};
+// END HARBOR MANIFEST
 const KEY = "synq.live.v3", LEGACY_KEY = "synq.live.v2";
 const emptyDraft = () => ({project:"", decision:"", questionsText:""});
 const freshProject = (pass="") => ({pass, projectId:crypto.randomUUID(), mode:"brief",
-  brief:null, briefDraft:emptyDraft(), briefReady:false, briefId:null,
+  demoId:HARBOR.id, harborSelected:false, brief:null, briefDraft:emptyDraft(), briefReady:false, briefId:null,
   experts:{}, order:[], sel:null, marks:{}, themes:"", draft:null, checks:[], themeOff:{}, queue:[]});
-let state = freshProject(), lastSaved = null, externalChange = false, busy = false, editingBrief = false;
+let state = freshProject(), lastSaved = null, externalChange = false, busy = false;
 let projectMessage = "";
 
 // Save completed work, never File objects or the passcode, in the project record.
@@ -506,11 +499,11 @@ function load(){
     const raw = lastSaved || legacy;
     if (raw){
       const saved = JSON.parse(raw);
-      state = {...freshProject(pass), ...saved, pass, queue:[]};
+      state = {...freshProject(pass), ...saved, demoId:saved.demoId || null, pass, queue:[]};
       if (legacy){
         state.mode = state.order.length ? "questionnaire" : "brief"; state.briefReady = !!state.order.length;
-        projectMessage = "Your earlier run is restored below. It used the original IT software questionnaire. Choose New project to analyze interviews with a research brief; the earlier run will stay saved.";
-      } else projectMessage = state.order.length ? "Saved results restored from this browser. Nothing has been re-analyzed." : "Your draft brief has been restored.";
+        projectMessage = "Your earlier run is restored below. It used the original IT software questionnaire. Choose Start a new Harbor demo to try the guided example; the earlier run will stay saved.";
+      } else projectMessage = state.order.length ? "Saved results restored from this browser. Nothing has been re-analyzed." : "Your saved brief has been restored.";
     } else state.pass = pass;
   } catch(e){ storageError(); conflict(); }
 }
@@ -533,6 +526,7 @@ function invalidateOutput(){
   if (state.draft || state.checks.length) projectMessage = "Evidence changed. Draft the synthesis and check any claims again to use your current confirmed findings.";
   state.draft = null; state.checks = []; state.themeOff = {};
 }
+function isHarbor(){ return state.demoId === HARBOR.id; }
 function researchPayload(){ return {mode:state.mode, ...(state.mode === "brief" ? {brief:state.brief} : {})}; }
 window.addEventListener("storage", e => { if (e.key === KEY || e.key === null) conflict(); });
 $("#reloadProject").onclick = () => location.reload();
@@ -620,29 +614,28 @@ $("#gateGo").onclick = () => enterDemo($("#pass").value.trim());
 $("#pass").addEventListener("keydown", e => { if (e.key === "Enter") $("#gateGo").click(); });
 
 // ------------------------------------------------------------- project brief
-function draftFromForm(){
-  return {project:$("#briefProject").value, decision:$("#briefDecision").value, questionsText:$("#briefQuestions").value};
+function fillBriefForm(){
+  const b = isHarbor() ? HARBOR.brief : state.brief || {project:state.briefDraft.project, decision:state.briefDraft.decision, questions:state.briefDraft.questionsText.split("\n")};
+  $("#briefProject").value = b.project;
+  $("#briefDecision").value = b.decision;
+  $("#briefQuestions").value = b.questions.join("\n");
+  show($("#briefFields"), state.harborSelected || !isHarbor());
+  show($("#continueBrief"), isHarbor() && state.harborSelected);
+  show($("#harborExample"), isHarbor() && !state.harborSelected);
+  fitBriefFields();
 }
-function fillBriefForm(mode = state.mode){
-  const d = state.briefDraft;
-  $("#researchMode").value = mode;
-  $("#briefProject").value = d.project;
-  $("#briefDecision").value = d.decision;
-  $("#briefQuestions").value = d.questionsText;
-  toggleBriefFields();
+function fitBriefFields(){
+  ["#briefDecision", "#briefQuestions"].forEach(id => { const el = $(id); el.style.height = "auto"; el.style.height = Math.max(96, el.scrollHeight + 2) + "px"; });
 }
-function toggleBriefFields(){
-  const on = $("#researchMode").value === "brief";
-  show($("#briefFields"), on); show($("#questionnaireHelp"), !on);
-  ["#briefProject", "#briefDecision", "#briefQuestions"].forEach(id => $(id).required = on);
-  $("#briefForm button[type=submit]").textContent = on ? "Save brief and add interviews" : "Use questionnaire and add interviews";
-}
+window.addEventListener("resize", fitBriefFields);
 function renderProject(){
-  const intake = !state.briefReady || editingBrief;
+  const intake = !state.briefReady;
   show($("#briefIntake"), intake); show($("#analysisWorkspace"), !intake);
-  show($("#briefSummary"), !intake); show($("#cancelBrief"), editingBrief);
+  show($("#briefSummary"), !intake);
   if (intake) fillBriefForm();
-  $("#projectNotice").textContent = projectMessage;
+  $("#projectNotice").textContent = !isHarbor()
+    ? "Earlier workspace restored. Your results and notes are preserved. To run the guided example, choose Start a new Harbor demo."
+    : projectMessage;
   try {
     const saved = projects();
     $("#savedProjects").innerHTML = '<option value="">Choose a project</option>' + Object.entries(saved)
@@ -652,48 +645,32 @@ function renderProject(){
   } catch(e){ storageError(); }
   const b = state.brief;
   $("#briefSummary").innerHTML = state.mode === "brief" && b
-    ? `<h2>${esc(b.project)}</h2><p>${esc(b.decision)}</p><details><summary>${b.questions.length} research questions</summary><ol>${b.questions.map(q => `<li>${esc(q)}</li>`).join("")}</ol></details>`
-    : `<h2>Original IT software questionnaire</h2><p class="mute">This run uses the fixed IT service management schema. For another topic, start a new project with a research brief.</p>`;
-  $("#briefSummary").innerHTML += state.order.length
-    ? '<p class="help">This research approach stays attached to these results. Start a new project to ask different questions.</p>'
-    : '<button id="editBrief" class="btn-2" style="margin-top:var(--s3)">Edit brief</button>';
-  const edit = $("#editBrief");
-  if (edit) edit.onclick = () => { editingBrief = true; renderAll(); };
-  $("#claim").placeholder = state.mode === "brief" ? "e.g. ERP integrations are the main reason customers stay with Harbor" : "e.g. ServiceNow is quoted at roughly 2.7x what mid-market buyers actually pay";
+    ? `<h2>${esc(b.project)}</h2><p>${esc(b.decision)}</p><details><summary>${b.questions.length} research questions · Read only</summary><ol>${b.questions.map(q => `<li>${esc(q)}</li>`).join("")}</ol></details>`
+    : `<h2>Original IT software questionnaire</h2><p class="mute">Saved results from an earlier version of the demo.</p>`;
+  if (isHarbor()) $("#briefSummary").innerHTML += '<p class="help">Fictional demo project · <a href="/samples/harbor-project-brief.txt" target="_blank" rel="noopener">Read the sample brief</a></p>';
+  $("#draftBtn").disabled = !isHarbor();
+  $("#checkBtn").disabled = !isHarbor();
+  $("#claim").placeholder = "e.g. ERP integrations are the main reason customers stay with Harbor";
 }
-$("#briefForm").addEventListener("input", () => { state.briefDraft = draftFromForm(); if (!state.briefReady) state.mode = $("#researchMode").value; save(); });
-$("#researchMode").onchange = () => { toggleBriefFields(); if (!state.briefReady) { state.mode = $("#researchMode").value; save(); } };
 $("#harborExample").onclick = () => {
-  state.briefDraft = {
-    project:"Harbor payments diligence",
-    decision:"We’re evaluating a payments platform serving mid-market distributors. Understand the drivers of growth, retention and margins, and the risks to investigate with management.",
-    questionsText:["What drives customer acquisition, retention and switching?", "How do ERP integrations and partners affect growth and retention?", "What drives margins and recurring software revenue?", "What risks or assumptions need validation?", "What should we ask management or verify in company data?"].join("\n")
-  };
-  fillBriefForm("brief");
-  if (!state.briefReady) state.mode = "brief";
-  save();
+  if (!isHarbor() || busy || externalChange) return;
+  state.harborSelected = true;
+  state.briefDraft = {...HARBOR.brief, questionsText:HARBOR.brief.questions.join("\n")};
+  save(); fillBriefForm();
 };
 $("#briefForm").onsubmit = e => {
-  e.preventDefault(); err($("#briefErr"), "");
-  const mode = $("#researchMode").value, d = draftFromForm();
-  const questions = d.questionsText.split(/\n/).map(q => q.trim()).filter(Boolean);
-  if (mode === "brief" && (!d.project.trim() || !d.decision.trim() || !questions.length || questions.length > 6 || questions.some(q => q.length > 400))){
-    err($("#briefErr"), "Add a project name, decision and one to six questions. Keep each question under 400 characters."); return;
-  }
-  state.mode = mode; state.briefDraft = d;
-  state.brief = mode === "brief" ? {project:d.project.trim(), decision:d.decision.trim(), questions} : null;
-  state.briefId = null; state.briefReady = true; editingBrief = false;
-  projectMessage = "Research approach saved. Choose your interviews below, then press Extract to run the AI.";
+  e.preventDefault();
+  if (!isHarbor() || !state.harborSelected || busy || externalChange) return;
+  // Read the canonical brief, never the displayed fields.
+  state.mode = "brief"; state.brief = structuredClone(HARBOR.brief);
+  state.briefId = null; state.briefReady = true;
+  projectMessage = "Harbor brief loaded. Select one or both interviews, then press Extract to run the AI.";
   save(); renderAll();
-};
-$("#cancelBrief").onclick = () => {
-  if (state.brief) state.briefDraft = {...state.brief, questionsText:state.brief.questions.join("\n")};
-  editingBrief = false; save(); renderAll();
 };
 $("#newProject").onclick = () => {
   if (busy || !archiveCurrent()) return;
-  state = freshProject(state.pass); editingBrief = false;
-  projectMessage = "New project. Your previous work is available under Saved in this browser.";
+  state = freshProject(state.pass);
+  projectMessage = "New Harbor demo. Your previous work is available under Saved in this browser.";
   save(); resetView(); renderAll();
 };
 $("#openProject").onclick = () => {
@@ -701,8 +678,8 @@ $("#openProject").onclick = () => {
   if (!id || busy || !archiveCurrent()) return;
   try {
     const chosen = projects()[id]; if (!chosen) return;
-    state = {...freshProject(state.pass), ...chosen, pass:state.pass, queue:[]};
-    editingBrief = false; projectMessage = "Saved project opened. Nothing has been re-analyzed.";
+    state = {...freshProject(state.pass), ...chosen, demoId:chosen.demoId || null, pass:state.pass, queue:[]};
+    projectMessage = "Saved project opened. Nothing has been re-analyzed.";
     save(); resetView(); renderAll();
   } catch(e){ storageError(); }
 };
@@ -713,93 +690,51 @@ function resetView(){
   document.querySelector('.tabs [data-tab="queue"]').click();
 }
 
-// ------------------------------------------------------------------ upload
-const drop = $("#drop"), fileInput = $("#file");
+// ---------------------------------------------------------- Harbor interviews
 function openTranscriptPicker(){
-  if (busy || externalChange || !state.briefReady) return;
-  showUpload(true);
-  fileInput.click();
+  if (busy || externalChange || !isHarbor() || !state.briefReady) return;
+  showUpload(true); renderQueueList();
 }
-$("#pick").onclick = openTranscriptPicker;
-fileInput.onchange = () => { pickFiles(fileInput.files); fileInput.value = ""; };
-["dragenter","dragover"].forEach(ev =>
-  drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("hot"); }));
-["dragleave","drop"].forEach(ev =>
-  drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("hot"); }));
-drop.addEventListener("drop", e => pickFiles(e.dataTransfer.files));
-
-/** Pick a free label. The label becomes the atom id prefix, so a collision would
-    silently merge two experts into one — dedupe against the queue AND what's loaded. */
-function deriveLabel(name, taken){
-  const m = name.match(/expert\s*_?(\d+)/i);
-  let base = m ? "E" + m[1] : null;
-  if (!base)
-    for (let i = 1; i < 99; i++)
-      if (!taken.has("E" + i) && !state.experts["E" + i]) { base = "E" + i; break; }
-  base = base || "E99";
-  let label = base, n = 2;
-  while (taken.has(label)) label = base + "-" + (n++);
-  return label;
+function addSample(id){
+  if (busy || externalChange || !isHarbor() || !state.briefReady) return;
+  const sample = HARBOR.samples.find(s => s.id === id);
+  if (!sample || state.experts[sample.label] || state.queue.some(q => q.sampleId === id)) return;
+  state.queue.push({sampleId:id, label:sample.label, status:"pending", error:""});
+  err($("#uploadErr"), ""); renderQueueList();
 }
-
-function pickFiles(files){
-  if (!files || !files.length || busy || !state.briefReady) return;
-  err($("#uploadErr"), "");
-  const taken = new Set(state.queue.map(q => q.label));
-  Array.prototype.forEach.call(files, f => {
-    const label = deriveLabel(f.name, taken);
-    taken.add(label);
-    state.queue.push({file: f, label, status: "pending", error: ""});
-  });
-  renderQueueList();
-}
-
+$("#addBoth").onclick = () => HARBOR.samples.forEach(s => addSample(s.id));
 function renderQueueList(){
-  const box = $("#queueList"), q = state.queue;
-  const pending = q.filter(x => x.status !== "done").length;
-  box.innerHTML = q.map((x, i) => {
-    const pill = x.status === "running" ? `<span class="pill acc"><span class="spin" style="width:9px;height:9px;border-width:2px"></span> extracting</span>`
-               : x.status === "done"    ? `<span class="pill ok">${x.atoms} findings</span>`
-               : x.status === "failed"  ? `<span class="pill bad">${esc(x.error || "failed")}</span>`
-               : `<span class="pill neutral">ready</span>`;
-    return `<div class="qrow ${x.status}">
-      <input type="text" value="${esc(x.label)}" data-lab="${i}" spellcheck="false" aria-label="Expert label for ${esc(x.file.name)}"
-             ${x.status === "running" ? "disabled" : ""}>
-      <span class="fn">${esc(x.file.name)}</span>
-      <span class="sz">${(x.file.size/1024).toFixed(0)} KB</span>
-      ${pill}
-      <button class="x" data-rm="${i}" title="Remove"${x.status === "running" ? " disabled" : ""}>&times;</button>
-    </div>`;
+  const q = state.queue;
+  if (!q.length) err($("#uploadErr"), "");
+  $("#sampleChoices").innerHTML = HARBOR.samples.map(s => {
+    const queued = q.some(j => j.sampleId === s.id), loaded = !!state.experts[s.label];
+    return `<article class="sample-card"><h3>${esc(s.name)}</h3><p class="mute">${esc(s.role)} perspective · ${esc(s.label)}</p>
+      <p><a href="/samples/${s.filename}" target="_blank" rel="noopener">Read interview</a> · <a href="/samples/${s.filename}" download>Download</a></p>
+      <button class="btn-2" data-sample="${s.id}" ${loaded || queued ? "disabled" : ""}>${loaded ? "Already extracted" : queued ? "Added to list" : "Add " + esc(s.name.split(" ")[0]) + "’s interview"}</button></article>`;
   }).join("");
-
-  box.querySelectorAll("[data-lab]").forEach(inp => inp.onchange = () => {
-    state.queue[+inp.dataset.lab].label = inp.value.trim() || "E1";
-    renderQueueList();
+  $("#sampleChoices").querySelectorAll("[data-sample]").forEach(b => b.onclick = () => addSample(b.dataset.sample));
+  $("#addBoth").disabled = HARBOR.samples.every(s => state.experts[s.label] || q.some(j => j.sampleId === s.id));
+  $("#queueList").innerHTML = q.map((x,i) => {
+    const sample = HARBOR.samples.find(s => s.id === x.sampleId);
+    const status = x.status === "running" ? "Extracting…" : x.status === "done" ? `${x.atoms} findings` : x.status === "failed" ? x.error : "Ready to extract";
+    return `<div class="qrow ${x.status}"><strong>${esc(x.label)}</strong><span class="fn">${esc(sample.name)}</span><span role="status">${esc(status)}</span><button class="x" data-rm="${i}" aria-label="Remove ${esc(sample.name)} from list" ${x.status === "running" ? "disabled" : ""}>&times;</button></div>`;
+  }).join("");
+  $("#queueList").querySelectorAll("[data-rm]").forEach(b => b.onclick = () => {
+    if (busy) return;
+    state.queue.splice(+b.dataset.rm,1); renderQueueList();
   });
-  box.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => {
-    state.queue.splice(+b.dataset.rm, 1); renderQueueList();
-  });
-
-  $("#run").disabled = !pending;
-  $("#run").textContent = pending > 1 ? `Extract ${pending} transcripts` : "Extract";
+  const pending = q.filter(x => x.status !== "done").length;
+  $("#run").disabled = !pending || !isHarbor();
+  $("#run").textContent = pending > 1 ? `Extract ${pending} interviews` : "Extract interview";
   show($("#clearQ"), q.length > 0);
 }
-
-$("#clearQ").onclick = () => { state.queue = []; renderQueueList(); };
-
-const toB64 = (file) => new Promise((res, rej) => {
-  const r = new FileReader();
-  r.onload = () => res(String(r.result).split(",")[1]);
-  r.onerror = () => rej(new Error("Could not read that file."));
-  r.readAsDataURL(file);
-});
+$("#clearQ").onclick = () => { if (!busy) { state.queue = []; renderQueueList(); } };
 
 async function extractOne(job){
   job.status = "running"; renderQueueList();
-  const b64 = await toB64(job.file);
   const r = await fetch("/api/extract", {
     method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({passcode: state.pass, filename: job.file.name, expert: job.label, b64, ...researchPayload()})
+    body: JSON.stringify({passcode: state.pass, sample_id:job.sampleId, ...researchPayload()})
   });
   const j = await r.json().catch(() => ({ok:false, error:"Server sent a non-JSON response."}));
   if (!r.ok || !j.ok){
@@ -841,11 +776,10 @@ async function runPool(jobs, width){
 
 $("#run").onclick = async () => {
   const jobs = state.queue.filter(q => q.status !== "done");
-  if (!jobs.length || busy || !state.briefReady) return;
-  if (new Set(jobs.map(j => j.label)).size !== jobs.length){ err($("#uploadErr"), "Give every interview a different label before extracting."); return; }
-
-  const clash = jobs.filter(j => state.experts[j.label]).map(j => j.label);
-  if (clash.length && !confirm(`${clash.join(", ")} already loaded. Replace?`)) return;
+  if (!jobs.length || busy || externalChange || !isHarbor() || !state.briefReady) return;
+  if (jobs.some(j => !HARBOR.samples.some(s => s.id === j.sampleId && s.label === j.label) || state.experts[j.label])) {
+    err($("#uploadErr"), "This interview is already extracted. Start a new Harbor demo to run it again."); return;
+  }
 
   const btn = $("#run");
   btn.disabled = true; setBusy(true);
@@ -867,8 +801,8 @@ $("#run").onclick = async () => {
 
   const failed = state.queue.filter(q => q.status === "failed");
   if (failed.length)
-    err($("#uploadErr"), `${failed.length} of ${jobs.length} failed — the rest loaded. ` +
-        `Fix or remove the failed rows and press Extract again.`);
+    err($("#uploadErr"), `${failed.length} interview${failed.length === 1 ? "" : "s"} could not be extracted. ${jobs.some(j => j.status === "done") ? "Completed interviews are saved. " : ""}` +
+        `Press Extract to retry the failed interviews, or remove them from the list.`);
 
   const loaded = state.queue.filter(q => q.status === "done");
   if (loaded.length){
@@ -892,10 +826,9 @@ function showUpload(on){
   show($("#uploadBox"), on);
   show($("#results"), !on && state.order.length > 0);
   show($("#cancelAdd"), on && state.order.length > 0);
-  $("#uploadTitle").textContent = state.order.length ? "Add more transcripts" : "Add transcripts";
-  $("#uploadApproach").textContent = state.mode === "brief"
-    ? `Using your project brief: ${state.brief.project} (${state.brief.questions.length} questions).`
-    : "Using the original IT software questionnaire. No project brief is applied to this run.";
+  $("#uploadTitle").textContent = "Add the Harbor interviews";
+  $("#uploadApproach").textContent = "Using the fixed Harbor brief and its five research questions.";
+  if (!isHarbor()) show($("#uploadBox"), false);
 }
 
 // -------------------------------------------------------------- panel bar
@@ -906,12 +839,12 @@ function renderPanelBar(){
     const total = Object.values(d.atoms).reduce((n, a) => n + a.length, 0);
     const conf = Object.values(confirmedMap()).filter(a => a.expert === ex).length;
     return `<button class="exchip ${ex === state.sel ? "on" : ""}" data-ex="${esc(ex)}">
-              <span class="id">${esc(ex)}</span>
+              <span class="id">${esc(ex)}${isHarbor() ? " · " + esc(HARBOR.samples.find(s => s.label === ex)?.name.split(" ")[0] || "") : ""}</span>
               <span class="meta">${conf}/${total} confirmed</span>
             </button>`;
   }).join("");
   bar.innerHTML = chips +
-    `<button id="addMore" class="btn-2" style="align-self:stretch">+ Add transcript</button>`;
+    `<button id="addMore" class="btn-2" style="align-self:stretch"${!isHarbor() || state.order.length >= 2 ? "disabled" : ""}>${state.order.length >= 2 && isHarbor() ? "Both interviews extracted" : "+ Add sample interview"}</button>`;
 
   bar.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => {
     state.sel = b.dataset.ex; save(); renderAll();
@@ -922,7 +855,7 @@ function renderPanelBar(){
 // ------------------------------------------------------------------ render
 function renderAll(){
   renderProject();
-  if (!state.briefReady || editingBrief) return;
+  if (!state.briefReady) return;
   renderPanelBar();
   renderQueueList();
   if (!state.order.length){ showUpload(true); return; }
@@ -978,7 +911,7 @@ function renderQueue(){
       `<span class="mute" style="font-size:13px">${items.length} finding${items.length===1?"":"s"}` +
       (items.length ? ` · ${conf} confirmed` : "") + `</span></div>`);
     if (!items.length){
-      out.push(`<p class="mute" style="font-size:14px">No findings returned for this group. Check any errors above. Otherwise, review the transcript against your research questions; you can re-extract or start a new project with a different brief.</p>`);
+      out.push(`<p class="mute" style="font-size:14px">No findings returned for this group. Check any errors above. Otherwise, review the transcript against your research questions; you can start a new Harbor demo to re-extract the samples.</p>`);
       continue;
     }
     items.forEach((a, i) => {
@@ -998,7 +931,7 @@ function renderQueue(){
           </div>
           <blockquote>${esc(a.quote)}</blockquote>
           ${a.review_note && a.review_status !== "supported" ? `<p class="help">${esc(a.review_note)}</p>` : ""}
-          ${!eligible(a) ? '<p class="help">This finding cannot be confirmed. Reject it, or add the transcript again with this expert label to re-extract it.</p>' : ""}
+          ${!eligible(a) ? '<p class="help">This finding cannot be confirmed. Reject it, or start a new Harbor demo to re-extract the samples. Your current work stays saved.</p>' : ""}
           <div class="acts">
             <button data-m="y" ${eligible(a) ? "" : "disabled"} class="${mark==="y"?"on-y":""}">${mark==="y"?"&#10003; Confirmed":"Confirm"}</button>
             <button data-m="n" class="${mark==="n"?"on-n":""}">${mark==="n"?"&#10005; Rejected":"Reject"}</button>
@@ -1230,6 +1163,7 @@ document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
 
 // --------------------------------------------------------------- synthesis
 $("#draftBtn").onclick = async () => {
+  if (!isHarbor() || busy || externalChange) return;
   const map = confirmedMap(), n = Object.keys(map).length, experts = panelExperts();
   err($("#draftErr"), "");
   if (!n){ err($("#draftErr"), "Nothing confirmed yet. Confirm findings in the review queue first — the draft is built only from what you approved."); return; }
@@ -1305,6 +1239,7 @@ const VPILL  = {"supported":"ok","partially supported":"warn",
                 "not supported":"bad","contradicted":"bad"};
 
 $("#checkBtn").onclick = async () => {
+  if (!isHarbor() || busy || externalChange) return;
   const claim = $("#claim").value.trim();
   const map = confirmedMap(), n = Object.keys(map).length, experts = panelExperts();
   err($("#checkErr"), "");

@@ -1,0 +1,19 @@
+FICTIONAL DEMO PROJECT — Not a real company or investment recommendation.
+
+Harbor payments diligence
+
+Decision
+We’re evaluating a payments platform serving mid-market distributors. Understand the drivers of growth, retention and margins, and the risks to investigate with management.
+
+Research questions
+1. What drives customer acquisition, retention and switching?
+2. How do ERP integrations and partners affect growth and retention?
+3. What drives margins and recurring software revenue?
+4. What risks or assumptions need validation?
+5. What should we ask management or verify in company data?
+
+Sources
+David Okafor — Operations perspective
+Maria Castellanos — Sales perspective
+
+The brief guides extraction; it is context, not evidence.

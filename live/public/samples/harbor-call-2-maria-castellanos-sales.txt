@@ -1,0 +1,87 @@
+FICTIONAL DEMO INTERVIEW — Not a real person, company or investment recommendation.
+
+# Expert Network Call Transcript
+
+**Project:** Diligence on a mid-market B2B payments platform (codename "Harbor")
+**Consultant:** Priya Raman, Senior Associate, Marlowe Consulting
+**Expert:** Maria Castellanos, former SVP of Sales at a B2B payments provider (2019 to 2025), now advising early-stage fintechs
+**Date:** 2026-09-05
+**Duration:** 40 minutes
+
+---
+
+**Priya:** Hi Maria, thanks for joining. So we're looking at a payments platform for mid-market distributors and I wanted to get the sales perspective. I spoke with an ops person earlier this week who said the whole game is reconciliation, not rate. I'm assuming you'd agree with that?
+
+**Maria:** Partly. Reconciliation is what keeps the customer. It's not what gets the meeting. Nobody takes a call because you promise better cash application. They take the call because their bank just raised fees, or their CFO read something about check fraud, or a competitor of theirs went live on a portal and their buyers started asking why they can't pay online.
+
+**Priya:** Right, so there's a trigger event.
+
+**Maria:** Always. If I were looking at a provider's pipeline, the first thing I'd want to know is what triggers they're built to catch. The ones who grow are the ones with a repeatable trigger, not the ones with a better product.
+
+**Priya:** Got it. So what's the sales cycle look like, roughly?
+
+**Maria:** For a distributor in the twenty to two hundred million range, four to nine months from first call to first transaction. The variance is almost entirely on the customer side. The CFO wants it, but AR has to implement it, and IT has to approve the ERP connection, and IT's queue is six months long.
+
+**Priya:** That's long. Is there anything a provider can do about that, or is it just the segment?
+
+**Maria:** Two things. First, bring the ERP integrator in early. If the customer's NetSuite consultant is on the second call, the IT objection mostly disappears because IT trusts the consultant. Second, sell to the AR manager, not the CFO. The CFO signs, but the AR manager decides whether the project ever actually starts.
+
+**Priya:** That's interesting. The ops expert mentioned integrators as a channel too. Can you say more on how a provider actually works with them? Like what does the economic arrangement look like?
+
+**Maria:** Referral fees, usually a percentage of first-year revenue, sometimes a small trailing piece. But money isn't really the lever. The integrator cares about two things: does the integration make their implementation harder or easier, and will the provider make them look bad. A provider that's easy to implement and picks up the phone when something breaks gets referrals without paying much. A provider that pays twenty percent and breaks things gets nothing.
+
+**Priya:** Okay. So on pricing, how do these deals usually get structured?
+
+**Maria:** Basis points on card, flat fee per ACH, and a monthly platform fee. The platform fee is where the negotiation happens. Sales reps will waive it to close, and that's the number one way these companies end up with a big customer base and no software revenue.
+
+**Priya:** So you'd expect the platform fee to be discounted a lot.
+
+**Maria:** I'd expect to see a lot of accounts paying zero platform fee and then check whether anyone's ever gone back to reprice them. Most haven't. It's a real opportunity if the product is good enough, and a real problem if it isn't.
+
+**Priya:** How would I tell which?
+
+**Maria:** Find an account that had the fee reintroduced and see if they stayed.
+
+**Priya:** Makes sense. Let me ask about competition. Who did you lose to most often?
+
+**Maria:** The bank. Not because the bank was better. Because the bank was already there and the CFO didn't want to have another conversation. The second most common loss was to no decision. The deal just went quiet.
+
+**Priya:** What about the other fintech providers?
+
+**Maria:** Less than you'd think. In this segment the fintechs mostly aren't competing with each other yet. They're all competing with the bank and with inertia. That'll change, but it's not the current picture.
+
+**Priya:** So a provider's win rate against other fintechs wouldn't tell me much.
+
+**Maria:** It would tell you about a small slice of deals. The number I'd want is win rate against the incumbent bank. That's the real competition.
+
+**Priya:** What kind of win rate would be good there?
+
+**Maria:** Depends on how you count, and everyone counts differently. Honestly I'd be skeptical of any number a management team gives me on this without seeing the underlying opportunity list.
+
+**Priya:** Fair. So switching to retention. From a sales side, what does a healthy book look like?
+
+**Maria:** Expansion. Distributors have multiple divisions and entities. A good provider lands one division and rolls to the others. If a provider's average account is one entity after three years, they're not selling into the account after the close, and that's usually a sign the customer success function is thin or nonexistent.
+
+**Priya:** And how would that show up in the numbers?
+
+**Maria:** Net revenue retention above a hundred and ten is the sign of a book that's expanding. Below a hundred means they're leaking. The interesting range is the middle, because that's usually a mix of some accounts expanding a lot and others quietly shrinking, and you'd want to see the distribution, not the average.
+
+**Priya:** Okay. Let me ask about the sales team itself. What should I look for?
+
+**Maria:** Tenure and territory. If the average rep has been there under eighteen months, the company is churning reps, which means the pipeline is constantly being rebuilt from scratch and the forecast is fiction. And if territories are by geography rather than by vertical, the reps don't build the industry knowledge that makes the trigger-event selling work.
+
+**Priya:** That's useful. What about comp structure, is there anything there?
+
+**Maria:** Whether reps are paid on volume or on revenue. If it's volume, they'll sign anyone, including accounts that are unprofitable. If it's revenue with a clawback on early churn, they'll be more selective.
+
+**Priya:** Last thing. If you had an hour with management, what would you ask?
+
+**Maria:** What's the trigger event for your last twenty closed deals. Show me platform fee by account, and which accounts pay zero. And what's your win rate against the customer's existing bank, with the opportunity list to back it up.
+
+**Priya:** Great. Anything else I should have asked?
+
+**Maria:** One thing. Ask about the buyer side. Every payment has two ends. If the provider's buyer portal is bad, the distributor's customers complain, and the distributor blames the provider. Most diligence only looks at the seller experience. The buyer experience is where the surprise problems come from.
+
+**Priya:** That's a good point, I hadn't thought about that. Thanks Maria, this was really helpful.
+
+**Maria:** Anytime.

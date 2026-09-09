@@ -11,7 +11,7 @@ function workspace(seed={}) {
     return nodes.get(id);
   };
   const context = vm.createContext({
-    console, crypto:require('node:crypto').webcrypto, setTimeout,clearTimeout,
+    structuredClone, console, crypto:require('node:crypto').webcrypto, setTimeout,clearTimeout,
     document:{querySelector:node,querySelectorAll:()=>[]},
     window:{addEventListener(){}},location:{reload(){}}, navigator:{},
     localStorage:{getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)},
@@ -63,20 +63,58 @@ w.run('state.draft={summary:"stale"};state.checks=[{claim:"stale"}];invalidateOu
 assert.equal(w.run('state.draft'),null);assert.equal(w.run('state.checks.length'),0);
 console.log('PASS: draft restoration, legacy migration, archive/open, quota recovery, cross-tab guard, evidence eligibility and output invalidation.');
 
-// Editing a saved questionnaire must not switch back after applying the Harbor brief.
+// The first visit requires an explicit choice. Displayed fields never set the brief.
 w=workspace();
-w.run('state.mode="questionnaire";state.briefReady=true;editingBrief=true;fillBriefForm();$("#researchMode").value="brief";$("#researchMode").onchange();$("#harborExample").onclick()');
-assert.equal(w.run('$("#researchMode").value'),'brief','Harbor example must select project-brief extraction');
-assert.equal(w.run('state.mode'),'questionnaire','The active project changes only when the edited brief is saved');
 w.run('$("#briefForm").onsubmit({preventDefault(){}})');
-assert.equal(w.run('researchPayload().mode'),'brief');
+assert.equal(w.run('state.briefReady'),false);
+w.run('$("#harborExample").onclick(); $("#briefProject").value="Injected custom project"; $("#briefForm").onsubmit({preventDefault(){}})');
+assert.equal(w.run('state.briefReady'),true);
 assert.equal(w.run('researchPayload().brief.project'),'Harbor payments diligence');
 assert.equal(w.run('researchPayload().brief.questions.length'),5);
+w=workspace(Object.fromEntries(w.data));
+assert.equal(w.run('state.briefReady'),true,'Refresh restores explicit selection');
 
-// Add transcript should open a picker even if the upload panel is already visible.
-w=workspace();
-w.run('state.briefReady=true;state.brief={project:"Test",questions:["Why?"]};renderPanelBar();let pickerClicks=0;fileInput.click=()=>pickerClicks++;$("#addMore").onclick()');
-assert.equal(w.run('pickerClicks'),1);
-w.run('busy=true;$("#addMore").onclick()');
-assert.equal(w.run('pickerClicks'),1,'Do not add files in the middle of an extraction');
-console.log('PASS: changing questionnaire to Harbor preserves the brief and Add transcript opens the picker.');
+// Exactly two samples, stable expert labels, no duplicate queued or loaded inputs.
+w.run('addSample("custom"); addSample("harbor-maria"); addSample("harbor-maria"); $("#addBoth").onclick()');
+assert.equal(w.run('state.queue.length'),2);
+assert.equal(w.run('state.queue[0].label'),'E2','Maria keeps her identity even when selected first');
+w.run('state.queue=[]; state.experts.E2={}; addSample("harbor-maria")');
+assert.equal(w.run('state.queue.length'),0,'Loaded interviews cannot be added again');
+w.run('busy=true;addSample("harbor-david")');assert.equal(w.run('state.queue.length'),0);
+w.run('busy=false;state.demoId=null;addSample("harbor-david")');assert.equal(w.run('state.queue.length'),0);
+
+// A v3 general workspace is historical, never silently relabeled as a guided run.
+w=workspace({'synq.live.v3':JSON.stringify({...old, projectId:'prior', mode:'brief',briefReady:true,brief:{project:'Custom',decision:'Keep',questions:['Why?']},briefDraft:{project:'Custom'}})});
+assert.equal(w.run('isHarbor()'),false);
+w.run('$("#newProject").onclick()');
+assert.equal(w.run('isHarbor()'),true);
+assert.equal(JSON.parse(w.data.get('synq.live.v3.projects')).prior.brief.project,'Custom');
+assert.equal(w.run('state.briefReady'),false);
+console.log('PASS: explicit sample choice, immutable canonical brief, stable sample identities, duplicate prevention and preserved historical workspaces.');
+
+(async () => {
+  const flow=workspace();
+  flow.run(`
+    let requests=[], failMaria=true;
+    fetch=async (url, options)=>{
+      const payload=JSON.parse(options.body);requests.push(payload);
+      if(payload.sample_id==='harbor-maria' && failMaria) return {ok:false,status:503,json:async()=>({ok:false,error:'Try again'})};
+      const sample=HARBOR.samples.find(s=>s.id===payload.sample_id);
+      return {ok:true,status:200,json:async()=>({ok:true,expert:sample.label,filename:sample.filename,brief_id:'harbor',atoms:{findings:[]},labels:{findings:'Findings'},stats:{total:0,verified:0,elapsed_s:0,usage:{input_tokens:0,output_tokens:0}},failures:[]})};
+    };
+    $('#harborExample').onclick();$('#briefForm').onsubmit({preventDefault(){}});$('#addBoth').onclick();
+  `);
+  assert.equal(flow.run('requests.length'),0,'Selecting a brief and samples must not call the model');
+  await flow.run('$("#run").onclick()');
+  assert.equal(flow.run('state.order.join(",")'),'E1');
+  assert.equal(flow.run('state.queue.find(q=>q.label==="E2").status'),'failed');
+  assert.equal(flow.run('busy'),false,'Failure must unlock the workspace');
+  flow.run('failMaria=false');
+  await flow.run('$("#run").onclick()');
+  assert.equal(flow.run('state.order.join(",")'),'E1,E2');
+  assert.equal(flow.run('requests.filter(r=>r.sample_id==="harbor-david").length'),1,'Retry must not charge for a completed interview again');
+  assert.equal(flow.run('requests.every(r=>!r.b64&&!r.filename&&!r.expert)'),true);
+  const restored=workspace(Object.fromEntries(flow.data));
+  assert.equal(restored.run('state.order.length'),2,'Completed guided results survive refresh');
+  console.log('PASS: no automatic calls, partial failure recovery, sample-only request bodies and retry without repeating successful extraction.');
+})().catch(error=>{ console.error(error);process.exitCode=1; });

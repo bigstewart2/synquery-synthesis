@@ -128,27 +128,47 @@ class BriefTests(unittest.TestCase):
         self.assertTrue(result[0]['citations_resolve'])
         self.assertNotIn('thinking',client.calls[0])
 
-    def test_http_brief_dispatch_and_invalid_intake_do_not_use_questionnaire(self):
-        base = {'passcode':'test-code', 'filename':'interview.md', 'expert':'E1', 'mode':'brief',
-                'b64':base64.b64encode(TRANSCRIPT.encode()).decode(), 'brief':BRIEF}
+    def test_http_only_accepts_canonical_harbor_inputs(self):
+        base = {'passcode':'test-code', 'sample_id':'harbor-david'}
         with patch.dict(os.environ, {'DEMO_PASSCODE':'test-code','ANTHROPIC_API_KEY':'test-only'}), \
              patch.object(api, 'extract_brief', return_value=({'findings':[]},{'input_tokens':0,'output_tokens':0},[])) as brief_call, \
-             patch.object(api, 'run_extraction') as questionnaire:
+             patch.object(api, 'run_extraction') as questionnaire, \
+             patch.object(api, 'run_themes') as themes, patch.object(api, 'run_check') as check:
             server=ThreadingHTTPServer(('127.0.0.1',0),api.handler)
             thread=Thread(target=server.serve_forever,daemon=True);thread.start()
             try:
-                for payload, expected in [(base,200),({**base,'brief':None},400),
-                    ({**base,'brief':{**BRIEF,'questions':['q']*7}},400),
-                    ({**base,'b64':base64.b64encode(b'x'*60001).decode()},413)]:
-                    request=Request(f'http://127.0.0.1:{server.server_port}/api/extract',
-                                    data=json.dumps(payload).encode(),headers={'Content-Type':'application/json'})
-                    try: response=urlopen(request)
-                    except HTTPError as error: response=error
-                    with response:
-                        self.assertEqual(response.status,expected)
-                        result=json.load(response)
-                        if expected==200: self.assertEqual(result['brief_id'],brief_id(BRIEF))
-                brief_call.assert_called_once();questionnaire.assert_not_called()
+                cases = [('/api/extract',base,200),
+                    ('/api/extract',{**base,'sample_id':'harbor-maria'},200),
+                    ('/api/extract',{**base,'sample_id':'../../secret'},400),
+                    ('/api/extract',{**base,'sample_id':{}},400),
+                    ('/api/extract',{'passcode':'test-code'},400),
+                    ('/api/extract',{**base,'brief':None},400),
+                    ('/api/extract',{**base,'brief':BRIEF},400),
+                    ('/api/extract',{**base,'expert':'E9'},400),
+                    ('/api/extract',{**base,'mode':'questionnaire'},400),
+                    ('/api/extract',{**base,'b64':base64.b64encode(TRANSCRIPT.encode()).decode()},400),
+                    ('/api/themes',{**base,'brief':BRIEF},400),
+                    ('/api/check',{**base,'mode':'questionnaire'},400)]
+                for route, payload, expected in cases:
+                    with self.subTest(payload=payload):
+                        request=Request(f'http://127.0.0.1:{server.server_port}'+route,
+                                        data=json.dumps(payload).encode(),headers={'Content-Type':'application/json'})
+                        try: response=urlopen(request)
+                        except HTTPError as error: response=error
+                        with response:
+                            self.assertEqual(response.status,expected)
+                            result=json.load(response)
+                            if expected==200:
+                                sample=api.HARBOR_SAMPLES[payload['sample_id']]
+                                self.assertEqual(result['brief_id'],brief_id(api.HARBOR_BRIEF))
+                                self.assertEqual(result['expert'],sample['label'])
+                                self.assertEqual(result['filename'],sample['filename'])
+                self.assertEqual(brief_call.call_count,2)
+                for call, sample in zip(brief_call.call_args_list, api.HARBOR_SAMPLES.values()):
+                    self.assertEqual(call.args[1:],(sample['label'],sample['text'],api.HARBOR_BRIEF))
+                    download=Path(__file__).resolve().parents[1]/'public/samples'/sample['filename']
+                    self.assertEqual(download.read_text(),sample['text'])
+                questionnaire.assert_not_called();themes.assert_not_called();check.assert_not_called()
             finally: server.shutdown();server.server_close();thread.join()
 
 if __name__ == '__main__': unittest.main()

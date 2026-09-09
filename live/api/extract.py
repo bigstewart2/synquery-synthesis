@@ -1,9 +1,8 @@
-"""Live interview API: authenticate, decode, extract, synthesize and check claims.
+"""Public Harbor demo API: authenticate, extract the two samples and check findings.
 
-Brief projects use general extraction plus a separate semantic review. The original
-ITSM questionnaire still uses six fixed extraction groups. Source matching happens
-server-side; only browser-confirmed, eligible findings enter downstream analysis.
-The API key remains server-side. No transcripts are stored by this application.
+The public handler enforces a fixed brief and two canonical fictional interviews.
+General extraction helpers remain available for local development. Quote matching
+and a separate model review run before human confirmation. Keys stay server-side.
 """
 
 import base64
@@ -24,6 +23,7 @@ from _pipeline import (  # noqa: E402
     extract_group, verify_citations,
 )
 from _brief import MAX_BRIEF_TRANSCRIPT, brief_id, context_note, extract_brief, validate_brief
+from _harbor import BRIEF as HARBOR_BRIEF, SAMPLES as HARBOR_SAMPLES, DEMO_ID
 
 MAX_BYTES = 4 * 1024 * 1024        # a long transcript is ~100KB; this is generous
 MAX_CHARS = 400_000                # guard the token bill on a pasted book
@@ -238,8 +238,10 @@ class handler(BaseHTTPRequestHandler):
         self._send(200, {
             "ok": True,
             "model": MODEL,
-            "groups": list(GROUPS),
-            "research_modes": ["brief", "questionnaire"],
+            "groups": ["findings"],
+            "research_modes": ["brief"],
+            "demo": DEMO_ID,
+            "sample_ids": list(HARBOR_SAMPLES),
             "configured": {
                 "ANTHROPIC_API_KEY": bool(os.environ.get("ANTHROPIC_API_KEY")),
                 "DEMO_PASSCODE": bool(os.environ.get("DEMO_PASSCODE")),
@@ -269,6 +271,16 @@ class handler(BaseHTTPRequestHandler):
 
             # One entrypoint serves both routes; branch on the path.
             route = self.path.rstrip("/")
+            if route not in ("/api/extract", "/api/themes", "/api/check"):
+                raise Bad(404, "Unknown demo route.")
+            # The public demo is sample-only. Keep the general extraction helpers
+            # available for local development, but never accept arbitrary inputs here.
+            if any(k in payload for k in ("b64", "filename", "text", "transcript", "expert")):
+                raise Bad(400, "This demo accepts only the two supplied Harbor interviews. Reload and select a sample.")
+            if payload.get("mode") not in (None, "brief") or (
+                    "brief" in payload and payload["brief"] != HARBOR_BRIEF):
+                raise Bad(400, "This demo uses the fixed Harbor brief. Start a new Harbor demo to continue.")
+            payload["mode"], payload["brief"] = "brief", HARBOR_BRIEF
             if route.endswith("/themes") or route.endswith("/check"):
                 try:
                     result = run_themes(payload) if route.endswith("/themes") \
@@ -279,9 +291,11 @@ class handler(BaseHTTPRequestHandler):
                 self._send(200, result)
                 return
 
-            filename = payload.get("filename") or "transcript.txt"
-            text = decode_upload(filename, payload.get("b64"))
-            expert_label = payload.get("expert") or "E1"
+            sample_id = payload.get("sample_id")
+            if not isinstance(sample_id, str) or sample_id not in HARBOR_SAMPLES:
+                raise Bad(400, "Choose David’s or Maria’s Harbor interview from the sample list.")
+            sample = HARBOR_SAMPLES[sample_id]
+            filename, text, expert_label = sample["filename"], sample["text"], sample["label"]
             brief = brief_from(payload)
             if brief:
                 if len(text) > MAX_BRIEF_TRANSCRIPT:

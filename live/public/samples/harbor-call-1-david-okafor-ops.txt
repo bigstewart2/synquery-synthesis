@@ -1,0 +1,87 @@
+FICTIONAL DEMO INTERVIEW — Not a real person, company or investment recommendation.
+
+# Expert Network Call Transcript
+
+**Project:** Diligence on a mid-market B2B payments platform (codename "Harbor")
+**Consultant:** Priya Raman, Senior Associate, Marlowe Consulting
+**Expert:** David Okafor, former VP of Operations at a competing payments processor (2018 to 2024)
+**Date:** 2026-09-03
+**Duration:** 45 minutes
+
+---
+
+**Priya:** Thanks for making time, David. Quick framing before we start. My client is evaluating a payments platform that serves mid-market distributors and wholesalers. I'm trying to understand what actually drives churn and margin in this segment. I'll keep it to about forty minutes. Anything you can't discuss, just say so.
+
+**David:** Understood. I can speak to how the segment works generally. I won't get into anything specific to my former employer's numbers.
+
+**Priya:** That's fine. Let's start broad. When a mid-market distributor picks a payments provider, what are they actually buying?
+
+**David:** Honestly, they think they're buying a processing rate. They're actually buying reconciliation. A distributor doing forty million a year in receivables has a two-person AR team drowning in remittance mismatches. The provider that makes cash application take twenty minutes instead of four hours wins, and it doesn't matter if their rate is ten basis points worse.
+
+**Priya:** So the rate is a tiebreaker, not the decision.
+
+**David:** The rate gets you into the conversation. The AR team's Friday afternoon decides it.
+
+**Priya:** How would I test that? If I looked at a provider's churn data, what would I expect to see if you're right?
+
+**David:** Churned accounts would cluster around ERP migrations. When a distributor moves from, say, Sage to NetSuite, the integration breaks, the reconciliation stops being automatic, and within two quarters they're shopping. If churn is instead correlated with rate changes, I'm wrong.
+
+**Priya:** That's helpful. Let me push on it. Wouldn't an ERP migration be a churn event for every provider, so it washes out competitively?
+
+**David:** No, because the good providers have pre-built connectors for the top four or five ERPs. The migration is a churn risk only if your provider doesn't have the connector ready on day one. So the question for your target is how many native integrations they maintain and how fast they add new ones. If the answer is "we use a middleware partner," that's a yellow flag.
+
+**Priya:** Why yellow rather than red?
+
+**David:** Middleware works. It's just slower to fix when it breaks, and the customer blames the payments provider, not the middleware vendor. It's a service quality issue, not a structural one.
+
+**Priya:** Let's move to margin. Where does a provider in this segment actually make money?
+
+**David:** Three places, in order. Interchange spread on card transactions, though that's shrinking. Float on ACH, which most people underestimate. And software fees, which is where everyone wants to be but few have earned.
+
+**Priya:** Say more on float.
+
+**David:** When a buyer pays by ACH, there's a window between when the money leaves the buyer and when it settles to the seller. Depending on how the provider structures settlement, they may hold that balance for one to three days. At current rates, on a few billion in annual volume, that's real money. It's also the first thing that disappears if rates fall, so I'd model it separately.
+
+**Priya:** Would management call that out in their financials?
+
+**David:** Usually not cleanly. It often sits inside "other revenue" or gets netted against processing costs. I'd ask for it explicitly. If they can't isolate it, that tells you something about their finance function.
+
+**Priya:** What about the software fee piece. What separates the ones who've earned it from the ones who haven't?
+
+**David:** Whether the customer would keep paying if processing went to zero. If the answer is yes, because the invoicing, the portal, the collections workflow are load-bearing, then it's software. If the software is a thin wrapper that exists to justify a monthly fee, customers will cancel it the moment a competitor bundles it free.
+
+**Priya:** How would I figure that out from the outside?
+
+**David:** Ask for logins per account per week. Not logins total. Per account. A real software product gets used daily by the AR team. A wrapper gets logged into once a month to download a statement.
+
+**Priya:** That's a good one. Let me ask about the competitive set. Who does a provider like this actually lose deals to?
+
+**David:** It depends on size. Under ten million in revenue, they lose to the bank's own offering, because the customer already has the relationship. Over a hundred million, they lose to the big integrated players who can bundle treasury services. The sweet spot is between those, and in that band the main competitor is usually "do nothing," meaning the distributor keeps paying by check and mailing lockbox.
+
+**Priya:** What share of that middle band is still on checks?
+
+**David:** I'd guess more than half, but that's a guess and you should verify it. The point is that the market isn't primarily a share-shift game. It's a conversion game. That affects how you should read a prowvider's growth. Growth coming from check conversion is durable. Growth coming from poaching another platform's accounts often reverses.
+
+**Priya:** How do I tell the two apart in a customer list?
+
+**David:** Ask for previous payment method at onboarding. Most providers capture it in the sales CRM even if they don't report on it.
+
+**Priya:** Let's talk about risk. What's the failure mode for a company like this that people miss?
+
+**David:** Concentration in a single vertical. Distribution looks diversified from the outside because there are thousands of customers, but if eighty percent of them are in building products, a housing slowdown hits your whole book at once. I've seen a provider lose a fifth of volume in two quarters because lumber pricing collapsed and their customers' buyers stopped ordering.
+
+**Priya:** Anything on the fraud or compliance side?
+
+**David:** Less than you'd expect in B2B. The counterparties are known businesses with invoices behind every payment. Where it bites is onboarding. If the provider's KYB process is slow, sales cycles stretch, and that's a growth problem more than a loss problem.
+
+**Priya:** Last area. If you were sitting in my seat and had one hour with the target's management team, what would you ask?
+
+**David:** Three questions. One, what percentage of your volume runs through native ERP connectors versus file uploads or middleware. Two, what's your net revenue retention excluding accounts that churned during an ERP migration, because I want to see the underlying number. Three, show me weekly active users per account for the last eight quarters. If those three come back clean, most of the other diligence is confirmatory.
+
+**Priya:** That's really clear. Anything you'd add that I didn't ask?
+
+**David:** One thing. Watch for how they treat their integration partners. In this segment the ERP consultants who implement NetSuite and the like are the real channel. If the provider has a partner program with real economics, that's a moat. If they treat integrators as a cost center, expect the integrators to steer customers elsewhere.
+
+**Priya:** Great. I'll write this up and may come back with a follow-up on the float question if the client wants to model it. Thanks, David.
+
+**David:** Happy to help. Good luck with it.

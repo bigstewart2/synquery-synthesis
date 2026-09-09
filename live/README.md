@@ -3,19 +3,30 @@
 **Live:** https://synquery-live.vercel.app (passcode-gated)
 **Sibling:** https://synquery-synthesis.vercel.app — the submitted static prototype, unchanged.
 
-## Current workflow: project brief first
+## Current public workflow: guided Harbor example
 
-New projects begin with three fields: project name, the decision/context, and one to six research questions. The editable Harbor example is a convenience, not evidence or an answer key. Saving a brief makes no model call.
+The public demo accepts only a fixed, fictional Harbor project brief and two fictional expert interviews: David Okafor (E1, Operations) and Maria Castellanos (E2, Sales). Visitors must click **Use the Harbor example**, review the read-only brief, and **Continue to interviews**. They can add either sample or both, read/download each input, and click **Extract** to make live model calls. Nothing is pre-analyzed in a new run. No file picker, custom brief, or original ITSM questionnaire is offered.
 
-`api/_brief.py` receives the brief and complete interview together. One model call proposes up to 30 relevant findings with a type (observation, opinion, estimate, risk, recommendation or open question) and a contiguous quote. Deterministic matching locates each quote in the source, preserving original line numbers; it does not invent timestamps for untimed files. A second model call independently reviews the interpretation against the original interview. An unmatched quote, missing review or rejected interpretation cannot be confirmed or enter downstream analysis. These are fallible checks, not an accuracy guarantee.
+`api/_harbor.py` is the single source for the brief and exact transcript bytes. `python3 dev/sync_harbor.py` exports the browser manifest and three public `.txt` files; `--check` detects drift. Optional `--portfolio /path/to/portfolio-site` exports/checks the same downloads there. The API accepts only a whitelisted `sample_id`, chooses the source and expert label on the server, and rejects arbitrary upload bodies or changed briefs before making a model call. Samples are embedded in the Python module so serverless packaging cannot omit a separate transcript directory. The downloadable bytes match those used for extraction, including the fictional-material notice and source line numbers.
 
-After the analyst confirms findings, **Compare evidence** groups them by research question and interview. **Coverage** counts confirmed findings; it does not infer agreement. Synthesis and claim checking receive both the brief (context only, never evidence) and the confirmed findings. Each finding carries a brief identifier; the server rejects mismatched or unchecked findings in brief-mode judgement requests. This validates the client payload, not a tamper-proof audit trail: this demo trusts the browser's confirmation state.
+`api/_brief.py` receives the brief and complete interview together. One Sonnet call proposes up to 30 relevant findings with a type (observation, opinion, estimate, risk, recommendation or open question) and a contiguous quote. Code locates quotes and source lines. A second Sonnet call reviews the interpretation against the source. Unmatched quotations or failed, missing or flagged reviews cannot be confirmed. These checks are fallible, not an accuracy guarantee.
 
-The brief locks once an interview has been extracted. **New project** saves the current workspace into a browser-local archive before opening a fresh intake. **Saved in this browser** restores earlier projects. Drafts and completed interviews survive refresh; unprocessed File objects do not. Storage failures are visible and prevent project switching from discarding the current workspace. A cross-tab guard prevents another v3 tab's saved work from being silently overwritten.
+The analyst confirms findings before comparison, synthesis and claim checking. The brief is context, never evidence. Comparison groups confirmed findings by the five questions and expert; coverage counts do not imply agreement. Synthesis and claim checking receive confirmed evidence with source quotes and brief identifiers. The prototype trusts the browser's confirmation state; this is not a tamper-proof audit trail.
 
-Existing `synq.live.v2` workspaces are imported as **Original IT software questionnaire** runs, with the old storage record left intact. New work uses `synq.live.v3`. The legacy questionnaire remains selectable for the original ITSM interviews; it is not the general extraction path. New interviews use the brief attached to their project, so different research questions are never silently mixed within a run.
+**Start a new Harbor demo** archives the current workspace first. Results, notes and older projects remain under **Saved in this browser**. Pre-guided v3 and legacy v2 projects remain readable/exportable but cannot add interviews or make new judgement calls in the visitor UI. They are never silently relabeled as Harbor demo runs. The old v2 storage record is untouched. Current work still uses `synq.live.v3`, with a `demoId` identifying guided runs.
 
-Brief mode is limited to 60,000 characters per interview and at most two interviews in flight. It makes one extraction call and, when quotes match, one review call per transcript. Review failures remain visible with instructions to re-extract. Confirmation changes or replacement interviews invalidate prior synthesis and claim checks.
+Completed interviews survive refresh; selections not yet extracted must be selected again. A failed interview remains in the queue for retry, completed interviews are not recharged on retry, and samples cannot be duplicated or assigned new expert labels. Once both are extracted, start a new saved run to re-extract. Storage errors prevent project switching; another tab changing the active workspace produces a visible reload prompt. Confirmation changes invalidate prior synthesis/claim checks.
+
+## Local verification
+
+```
+python3 dev/sync_harbor.py --check
+python3 dev/check_entry.py
+python3 dev/check_brief.py
+node dev/check_workspace.cjs
+```
+
+Checks cover canonical sample dispatch, upload/brief rejection before paid calls, exact download/source bytes, quote/meaning gates, explicit selection, duplicate prevention, historical data preservation and storage recovery. Browser QA covers read-only fields, sample selection/removal, failure recovery, downloads and mobile layout. The general extraction helpers and historical questionnaire documentation below remain for local development; arbitrary transcripts are no longer exposed by the public HTTP handler.
 
 ## Original questionnaire: provenance and prior evaluation
 
@@ -129,7 +140,7 @@ python3 dev/local_run.py "/path/to/transcript.docx"   # real model calls; incurs
 
 The browser validates the shared `DEMO_PASSCODE` on entry and refresh by posting `{action: "authenticate", passcode}` to `api/extract.py`, the server entry point. This check makes no model call. A rejected or stale passcode returns to the entry screen without deleting the saved interview workspace. Run `python3 dev/check_entry.py` for the no-model HTTP check.
 
-The Vercel project has `rootDirectory` set to `live`. For CLI deployment, package `live/public/index.html`, `live/api/extract.py`, `live/api/_pipeline.py`, `live/api/_brief.py`, `live/pyproject.toml` and `live/vercel.json` under a clean package root, copy `live/.vercel/project.json` to the package root’s `.vercel/project.json`, and run `vercel deploy --prod --yes --cwd <package-root>`. Do not deploy directly from the `live` directory because the configured root is applied again. This runtime-only package excludes transcripts, local access files and environment files.
+The Vercel project has `rootDirectory` set to `live`. For CLI deployment, package `live/public/index.html`, `live/api/extract.py`, `live/api/_pipeline.py`, `live/api/_brief.py`, `live/api/_harbor.py`, the three `live/public/samples/harbor-*.txt` files, `live/pyproject.toml` and `live/vercel.json` under a clean package root, copy `live/.vercel/project.json` to the package root’s `.vercel/project.json`, and run `vercel deploy --prod --yes --cwd <package-root>`. Do not deploy directly from the `live` directory because the configured root is applied again. This runtime-only package includes only the two explicitly fictional Harbor transcripts; it excludes original interview materials, local access files and environment files.
 
 Entry update verified on 8 September 2026. Live deployment `dpl_E6zRiHBjU83PZK49mdS6AY1F4G7v` accepted the current passcode, rejected the old passcode, and preserved the existing browser workspace. No new model execution was used for verification.
 
