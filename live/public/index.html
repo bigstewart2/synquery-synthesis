@@ -50,6 +50,14 @@
   .brief-summary h2{font-size:17px;margin-bottom:var(--s2)}
   .brief-summary summary{cursor:pointer;font-size:13px;color:var(--mute)}
   .brief-summary ol{padding-left:20px;font-size:14px}
+  .setup-heading{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s3)}
+  .setup-heading h2,.setup-heading h3{margin:0}
+  .setup-number{display:inline-flex;align-items:center;justify-content:center;flex:0 0 28px;width:28px;height:28px;
+    border-radius:50%;background:var(--accent);color:#fff;font-size:14px;font-weight:700}
+  .setup-step{border-top:1px solid var(--line);margin-top:var(--s5);padding-top:var(--s5)}
+  .setup-step:first-child{border-top:0;margin-top:0;padding-top:0}
+  .setup-action{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s4);flex-wrap:wrap}
+  .setup-action .mute{margin:0;max-width:62ch}
   .evidence-grid table{min-width:740px;table-layout:fixed}
   .evidence-grid th:first-child{width:24%}
   .mobile-note{display:none}
@@ -58,6 +66,7 @@
     .wrap{padding:var(--s5) var(--s4) var(--s6)}
     .demo-context{padding:var(--s4)}
     .demo-steps{display:grid;gap:var(--s2)}
+    .setup-action .btn{width:100%}
     .mobile-note{display:block}
     .card{padding:var(--s5) var(--s4)}
   }
@@ -301,10 +310,10 @@
     <fieldset id="workControls">
     <p id="projectNotice" class="mute" role="status"></p>
     <section id="briefIntake" class="card">
-      <h2>Start with the Harbor brief</h2>
+      <div class="setup-heading"><span class="setup-number">1</span><h2>Load the Harbor research brief</h2></div>
       <p class="mute">Explore a fictional payments diligence project using a sample brief and two expert interviews. Load the brief to see the decision and questions that will guide the AI.</p>
       <form id="briefForm" class="brief-form">
-        <button type="button" id="harborExample" class="btn" style="margin-top:var(--s4)">Use the Harbor example</button>
+        <button type="button" id="harborExample" class="btn" style="margin-top:var(--s4)">Load the Harbor brief</button>
         <div id="briefFields" class="hide">
           <p class="help">Sample brief · Read only</p>
           <label for="briefProject">Project name</label>
@@ -316,7 +325,7 @@
           <p class="help"><a href="/samples/harbor-project-brief.txt" target="_blank" rel="noopener">Read the brief</a> · <a href="/samples/harbor-project-brief.txt" download>Download brief</a></p>
         </div>
         <div id="briefErr" class="err hide" role="alert" style="margin-top:var(--s4)"></div>
-        <button class="btn hide" id="continueBrief" type="submit" style="margin-top:var(--s5)">Continue to interviews</button>
+        <button class="btn hide" id="continueBrief" type="submit" style="margin-top:var(--s5)">Use this brief and continue</button>
         <p class="help">Nothing is analyzed until you select interviews and press Extract. This demo uses only the supplied Harbor materials.</p>
       </form>
     </section>
@@ -332,20 +341,28 @@
       <div class="panelbar" id="panelbar"></div>
 
       <div id="uploadBox">
-        <h2 id="uploadTitle">Add a transcript</h2>
-        <p id="uploadApproach" class="help" role="status"></p>
-        <p class="mute">Choose one or both fictional Harbor interviews. You can read or download them first. Extract sends the selected samples to the AI; results are saved in this browser.</p>
-        <div id="uploadErr" class="err hide" role="alert"></div>
-        <div id="sampleChoices" class="sample-choices"></div>
-        <button id="addBoth" class="btn-2" style="margin-top:var(--s3)">Add both interviews</button>
+        <div class="setup-step">
+          <div class="setup-heading"><span class="setup-number">2</span><h2 id="uploadTitle">Select the Harbor interviews</h2></div>
+          <p id="uploadApproach" class="help" role="status"></p>
+          <p class="mute">Choose one or both fictional Harbor interviews. You can read or download them before selecting them.</p>
+          <div id="uploadErr" class="err hide" role="alert"></div>
+          <div id="sampleChoices" class="sample-choices"></div>
+          <button id="addBoth" class="btn-2" style="margin-top:var(--s3)">Select both interviews</button>
 
-        <div id="queueList"></div>
+          <div id="queueList"></div>
+        </div>
 
-        <div style="display:flex;gap:var(--s3);align-items:center;margin-top:var(--s4);flex-wrap:wrap">
-          <button id="run" class="btn" disabled>Extract</button>
-          <button id="clearQ" class="btn-2 hide">Clear list</button>
-          <button id="cancelAdd" class="btn-2 hide">Cancel</button>
-          <span id="runNote" class="mute" style="font-size:13px"></span>
+        <div class="setup-step">
+          <div class="setup-heading"><span class="setup-number">3</span><h2>Run the extraction</h2></div>
+          <div class="setup-action">
+            <p class="mute">The AI extracts findings from the selected interviews, locates each source quote and runs a second-model meaning check.</p>
+            <button id="run" class="btn" disabled>Extract</button>
+          </div>
+          <div style="display:flex;gap:var(--s3);align-items:center;margin-top:var(--s3);flex-wrap:wrap">
+            <button id="clearQ" class="btn-2 hide">Clear list</button>
+            <button id="cancelAdd" class="btn-2 hide">Cancel</button>
+            <span id="runNote" class="mute" style="font-size:13px"></span>
+          </div>
         </div>
       </div>
 
@@ -838,7 +855,7 @@ function showUpload(on){
   show($("#uploadBox"), on);
   show($("#results"), !on && state.order.length > 0);
   show($("#cancelAdd"), on && state.order.length > 0);
-  $("#uploadTitle").textContent = "Add the Harbor interviews";
+  $("#uploadTitle").textContent = "Select the Harbor interviews";
   $("#uploadApproach").textContent = "Using the fixed Harbor brief and its five research questions.";
   if (!isHarbor()) show($("#uploadBox"), false);
 }
