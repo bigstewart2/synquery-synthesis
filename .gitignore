@@ -17,3 +17,6 @@ DESIGN.md
 # Keep preserved local pilot runtime and result data private.
 .venv-pilot/
 /04. Tools and Applications/Interview Research Application/live/dev/benchmark/runs/
+
+# A compatibility symlink is not matched by a directory-only ignore.
+/__pycache__
