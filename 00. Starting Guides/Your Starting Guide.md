@@ -1,5 +1,11 @@
 # Synquery Panel Synthesis (prototype)
 
+## Current location — October 27, 2026
+
+This guide is the maintained original after the approved interior filing. The complete software is in `04. Tools and Applications/Interview Research Application/`; its submitted static site and continuing `live/` application remain distinct. Run the commands below from `/Users/stephenlese/dev/AI Projects/workspaces/01. Business/Other Demos and Prototypes/Synquery — Interview Research and Claim Checking Demo/04. Tools and Applications/Interview Research Application`. Earlier path/hosting observations are dated history. Existing local settings, saved demo state, hosted URLs and provider defaults are preserved; this filing does not deploy, run paid models or resume the provider benchmark.
+
+Open [the application bundle](../04.%20Tools%20and%20Applications/Interview%20Research%20Application/), [the other starting guide](Live%20Application%20Guide.md) or [the source case](../../../../02.%20Career/Recruiting/03.%20Work%20and%20Outputs/Opportunities/synquery/Case%20Study/HANDOFF.md). The unfinished provider/benchmark files remain pending with their existing handoff in the application. Former local paths are compatibility links to these same originals.
+
 ## What this is
 
 A client-facing synthesis prototype built over three AI-led expert interview transcripts from a Synquery ITSM buying-decision workstream. It renders as a single static HTML page with five tabs — Themes & Quotes, Ratings & Numbers, Transcripts, Coverage, and Slide Check — plus a defensibility layer on top: the Slide Check tab takes five representative slide claims and computes, from the underlying facts, exactly what verdict the panel can support for each one, with the atoms and a paste-ready footnote behind it.
@@ -19,7 +25,7 @@ python3 build.py
 This writes `site/index.html`. Before it writes anything, the build runs and prints four checks, and fails loudly (nonzero exit, no output written) if any of them do not pass:
 
 - **Citation resolution** — every clickable quote and score links to a real turn in a real transcript; a broken link fails the build.
-- **Banned-term scan** — a redaction map built from the facts file (never hardcoded) is checked against the rendered output and against every `.py`/`.md`/`.html`/`.json`/`.gitignore` file in the repo.
+- **Banned-term scan** — a redaction map built from the facts file (never hardcoded) is checked against the rendered output and against maintained `.py`/`.md`/`.html`/`.json`/`.gitignore` files across the application, guides and original submission. Generated environments, caches, Git metadata and compatibility-link duplicates are excluded.
 - **Exact counts** — findings rows, rendered rating scores, and Slide Check claims/verdicts are each checked against the facts file, not eyeballed.
 - **Evidentiary-tag coverage and verbatim-quote precondition** — all three evidentiary states (volunteered, confirmed-on-prompt, confirmed-and-elaborated) must actually render, and every price quote in the facts file must appear verbatim in the output.
 

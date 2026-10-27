@@ -22,7 +22,7 @@ import sys
 import anthropic
 
 HERE = pathlib.Path(__file__).parent
-CASE = pathlib.Path("/Users/stephenlese/dev/AI Projects/projects/career/companies/interviews/synquery/Case Study")
+CASE = pathlib.Path("/Users/stephenlese/dev/AI Projects/workspaces/02. Career/Recruiting/03. Work and Outputs/Opportunities/synquery/Case Study")
 TRANSCRIPTS = {
     "E1": CASE / "transcripts-txt" / "Synquery FULL-transcript_ITSM Test_Expert1.txt",
     "E2": CASE / "transcripts-txt" / "Synquery_FULL-transcript_ITSM Test_Expert2.txt",

@@ -2,7 +2,7 @@
 """Build site/index.html: findings + ratings + linked transcripts + coverage + slide check."""
 import json, pathlib, re, html
 
-CASE = pathlib.Path("/Users/stephenlese/dev/AI Projects/projects/career/companies/interviews/synquery/Case Study")
+CASE = pathlib.Path("/Users/stephenlese/dev/AI Projects/workspaces/02. Career/Recruiting/03. Work and Outputs/Opportunities/synquery/Case Study")
 FACTS = json.load(open(CASE / "analysis" / "facts.json"))
 TXT = CASE / "transcripts-txt"
 FILES = {
@@ -720,7 +720,7 @@ def render():
     gaps = "".join(f"<li>{gap_text(esc(g))}</li>" for g in cov["known_gaps"])
     miss = "".join(f"<li>{esc(m)}</li>" for m in cov["segments_missing"])
 
-    tmpl = pathlib.Path(__file__).with_name("template.html").read_text()
+    tmpl = pathlib.Path(__file__).resolve().with_name("template.html").read_text()
     outp = (tmpl
             .replace("{{RAIL}}", "\n".join(rail))
             .replace("{{FROWS}}", "\n".join(frows))
@@ -772,13 +772,17 @@ def check_banned(doc):
     if pattern.search(doc):
         raise SystemExit("BANNED TERM PRESENT in <rendered output>")
 
-    root = pathlib.Path(__file__).parent
+    root = pathlib.Path(__file__).resolve().parent
+    # Filing separates guides and the frozen submission from the intact app.
+    # Retain their original privacy-audit coverage while using the app for output.
+    workspace = root.parent.parent
+    scan_root = workspace if (workspace / "00. Starting Guides").is_dir() else root
     n_files = 0
-    for p in sorted(root.rglob("*")):
-        if not p.is_file():
+    for p in sorted(scan_root.rglob("*")):
+        if p.is_symlink() or not p.is_file():
             continue
-        rel = p.relative_to(root)
-        if rel.parts[0] in (".git", "out"):
+        rel = p.relative_to(scan_root)
+        if any(part in (".git", "out", ".venv-pilot", "__pycache__") for part in rel.parts[:-1]):
             continue
         if not (p.name == ".gitignore" or p.suffix in (".py", ".md", ".html", ".json")):
             continue
@@ -832,7 +836,7 @@ if __name__ == "__main__":
     check_banned(doc)
     check_counts(doc)
     check_basis_labels()
-    site_dir = pathlib.Path(__file__).parent / "site"
+    site_dir = pathlib.Path(__file__).resolve().parent / "site"
     site_dir.mkdir(parents=True, exist_ok=True)
     dest = site_dir / "index.html"
     dest.write_text(doc)

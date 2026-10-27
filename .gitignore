@@ -5,8 +5,15 @@ extracted.json
 out/
 __pycache__/
 .DS_Store
-/live/dev/Demo passcode/
+/04. Tools and Applications/Interview Research Application/live/dev/Demo passcode/
 
 PRODUCT.md
 DESIGN.md
 .impeccable/
+
+# Original private product/design sources retain their exclusion after filing.
+/01. Knowledge and References/Product Purpose and Design Principles.md
+
+# Keep preserved local pilot runtime and result data private.
+.venv-pilot/
+/04. Tools and Applications/Interview Research Application/live/dev/benchmark/runs/

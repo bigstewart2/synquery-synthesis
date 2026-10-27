@@ -19,7 +19,7 @@ import re
 import unicodedata
 
 HERE = pathlib.Path(__file__).parent
-CASE = pathlib.Path("/Users/stephenlese/dev/AI Projects/projects/career/companies/interviews/synquery/Case Study")
+CASE = pathlib.Path("/Users/stephenlese/dev/AI Projects/workspaces/02. Career/Recruiting/03. Work and Outputs/Opportunities/synquery/Case Study")
 GT = json.loads((CASE / "analysis" / "facts.json").read_text())
 EX = json.loads((HERE.resolve().parent / "out" / "extracted.json").read_text())
 TDIR = CASE / "transcripts-txt"

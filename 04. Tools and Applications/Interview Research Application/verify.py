@@ -15,7 +15,7 @@ import unicodedata
 
 import build as B
 
-SITE = pathlib.Path(__file__).parent / "site" / "index.html"
+SITE = pathlib.Path(__file__).resolve().parent / "site" / "index.html"
 DOC = SITE.read_text()
 FACTS = B.FACTS
 FAILS = []

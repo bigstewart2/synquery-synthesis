@@ -1,5 +1,11 @@
 # Live extraction (the back end the submission doesn't have)
 
+## Current location — October 27, 2026
+
+This guide is the maintained original after the approved interior filing. The complete software is in `04. Tools and Applications/Interview Research Application/`; its submitted static site and continuing `live/` application remain distinct. Run the commands below from `/Users/stephenlese/dev/AI Projects/workspaces/01. Business/Other Demos and Prototypes/Synquery — Interview Research and Claim Checking Demo/04. Tools and Applications/Interview Research Application/live`. Earlier path/hosting observations are dated history. Existing local settings, saved demo state, hosted URLs and provider defaults are preserved; this filing does not deploy, run paid models or resume the provider benchmark.
+
+Open [the application bundle](../04.%20Tools%20and%20Applications/Interview%20Research%20Application/), [the other starting guide](Your%20Starting%20Guide.md) or [the source case](../../../../02.%20Career/Recruiting/03.%20Work%20and%20Outputs/Opportunities/synquery/Case%20Study/HANDOFF.md). The unfinished provider/benchmark files remain pending with their existing handoff in the application. Former local paths are compatibility links to these same originals.
+
 **Live:** https://interview-extraction-demo.vercel.app (passcode-gated)
 
 Vercel project: `interview-extraction-demo` (same project ID and environment variables). The old `synquery-live.vercel.app` address remains attached for existing links and browser-local saved runs. Browser storage is scoped to each hostname, so earlier runs remain at the old address.
