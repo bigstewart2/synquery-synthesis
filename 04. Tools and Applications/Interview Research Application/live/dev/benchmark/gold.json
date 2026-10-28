@@ -1,0 +1,516 @@
+{
+  "version": "harbor-gold-v1",
+  "created_at": "2026-09-09",
+  "author": "Codex, from canonical fictional sources before pilot outputs",
+  "review": {
+    "status": "pending",
+    "reviewer": null
+  },
+  "brief_sha256": "e19647a9869f96ebcd8d654c75facc112e79b48df5491c48c139c9d2261a1400",
+  "source_sha256": {
+    "harbor-david": "8b1327591044f7c20c852e5c8397d4018b7a9f2d8a88665fe37b48a92f4a124e",
+    "harbor-maria": "45308356c5e70b242e8313656963dc019e5bf1e7faeb00431f46d639e387d0a8"
+  },
+  "findings": [
+    {
+      "id": "E1-G01",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 0,
+      "kind": "opinion",
+      "finding": "David argues that reconciliation and cash application can outweigh processing-rate differences; the forty-million-dollar distributor and time savings are an illustration, not Harbor performance.",
+      "quote": "**David:** Honestly, they think they're buying a processing rate. They're actually buying reconciliation. A distributor doing forty million a year in receivables has a two-person AR team drowning in remittance mismatches. The provider that makes cash application take twenty minutes instead of four hours wins, and it doesn't matter if their rate is ten basis points worse.",
+      "source_start_line": 19,
+      "source_end_line": 19
+    },
+    {
+      "id": "E1-G02",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 1,
+      "kind": "opinion",
+      "finding": "David hypothesizes that churn clusters around ERP migrations when reconciliation breaks, and says rate-driven churn would falsify his hypothesis.",
+      "quote": "**David:** Churned accounts would cluster around ERP migrations. When a distributor moves from, say, Sage to NetSuite, the integration breaks, the reconciliation stops being automatic, and within two quarters they're shopping. If churn is instead correlated with rate changes, I'm wrong.",
+      "source_start_line": 27,
+      "source_end_line": 27
+    },
+    {
+      "id": "E1-G03",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 1,
+      "kind": "opinion",
+      "finding": "Having the destination ERP connector ready on day one can reduce migration-related churn risk; ask about native integration breadth and delivery speed.",
+      "quote": "**David:** No, because the good providers have pre-built connectors for the top four or five ERPs. The migration is a churn risk only if your provider doesn't have the connector ready on day one. So the question for your target is how many native integrations they maintain and how fast they add new ones. If the answer is \"we use a middleware partner,\" that's a yellow flag.",
+      "source_start_line": 31,
+      "source_end_line": 31
+    },
+    {
+      "id": "E1-G04",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 1,
+      "kind": "opinion",
+      "finding": "David calls middleware a service-quality concern because fixes take longer; he says it works and is not a structural failure.",
+      "quote": "**David:** Middleware works. It's just slower to fix when it breaks, and the customer blames the payments provider, not the middleware vendor. It's a service quality issue, not a structural one.",
+      "source_start_line": 35,
+      "source_end_line": 35
+    },
+    {
+      "id": "E1-G05",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 2,
+      "kind": "opinion",
+      "finding": "David lists card interchange spread, ACH float and software fees as revenue sources, in that order. This is not a ranked list of purchasing criteria.",
+      "quote": "**David:** Three places, in order. Interchange spread on card transactions, though that's shrinking. Float on ACH, which most people underestimate. And software fees, which is where everyone wants to be but few have earned.",
+      "source_start_line": 39,
+      "source_end_line": 39
+    },
+    {
+      "id": "E1-G06",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 2,
+      "kind": "estimate",
+      "finding": "Depending on settlement structure, a provider may hold ACH balances for one to three days; David recommends isolating the exposure to falling rates.",
+      "quote": "**David:** When a buyer pays by ACH, there's a window between when the money leaves the buyer and when it settles to the seller. Depending on how the provider structures settlement, they may hold that balance for one to three days. At current rates, on a few billion in annual volume, that's real money. It's also the first thing that disappears if rates fall, so I'd model it separately.",
+      "source_start_line": 43,
+      "source_end_line": 43
+    },
+    {
+      "id": "E1-G07",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 4,
+      "kind": "recommendation",
+      "finding": "Ask management to isolate float income, which David says may sit in other revenue or be netted against processing costs.",
+      "quote": "**David:** Usually not cleanly. It often sits inside \"other revenue\" or gets netted against processing costs. I'd ask for it explicitly. If they can't isolate it, that tells you something about their finance function.",
+      "source_start_line": 47,
+      "source_end_line": 47
+    },
+    {
+      "id": "E1-G08",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 2,
+      "kind": "opinion",
+      "finding": "David tests software value by whether customers would keep paying for invoicing, portal and collections workflows without processing; a thin wrapper is vulnerable to free bundles.",
+      "quote": "**David:** Whether the customer would keep paying if processing went to zero. If the answer is yes, because the invoicing, the portal, the collections workflow are load-bearing, then it's software. If the software is a thin wrapper that exists to justify a monthly fee, customers will cancel it the moment a competitor bundles it free.",
+      "source_start_line": 51,
+      "source_end_line": 51
+    },
+    {
+      "id": "E1-G09",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 4,
+      "kind": "recommendation",
+      "finding": "David recommends weekly logins per account to distinguish daily AR use from monthly statement downloads; total logins alone do not answer it.",
+      "quote": "**David:** Ask for logins per account per week. Not logins total. Per account. A real software product gets used daily by the AR team. A wrapper gets logged into once a month to download a statement.",
+      "source_start_line": 55,
+      "source_end_line": 55
+    },
+    {
+      "id": "E1-G10",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 0,
+      "kind": "opinion",
+      "finding": "David distinguishes bank competition below ten million in distributor revenue, integrated treasury providers above a hundred million, and inertia in the middle.",
+      "quote": "**David:** It depends on size. Under ten million in revenue, they lose to the bank's own offering, because the customer already has the relationship. Over a hundred million, they lose to the big integrated players who can bundle treasury services. The sweet spot is between those, and in that band the main competitor is usually \"do nothing,\" meaning the distributor keeps paying by check and mailing lockbox.",
+      "source_start_line": 59,
+      "source_end_line": 59
+    },
+    {
+      "id": "E1-G11",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 3,
+      "kind": "estimate",
+      "finding": "David guesses that more than half of the middle band still uses checks and explicitly asks that this be verified.",
+      "quote": "**David:** I'd guess more than half, but that's a guess and you should verify it. The point is that the market isn't primarily a share-shift game. It's a conversion game. That affects how you should read a prowvider's growth. Growth coming from check conversion is durable. Growth coming from poaching another platform's accounts often reverses.",
+      "source_start_line": 63,
+      "source_end_line": 63
+    },
+    {
+      "id": "E1-G12",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 0,
+      "kind": "opinion",
+      "finding": "David views check conversion as more durable growth than poaching another platform’s accounts; this is his assessment, not a measured Harbor result.",
+      "quote": "**David:** I'd guess more than half, but that's a guess and you should verify it. The point is that the market isn't primarily a share-shift game. It's a conversion game. That affects how you should read a prowvider's growth. Growth coming from check conversion is durable. Growth coming from poaching another platform's accounts often reverses.",
+      "source_start_line": 63,
+      "source_end_line": 63
+    },
+    {
+      "id": "E1-G13",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 4,
+      "kind": "recommendation",
+      "finding": "Ask for customers’ previous payment method at onboarding to distinguish check conversion from share shift.",
+      "quote": "**David:** Ask for previous payment method at onboarding. Most providers capture it in the sales CRM even if they don't report on it.",
+      "source_start_line": 67,
+      "source_end_line": 67
+    },
+    {
+      "id": "E1-G14",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 3,
+      "kind": "risk",
+      "finding": "David warns that vertical concentration can transmit a sector downturn across many customers. Eighty percent in building products is hypothetical; a fifth of volume lost in two quarters is an anecdote about an unnamed provider.",
+      "quote": "**David:** Concentration in a single vertical. Distribution looks diversified from the outside because there are thousands of customers, but if eighty percent of them are in building products, a housing slowdown hits your whole book at once. I've seen a provider lose a fifth of volume in two quarters because lumber pricing collapsed and their customers' buyers stopped ordering.",
+      "source_start_line": 71,
+      "source_end_line": 71
+    },
+    {
+      "id": "E1-G15",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 3,
+      "kind": "opinion",
+      "finding": "David identifies slow KYB onboarding as a growth and sales-cycle issue in B2B, while describing fraud losses as a lesser concern in his experience.",
+      "quote": "**David:** Less than you'd expect in B2B. The counterparties are known businesses with invoices behind every payment. Where it bites is onboarding. If the provider's KYB process is slow, sales cycles stretch, and that's a growth problem more than a loss problem.",
+      "source_start_line": 75,
+      "source_end_line": 75
+    },
+    {
+      "id": "E1-G16",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 4,
+      "kind": "recommendation",
+      "finding": "Ask for the percentage of volume on native ERP connectors versus file uploads or middleware.",
+      "quote": "**David:** Three questions. One, what percentage of your volume runs through native ERP connectors versus file uploads or middleware. Two, what's your net revenue retention excluding accounts that churned during an ERP migration, because I want to see the underlying number. Three, show me weekly active users per account for the last eight quarters. If those three come back clean, most of the other diligence is confirmatory.",
+      "source_start_line": 79,
+      "source_end_line": 79
+    },
+    {
+      "id": "E1-G17",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 4,
+      "kind": "recommendation",
+      "finding": "Ask for net revenue retention excluding ERP-migration churn to inspect the underlying number; the interview supplies no Harbor retention figure.",
+      "quote": "**David:** Three questions. One, what percentage of your volume runs through native ERP connectors versus file uploads or middleware. Two, what's your net revenue retention excluding accounts that churned during an ERP migration, because I want to see the underlying number. Three, show me weekly active users per account for the last eight quarters. If those three come back clean, most of the other diligence is confirmatory.",
+      "source_start_line": 79,
+      "source_end_line": 79
+    },
+    {
+      "id": "E1-G18",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 4,
+      "kind": "recommendation",
+      "finding": "Ask for weekly active users per account for the last eight quarters; no such Harbor usage data are supplied.",
+      "quote": "**David:** Three questions. One, what percentage of your volume runs through native ERP connectors versus file uploads or middleware. Two, what's your net revenue retention excluding accounts that churned during an ERP migration, because I want to see the underlying number. Three, show me weekly active users per account for the last eight quarters. If those three come back clean, most of the other diligence is confirmatory.",
+      "source_start_line": 79,
+      "source_end_line": 79
+    },
+    {
+      "id": "E1-G19",
+      "sample_id": "harbor-david",
+      "expert": "E1",
+      "question_index": 1,
+      "kind": "opinion",
+      "finding": "David sees ERP implementers as a channel and says partner economics can affect whether they refer or steer customers away.",
+      "quote": "**David:** One thing. Watch for how they treat their integration partners. In this segment the ERP consultants who implement NetSuite and the like are the real channel. If the provider has a partner program with real economics, that's a moat. If they treat integrators as a cost center, expect the integrators to steer customers elsewhere.",
+      "source_start_line": 83,
+      "source_end_line": 83
+    },
+    {
+      "id": "E2-G01",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 0,
+      "kind": "opinion",
+      "finding": "Maria distinguishes acquisition triggers such as bank fee increases, check-fraud concerns and buyer demand for online payment from reconciliation’s role in retention.",
+      "quote": "**Maria:** Partly. Reconciliation is what keeps the customer. It's not what gets the meeting. Nobody takes a call because you promise better cash application. They take the call because their bank just raised fees, or their CFO read something about check fraud, or a competitor of theirs went live on a portal and their buyers started asking why they can't pay online.",
+      "source_start_line": 15,
+      "source_end_line": 15
+    },
+    {
+      "id": "E2-G02",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 4,
+      "kind": "recommendation",
+      "finding": "Maria recommends examining which repeatable trigger events a provider’s pipeline is built to catch.",
+      "quote": "**Maria:** Always. If I were looking at a provider's pipeline, the first thing I'd want to know is what triggers they're built to catch. The ones who grow are the ones with a repeatable trigger, not the ones with a better product.",
+      "source_start_line": 19,
+      "source_end_line": 19
+    },
+    {
+      "id": "E2-G03",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 0,
+      "kind": "estimate",
+      "finding": "Maria describes four to nine months from first call to first transaction for distributors in the twenty-to-two-hundred-million range; it is not Harbor implementation duration.",
+      "quote": "**Maria:** For a distributor in the twenty to two hundred million range, four to nine months from first call to first transaction. The variance is almost entirely on the customer side. The CFO wants it, but AR has to implement it, and IT has to approve the ERP connection, and IT's queue is six months long.",
+      "source_start_line": 23,
+      "source_end_line": 23
+    },
+    {
+      "id": "E2-G04",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 0,
+      "kind": "opinion",
+      "finding": "Maria attributes sales-cycle variation mainly to customer coordination: CFO sponsorship, AR implementation and IT approval of the ERP connection.",
+      "quote": "**Maria:** For a distributor in the twenty to two hundred million range, four to nine months from first call to first transaction. The variance is almost entirely on the customer side. The CFO wants it, but AR has to implement it, and IT has to approve the ERP connection, and IT's queue is six months long.",
+      "source_start_line": 23,
+      "source_end_line": 23
+    },
+    {
+      "id": "E2-G05",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 1,
+      "kind": "recommendation",
+      "finding": "Maria recommends involving the customer’s trusted ERP integrator early to reduce the IT objection.",
+      "quote": "**Maria:** Two things. First, bring the ERP integrator in early. If the customer's NetSuite consultant is on the second call, the IT objection mostly disappears because IT trusts the consultant. Second, sell to the AR manager, not the CFO. The CFO signs, but the AR manager decides whether the project ever actually starts.",
+      "source_start_line": 27,
+      "source_end_line": 27
+    },
+    {
+      "id": "E2-G06",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 0,
+      "kind": "opinion",
+      "finding": "Maria says the CFO signs but the AR manager determines whether implementation starts; she recommends selling to the AR manager.",
+      "quote": "**Maria:** Two things. First, bring the ERP integrator in early. If the customer's NetSuite consultant is on the second call, the IT objection mostly disappears because IT trusts the consultant. Second, sell to the AR manager, not the CFO. The CFO signs, but the AR manager decides whether the project ever actually starts.",
+      "source_start_line": 27,
+      "source_end_line": 27
+    },
+    {
+      "id": "E2-G07",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 1,
+      "kind": "opinion",
+      "finding": "Maria describes referral fees tied to first-year revenue, sometimes with a trailing portion, but prioritizes reliable implementation and responsiveness over fee size. Twenty percent is illustrative.",
+      "quote": "**Maria:** Referral fees, usually a percentage of first-year revenue, sometimes a small trailing piece. But money isn't really the lever. The integrator cares about two things: does the integration make their implementation harder or easier, and will the provider make them look bad. A provider that's easy to implement and picks up the phone when something breaks gets referrals without paying much. A provider that pays twenty percent and breaks things gets nothing.",
+      "source_start_line": 31,
+      "source_end_line": 31
+    },
+    {
+      "id": "E2-G08",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 2,
+      "kind": "observation",
+      "finding": "Maria describes card basis points, a flat ACH fee and a monthly platform fee; waiving the platform fee to close deals can undermine software revenue.",
+      "quote": "**Maria:** Basis points on card, flat fee per ACH, and a monthly platform fee. The platform fee is where the negotiation happens. Sales reps will waive it to close, and that's the number one way these companies end up with a big customer base and no software revenue.",
+      "source_start_line": 35,
+      "source_end_line": 35
+    },
+    {
+      "id": "E2-G09",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 2,
+      "kind": "opinion",
+      "finding": "Maria expects zero-platform-fee accounts and suggests checking whether they have been repriced; opportunity depends on sufficient product value, not a proven Harbor pricing opportunity.",
+      "quote": "**Maria:** I'd expect to see a lot of accounts paying zero platform fee and then check whether anyone's ever gone back to reprice them. Most haven't. It's a real opportunity if the product is good enough, and a real problem if it isn't.",
+      "source_start_line": 39,
+      "source_end_line": 39
+    },
+    {
+      "id": "E2-G10",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 4,
+      "kind": "recommendation",
+      "finding": "Inspect whether an account stayed after its platform fee was reintroduced.",
+      "quote": "**Maria:** Find an account that had the fee reintroduced and see if they stayed.",
+      "source_start_line": 43,
+      "source_end_line": 43
+    },
+    {
+      "id": "E2-G11",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 0,
+      "kind": "observation",
+      "finding": "In Maria’s experience the incumbent bank was the most common loss, followed by no decision, because of relationship and inertia.",
+      "quote": "**Maria:** The bank. Not because the bank was better. Because the bank was already there and the CFO didn't want to have another conversation. The second most common loss was to no decision. The deal just went quiet.",
+      "source_start_line": 47,
+      "source_end_line": 47
+    },
+    {
+      "id": "E2-G12",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 0,
+      "kind": "opinion",
+      "finding": "Maria views bank competition and inertia as more important than competition among fintechs in this segment at present.",
+      "quote": "**Maria:** Less than you'd think. In this segment the fintechs mostly aren't competing with each other yet. They're all competing with the bank and with inertia. That'll change, but it's not the current picture.",
+      "source_start_line": 51,
+      "source_end_line": 51
+    },
+    {
+      "id": "E2-G13",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 4,
+      "kind": "recommendation",
+      "finding": "Maria favors win rate against the incumbent bank over a win rate against fintech competitors.",
+      "quote": "**Maria:** It would tell you about a small slice of deals. The number I'd want is win rate against the incumbent bank. That's the real competition.",
+      "source_start_line": 55,
+      "source_end_line": 55
+    },
+    {
+      "id": "E2-G14",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 3,
+      "kind": "recommendation",
+      "finding": "Verify win-rate definitions against the underlying opportunity list; Maria supplies no benchmark win-rate percentage.",
+      "quote": "**Maria:** Depends on how you count, and everyone counts differently. Honestly I'd be skeptical of any number a management team gives me on this without seeing the underlying opportunity list.",
+      "source_start_line": 59,
+      "source_end_line": 59
+    },
+    {
+      "id": "E2-G15",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 0,
+      "kind": "opinion",
+      "finding": "Maria describes growth through expansion from one distributor division to others, and sees one entity after three years as a warning about post-sale coverage.",
+      "quote": "**Maria:** Expansion. Distributors have multiple divisions and entities. A good provider lands one division and rolls to the others. If a provider's average account is one entity after three years, they're not selling into the account after the close, and that's usually a sign the customer success function is thin or nonexistent.",
+      "source_start_line": 63,
+      "source_end_line": 63
+    },
+    {
+      "id": "E2-G16",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 3,
+      "kind": "opinion",
+      "finding": "Maria interprets NRR above 110 as expansion and below 100 as leakage; in the middle she wants the account distribution rather than the average. These are diagnostic thresholds, not Harbor results.",
+      "quote": "**Maria:** Net revenue retention above a hundred and ten is the sign of a book that's expanding. Below a hundred means they're leaking. The interesting range is the middle, because that's usually a mix of some accounts expanding a lot and others quietly shrinking, and you'd want to see the distribution, not the average.",
+      "source_start_line": 67,
+      "source_end_line": 67
+    },
+    {
+      "id": "E2-G17",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 3,
+      "kind": "opinion",
+      "finding": "Maria flags average rep tenure under eighteen months and geographic rather than vertical territories as possible pipeline and selling-quality risks; Harbor’s actual staffing is unknown.",
+      "quote": "**Maria:** Tenure and territory. If the average rep has been there under eighteen months, the company is churning reps, which means the pipeline is constantly being rebuilt from scratch and the forecast is fiction. And if territories are by geography rather than by vertical, the reps don't build the industry knowledge that makes the trigger-event selling work.",
+      "source_start_line": 71,
+      "source_end_line": 71
+    },
+    {
+      "id": "E2-G18",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 3,
+      "kind": "opinion",
+      "finding": "Maria contrasts volume-based incentives with revenue-based incentives and early-churn clawbacks; she argues the former can attract unprofitable accounts.",
+      "quote": "**Maria:** Whether reps are paid on volume or on revenue. If it's volume, they'll sign anyone, including accounts that are unprofitable. If it's revenue with a clawback on early churn, they'll be more selective.",
+      "source_start_line": 75,
+      "source_end_line": 75
+    },
+    {
+      "id": "E2-G19",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 4,
+      "kind": "recommendation",
+      "finding": "Ask for trigger events on the last twenty closed deals, platform fees by account including zeros, and bank win rates backed by the opportunity list.",
+      "quote": "**Maria:** What's the trigger event for your last twenty closed deals. Show me platform fee by account, and which accounts pay zero. And what's your win rate against the customer's existing bank, with the opportunity list to back it up.",
+      "source_start_line": 79,
+      "source_end_line": 79
+    },
+    {
+      "id": "E2-G20",
+      "sample_id": "harbor-maria",
+      "expert": "E2",
+      "question_index": 3,
+      "kind": "risk",
+      "finding": "Maria warns that a poor buyer portal can generate complaints that the distributor attributes to the provider; diligence should include buyer experience.",
+      "quote": "**Maria:** One thing. Ask about the buyer side. Every payment has two ends. If the provider's buyer portal is bad, the distributor's customers complain, and the distributor blames the provider. Most diligence only looks at the seller experience. The buyer experience is where the surprise problems come from.",
+      "source_start_line": 83,
+      "source_end_line": 83
+    }
+  ],
+  "forbidden_findings": [
+    "Harbor has measured cash-application savings of four hours to twenty minutes.",
+    "Harbor’s implementation takes four to nine months.",
+    "Harbor has 80% building-products exposure or lost 20% of volume.",
+    "More than half of the market uses checks as an established measurement.",
+    "Harbor has NRR above 110%, a known win rate, or a proven repricing opportunity.",
+    "ERP partners receive a fixed 20% referral fee as a measured or universal fact.",
+    "David ranked purchasing criteria as interchange spread, float, software.",
+    "Maria fully agrees that reconciliation is what gets the first meeting.",
+    "The two experts represent a market survey or observed Harbor customer outcomes."
+  ],
+  "claims": [
+    {
+      "id": "C1",
+      "claim": "Maria describes four to nine months from first call to first transaction for distributors in the twenty-to-two-hundred-million range.",
+      "expected": "supported",
+      "evidence": [
+        "E2-G03"
+      ]
+    },
+    {
+      "id": "C2",
+      "claim": "Harbor implementations take four to nine months.",
+      "expected": "not supported",
+      "evidence": [
+        "E2-G03"
+      ]
+    },
+    {
+      "id": "C3",
+      "claim": "Maria says the CFO signs, but the AR manager decides whether the project starts.",
+      "expected": "supported",
+      "evidence": [
+        "E2-G06"
+      ]
+    },
+    {
+      "id": "C4",
+      "claim": "David says middleware cannot work and is a structural failure.",
+      "expected": "contradicted",
+      "evidence": [
+        "E1-G04"
+      ]
+    },
+    {
+      "id": "C5",
+      "claim": "Maria describes a sales cycle of two to three months from first call to first transaction for distributors in the twenty-to-two-hundred-million range.",
+      "expected": "partially supported",
+      "evidence": [
+        "E2-G03"
+      ],
+      "note": "The application explicitly grades directionally correct but numerically wrong claims as partially supported."
+    },
+    {
+      "id": "C6",
+      "claim": "Harbor has net revenue retention above 110 percent.",
+      "expected": "not supported",
+      "evidence": [
+        "E1-G17",
+        "E2-G16"
+      ]
+    }
+  ],
+  "evidence_gaps": [
+    "No measured Harbor financials, retention, churn or customer outcomes.",
+    "No verified market size, check penetration or market-wide buying behavior.",
+    "No observed Harbor implementation duration or bank win-rate benchmark.",
+    "No Harbor integration inventory, connector volume share, active-use series or partner economics.",
+    "No Harbor customer/vertical concentration, repricing outcomes or sales-compensation data.",
+    "Two fictional expert perspectives cannot establish causality or represent a market survey."
+  ]
+}

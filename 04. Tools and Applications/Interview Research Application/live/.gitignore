@@ -3,3 +3,5 @@ PASSCODE.local.txt
 .vercel
 .env*
 __pycache__/
+.venv-pilot/
+dev/benchmark/runs/

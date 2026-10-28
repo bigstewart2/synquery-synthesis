@@ -15,6 +15,7 @@ judgement to a human in the review queue.
 import json
 import re
 import unicodedata
+from _providers import generate_structured
 
 MODEL = "claude-sonnet-5"
 
@@ -279,20 +280,14 @@ def draft_themes(client, atoms_by_id, expert_note, brief_mode=False):
         f"[{aid}] {json.dumps({k: v for k, v in a.items() if k not in ('verified', 'review_note', 'review_status', 'brief_id')}, ensure_ascii=False)}"
         for aid, a in atoms_by_id.items()
     )
-    msg = client.messages.create(
-        model=THEME_MODEL,
-        max_tokens=8000,
-        system=THEME_SYSTEM,
-        tools=[THEME_TOOL],
-        tool_choice={"type": "tool", "name": "emit_themes"},
-        **({} if brief_mode else {"thinking": {"type": "adaptive"}}),
-        messages=[{
-            "role": "user",
-            "content": f"{expert_note}\n\nConfirmed atoms:\n{listing}\n\n"
-                       f"Draft the themes these atoms support.",
-        }],
+    msg = generate_structured(
+        client, model=THEME_MODEL, max_output_tokens=8000,
+        instructions=THEME_SYSTEM, tool=THEME_TOOL,
+        thinking=None if brief_mode else {"type": "adaptive"},
+        input=f"{expert_note}\n\nConfirmed atoms:\n{listing}\n\n"
+              f"Draft the themes these atoms support.",
     )
-    payload = judgement_payload(msg, "emit_themes")
+    payload = msg.payload
     summary = payload.get("summary")
     if (not isinstance(summary, dict) or not isinstance(summary.get("text"), str) or
         not isinstance(summary.get("atom_ids"), list) or
@@ -401,20 +396,14 @@ def check_claim(client, claim, atoms_by_id, expert_note):
         f"[{aid}] {json.dumps({k: v for k, v in a.items() if k not in ('verified', 'review_note', 'review_status', 'brief_id')}, ensure_ascii=False)}"
         for aid, a in atoms_by_id.items()
     )
-    msg = client.messages.create(
-        model=THEME_MODEL,
-        max_tokens=4000,
-        system=CHECK_SYSTEM,
-        tools=[CHECK_TOOL],
-        tool_choice={"type": "tool", "name": "emit_verdict"},
+    msg = generate_structured(
+        client, model=THEME_MODEL, max_output_tokens=4000,
+        instructions=CHECK_SYSTEM, tool=CHECK_TOOL,
         thinking={"type": "adaptive"},
-        messages=[{
-            "role": "user",
-            "content": f"{expert_note}\n\nConfirmed atoms:\n{listing}\n\n"
-                       f"Claim to grade:\n\"{claim}\"",
-        }],
+        input=f"{expert_note}\n\nConfirmed atoms:\n{listing}\n\n"
+              f"Claim to grade:\n\"{claim}\"",
     )
-    out = judgement_payload(msg, "emit_verdict")
+    out = msg.payload
     if (out.get("verdict") not in ("supported", "partially supported", "not supported", "contradicted") or
         not all(isinstance(out.get(k), str) for k in ("reasoning", "footnote")) or
         not isinstance(out.get("atom_ids"), list) or not isinstance(out.get("caveats"), list)):
@@ -461,19 +450,10 @@ def verify_citations(atoms, transcript_text):
 
 # --------------------------------------------------------------- extraction
 def extract_group(client, expert, transcript, spec):
-    msg = client.messages.create(
-        model=MODEL,
-        max_tokens=4096,
-        system=SYSTEM,
-        tools=[spec],
-        tool_choice={"type": "tool", "name": spec["name"]},
-        messages=[{
-            "role": "user",
-            "content": f"<transcript expert=\"{expert}\">\n{transcript}\n</transcript>\n\n"
-                       f"Extract: {spec['description']}",
-        }],
+    msg = generate_structured(
+        client, model=MODEL, max_output_tokens=4096,
+        instructions=SYSTEM, tool=spec,
+        input=f"<transcript expert=\"{expert}\">\n{transcript}\n</transcript>\n\n"
+              f"Extract: {spec['description']}",
     )
-    for block in msg.content:
-        if block.type == "tool_use":
-            return block.input.get("items", []), msg.usage
-    return [], msg.usage
+    return msg.payload["items"], msg.usage

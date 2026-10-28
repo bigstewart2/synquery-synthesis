@@ -8,6 +8,7 @@ import json
 import unicodedata
 
 from _pipeline import MODEL, norm
+from _providers import generate_structured
 
 MAX_BRIEF_TRANSCRIPT = 60_000
 KINDS = ["observation", "opinion", "estimate", "risk", "recommendation", "open question"]
@@ -132,15 +133,23 @@ def tool_payload(message, name):
     raise ValueError("The model did not return structured findings. Try again.")
 
 
-def extract_brief(client, expert, transcript, brief):
-    message = client.messages.create(
-        model=MODEL, max_tokens=6500, system=EXTRACT_SYSTEM,
-        tools=[FINDINGS_TOOL], tool_choice={"type": "tool", "name": "emit_findings"},
-        messages=[{"role": "user", "content": json.dumps({
-            "research_brief": brief, "expert_label": expert, "transcript": transcript,
-        }, ensure_ascii=False)}],
+def review_findings(client, transcript, brief, findings):
+    return generate_structured(
+        client, model=MODEL, max_output_tokens=3000, instructions=REVIEW_SYSTEM,
+        tool=REVIEW_TOOL, input=json.dumps({
+            "research_brief": brief, "transcript": transcript, "findings": findings,
+        }, ensure_ascii=False),
     )
-    raw = tool_payload(message, "emit_findings").get("items")
+
+
+def extract_brief(client, expert, transcript, brief):
+    message = generate_structured(
+        client, model=MODEL, max_output_tokens=6500, instructions=EXTRACT_SYSTEM,
+        tool=FINDINGS_TOOL, input=json.dumps({
+            "research_brief": brief, "expert_label": expert, "transcript": transcript,
+        }, ensure_ascii=False),
+    )
+    raw = message.payload.get("items")
     if not isinstance(raw, list) or len(raw) > 30:
         raise ValueError("The model returned an invalid findings list. Try again.")
     usage = {"input_tokens": message.usage.input_tokens, "output_tokens": message.usage.output_tokens}
@@ -175,16 +184,10 @@ def extract_brief(client, expert, transcript, brief):
     failures = []
     if valid:
         try:
-            review = client.messages.create(
-                model=MODEL, max_tokens=3000, system=REVIEW_SYSTEM,
-                tools=[REVIEW_TOOL], tool_choice={"type": "tool", "name": "review_findings"},
-                messages=[{"role": "user", "content": json.dumps({
-                    "research_brief": brief, "transcript": transcript, "findings": valid,
-                }, ensure_ascii=False)}],
-            )
+            review = review_findings(client, transcript, brief, valid)
             usage["input_tokens"] += review.usage.input_tokens
             usage["output_tokens"] += review.usage.output_tokens
-            checks = tool_payload(review, "review_findings").get("checks", [])
+            checks = review.payload.get("checks", [])
             if not isinstance(checks, list):
                 raise ValueError("Invalid review response")
             by_index = {}

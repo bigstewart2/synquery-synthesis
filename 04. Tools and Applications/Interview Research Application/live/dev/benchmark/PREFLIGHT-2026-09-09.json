@@ -1,0 +1,10 @@
+{
+  "checked_on": "2026-09-09",
+  "method": "Read-only models.retrieve using each provider SDK",
+  "generation_calls": 0,
+  "results": [
+    {"provider": "anthropic", "requested_model": "claude-sonnet-5", "available": true, "returned_model": "claude-sonnet-5"},
+    {"provider": "openai", "requested_model": "gpt-5.6-terra", "available": true, "returned_model": "gpt-5.6-terra"},
+    {"provider": "openai", "requested_model": "gpt-5.6-sol", "available": true, "returned_model": "gpt-5.6-sol"}
+  ]
+}

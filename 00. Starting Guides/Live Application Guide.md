@@ -6,6 +6,8 @@ This guide is the maintained original after the approved interior filing. The co
 
 Open [the application bundle](../04.%20Tools%20and%20Applications/Interview%20Research%20Application/), [the other starting guide](Your%20Starting%20Guide.md) or [the source case](../../../../02.%20Career/Recruiting/03.%20Work%20and%20Outputs/Opportunities/synquery/Case%20Study/HANDOFF.md). The unfinished provider/benchmark files remain pending with their existing handoff in the application. Former local paths are compatibility links to these same originals.
 
+**October 22, 2026 — preserved application home:** this complete repository moved to workspaces/01. Business/Other Demos and Prototypes/Synquery — Interview Research and Claim Checking Demo. The submitted static site/ and continuing live/ application remain distinct, with their history, saved configuration and existing unfinished work intact. [Original case inputs and submission records](../../../../02.%20Career/Recruiting/03.%20Work%20and%20Outputs/Opportunities/synquery/Case%20Study/HANDOFF.md) remain in Recruiting; source-input paths read those originals. Existing hosted addresses, storage keys and credentials are unchanged. This move performs no rebuild, deployment or model test.
+
 **Live:** https://interview-extraction-demo.vercel.app (passcode-gated)
 
 Vercel project: `interview-extraction-demo` (same project ID and environment variables). The old `synquery-live.vercel.app` address remains attached for existing links and browser-local saved runs. Browser storage is scoped to each hostname, so earlier runs remain at the old address.
@@ -25,12 +27,22 @@ The visitor UI shows one current workspace, with no previous-runs picker or new-
 
 Completed interviews survive refresh; selections not yet extracted must be selected again. A failed interview remains in the queue for retry, completed interviews are not recharged on retry, and samples cannot be duplicated or assigned new expert labels. Once both are extracted, visitors can keep reviewing, change confirmations, draft again or check another claim. Re-extraction and browsing older runs are intentionally omitted from this simplified demo at Stephen's request. Storage errors are visible; another tab changing the active workspace produces a reload prompt. Confirmation changes invalidate prior synthesis/claim checks.
 
+## Local provider pilot (not deployed)
+
+The backend now has a narrow provider adapter in `api/_providers.py`. Anthropic remains the default, with `claude-sonnet-5` pinned. OpenAI is available locally through the Responses API using `gpt-5.6-terra` or `gpt-5.6-sol`, strict JSON Schema output and `store=false`. The canonical prompts and task schemas, exact source selection, quote-location checks, separate interpretation review, human confirmation and citation checks are shared. Incomplete responses, refusals and missing structured fields fail visibly. This change has not been deployed.
+
+Provider selection is server-side through `INTERVIEW_PROVIDER` and `INTERVIEW_MODEL`. Browser requests attempting to select a model or provider are rejected. OpenAI defaults to explicit `none` reasoning in extraction, review and brief synthesis, matching the existing non-thinking stages; claim checking uses explicit `medium` as a pilot approximation of Claude's adaptive-thinking stage. `INTERVIEW_OPENAI_REASONING_EFFORT` can override that for a separate experiment, but the fixed benchmark rejects an override. These settings do not imply equal reasoning across providers.
+
+The local pilot environment is `.venv-pilot`. Its OpenAI key is stored in `~/.config/secrets.env` as `INTERVIEW_OPENAI_API_KEY`, alongside the existing general-purpose `OPENAI_API_KEY` and Anthropic key. The app prefers the interview-specific key when present and otherwise accepts `OPENAI_API_KEY`. The benchmark reads provider keys without printing them or executing the secrets file; local app servers use the environment loaded by the existing `source ~/.config/secrets.env` setup. No OpenAI key remains in `.env.local`. This does not change Vercel secrets or the public provider. See [the benchmark protocol](../04.%20Tools%20and%20Applications/Interview%20Research%20Application/live/dev/benchmark/README.md) and [the draft answer key](../04.%20Tools%20and%20Applications/Interview%20Research%20Application/live/dev/benchmark/GOLD-REVIEW.md). The gold set must be human-reviewed before paid comparison calls, and generated findings are not automatically human-confirmed.
+
 ## Local verification
 
 ```
 python3 dev/sync_harbor.py --check
 python3 dev/check_entry.py
 python3 dev/check_brief.py
+.venv-pilot/bin/python dev/check_providers.py
+.venv-pilot/bin/python dev/check_benchmark.py
 node dev/check_workspace.cjs
 ```
 
@@ -148,7 +160,7 @@ python3 dev/local_run.py "/path/to/transcript.docx"   # real model calls; incurs
 
 The browser validates the shared `DEMO_PASSCODE` on entry and refresh by posting `{action: "authenticate", passcode}` to `api/extract.py`, the server entry point. This check makes no model call. A rejected or stale passcode returns to the entry screen without deleting the saved interview workspace. Run `python3 dev/check_entry.py` for the no-model HTTP check.
 
-The Vercel project has `rootDirectory` set to `live`. For CLI deployment, package `live/public/index.html`, `live/api/extract.py`, `live/api/_pipeline.py`, `live/api/_brief.py`, `live/api/_harbor.py`, the three `live/public/samples/harbor-*.txt` files, `live/pyproject.toml` and `live/vercel.json` under a clean package root, copy `live/.vercel/project.json` to the package root’s `.vercel/project.json`, and run `vercel deploy --prod --yes --cwd <package-root>`. Do not deploy directly from the `live` directory because the configured root is applied again. This runtime-only package includes only the two explicitly fictional Harbor transcripts; it excludes original interview materials, local access files and environment files.
+The Vercel project has `rootDirectory` set to `live`. After explicit deployment approval, package `live/public/index.html`, `live/api/extract.py`, `live/api/_pipeline.py`, `live/api/_brief.py`, `live/api/_harbor.py`, `live/api/_providers.py`, the three `live/public/samples/harbor-*.txt` files, `live/pyproject.toml` and `live/vercel.json` under a clean package root, copy `live/.vercel/project.json` to the package root’s `.vercel/project.json`, and run `vercel deploy --prod --yes --cwd <package-root>`. Do not deploy directly from the `live` directory because the configured root is applied again. This runtime-only package includes only the two explicitly fictional Harbor transcripts; it excludes original interview materials, benchmark runs, local access files and environment files. Keep the production provider on Anthropic unless a provider change is separately approved.
 
 Entry update verified on 8 September 2026. Live deployment `dpl_E6zRiHBjU83PZK49mdS6AY1F4G7v` accepted the current passcode, rejected the old passcode, and preserved the existing browser workspace. No new model execution was used for verification.
 

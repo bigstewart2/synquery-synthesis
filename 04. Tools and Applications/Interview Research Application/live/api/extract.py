@@ -24,6 +24,7 @@ from _pipeline import (  # noqa: E402
 )
 from _brief import MAX_BRIEF_TRANSCRIPT, brief_id, context_note, extract_brief, validate_brief
 from _harbor import BRIEF as HARBOR_BRIEF, SAMPLES as HARBOR_SAMPLES, DEMO_ID
+from _providers import create_provider, settings, credential_name, ProviderConfigurationError
 
 MAX_BYTES = 4 * 1024 * 1024        # a long transcript is ~100KB; this is generous
 MAX_CHARS = 400_000                # guard the token bill on a pasted book
@@ -90,12 +91,15 @@ def check_passcode(supplied):
 
 
 # --------------------------------------------------------------- work
-def run_extraction(text, expert_label):
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        raise Bad(500, "Server is missing ANTHROPIC_API_KEY.")
-    import anthropic
+def model_client():
+    try:
+        return create_provider()
+    except ProviderConfigurationError as exc:
+        raise Bad(500, str(exc)) from None
 
-    client = anthropic.Anthropic()
+
+def run_extraction(text, expert_label):
+    client = model_client()
     atoms, tok_in, tok_out, failures = {}, 0, 0, []
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(GROUPS)) as pool:
@@ -178,8 +182,6 @@ def expert_note_from(payload):
 
 
 def run_check(payload):
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        raise Bad(500, "Server is missing ANTHROPIC_API_KEY.")
     claim = (payload.get("claim") or "").strip()
     if len(claim) < 10:
         raise Bad(400, "Write a claim to check — at least a sentence.")
@@ -187,11 +189,12 @@ def run_check(payload):
         raise Bad(413, "Claim is too long.")
     confirmed = confirmed_from(payload)
 
-    import anthropic
-    result = check_claim(anthropic.Anthropic(), claim, confirmed,
+    client = model_client()
+    result = check_claim(client, claim, confirmed,
                          expert_note_from(payload))
     result["ok"] = True
-    result["model"] = THEME_MODEL
+    result["model"] = client.model
+    result["provider"] = client.provider
     result["atoms_used"] = len(confirmed)
     return result
 
@@ -202,21 +205,18 @@ def run_themes(payload):
     The client sends only confirmed atoms. That is the whole gate: an atom the analyst
     rejected is never in this request, so the model cannot build an argument on it.
     """
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        raise Bad(500, "Server is missing ANTHROPIC_API_KEY.")
-
     confirmed = confirmed_from(payload)
-
-    import anthropic
+    client = model_client()
     summary, themes, not_supported, dropped = draft_themes(
-        anthropic.Anthropic(), confirmed, expert_note_from(payload), brief_mode=brief_from(payload) is not None)
+        client, confirmed, expert_note_from(payload), brief_mode=brief_from(payload) is not None)
     return {
         "ok": True,
         "summary": summary,
         "themes": themes,
         "not_supported": not_supported,
         "dropped_citations": dropped,
-        "model": THEME_MODEL,
+        "model": client.model,
+        "provider": client.provider,
         "atoms_used": len(confirmed),
     }
 
@@ -235,15 +235,21 @@ class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         # A health probe that proves configuration without proving the passcode.
+        try:
+            provider, model = settings()
+        except ProviderConfigurationError as exc:
+            self._send(500, {"ok": False, "error": str(exc)})
+            return
         self._send(200, {
             "ok": True,
-            "model": MODEL,
+            "model": model,
+            "provider": provider,
             "groups": ["findings"],
             "research_modes": ["brief"],
             "demo": DEMO_ID,
             "sample_ids": list(HARBOR_SAMPLES),
             "configured": {
-                "ANTHROPIC_API_KEY": bool(os.environ.get("ANTHROPIC_API_KEY")),
+                credential_name(provider): bool(os.environ.get(credential_name(provider))),
                 "DEMO_PASSCODE": bool(os.environ.get("DEMO_PASSCODE")),
             },
         })
@@ -273,6 +279,8 @@ class handler(BaseHTTPRequestHandler):
             route = self.path.rstrip("/")
             if route not in ("/api/extract", "/api/themes", "/api/check"):
                 raise Bad(404, "Unknown demo route.")
+            if any(k in payload for k in ("provider", "model", "reasoning_effort")):
+                raise Bad(400, "Model selection is configured on the server.")
             # The public demo is sample-only. Keep the general extraction helpers
             # available for local development, but never accept arbitrary inputs here.
             if any(k in payload for k in ("b64", "filename", "text", "transcript", "expert")):
@@ -300,11 +308,9 @@ class handler(BaseHTTPRequestHandler):
             if brief:
                 if len(text) > MAX_BRIEF_TRANSCRIPT:
                     raise Bad(413, f"For this demo, keep each interview under {MAX_BRIEF_TRANSCRIPT:,} characters.")
-                if not os.environ.get("ANTHROPIC_API_KEY"):
-                    raise Bad(500, "Server is missing ANTHROPIC_API_KEY.")
-                import anthropic
+                client = model_client()
                 try:
-                    atoms, usage, failures = extract_brief(anthropic.Anthropic(), expert_label, text, brief)
+                    atoms, usage, failures = extract_brief(client, expert_label, text, brief)
                 except ValueError as exc:
                     raise Bad(502, str(exc))
                 stats = {"total": len(atoms["findings"]),
@@ -316,7 +322,8 @@ class handler(BaseHTTPRequestHandler):
                 labels = GROUP_LABELS
             stats.update(
                 elapsed_s=round(time.time() - started, 1),
-                model=MODEL,
+                model=settings()[1],
+                provider=settings()[0],
                 usage=usage,
                 chars=len(text),
             )
